@@ -63,8 +63,8 @@ case "$1" in
     psql_db -c "SET max_parallel_workers_per_gather = 4; SET work_mem = '256MB';
       INSERT INTO rosa_place_next (id, kind, name, gmina, woj, name_norm, parcels, lon, lat, min_lon, min_lat, max_lon, max_lat)
       WITH o AS (
-        SELECT numer_jednostki AS j, numer_obrebu AS n, min(nazwa_obrebu) AS name, min(nazwa_gminy) AS gmina, count(*) AS parcels, ST_Extent(geom) AS ext
-        FROM dzialki WHERE numer_jednostki IS NOT NULL AND numer_obrebu IS NOT NULL AND nazwa_obrebu IS NOT NULL GROUP BY 1, 2
+        SELECT split_part(id_dzialki, '.', 1) AS j, split_part(id_dzialki, '.', 2) AS n, min(nazwa_obrebu) AS name, min(nazwa_gminy) AS gmina, count(*) AS parcels, ST_Extent(geom) AS ext
+        FROM dzialki WHERE id_dzialki LIKE '%.%.%' AND nazwa_obrebu IS NOT NULL GROUP BY 1, 2
       ), t AS (
         SELECT j, n, initcap(name) AS name, regexp_replace(gmina, '^(gmina miejska|gmina wiejska|gmina|miasto)\\s+', '', 'i') AS gmina, parcels,
           ST_Transform(ST_SetSRID(ext::geometry, 2180), 4326) AS g FROM o
