@@ -1,0 +1,255 @@
+.stage {
+  container-type: size;
+}
+
+.camera {
+  transform-origin: 50% 55%;
+  transform: perspective(900px) rotateX(36deg) rotateZ(-6deg);
+  animation: camera 1.2s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+
+@keyframes camera {
+  from {
+    transform: perspective(900px) translateY(-6%) rotateX(60deg) rotateZ(-14deg) scale(0.6);
+  }
+}
+
+.cloud {
+  opacity: 0;
+  animation: cloud 1.2s cubic-bezier(0.65, 0, 0.35, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes cloud {
+  from {
+    transform: translateX(30cqw) scale(1);
+    opacity: 0.95;
+  }
+  to {
+    transform: translateX(-80cqw) scale(1.6);
+    opacity: 0;
+  }
+}
+
+.ping {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ping 1.6s ease-out infinite;
+}
+
+@keyframes ping {
+  from {
+    transform: scale(0.4);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+.fly {
+  stroke-dasharray: 6 8;
+  animation: fly 1.2s linear infinite;
+}
+
+@keyframes fly {
+  to {
+    stroke-dashoffset: -28;
+  }
+}
+
+.dots {
+  display: flex;
+  gap: 4px;
+}
+
+.dots span {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #0e6e73;
+  animation: dot 1s ease-in-out infinite;
+}
+
+.dots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.dots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes dot {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+.sceneIn {
+  animation: sceneIn 0.4s cubic-bezier(0.25, 1, 0.5, 1) both;
+}
+
+@keyframes sceneIn {
+  from {
+    opacity: 0;
+    transform: scale(1.06);
+  }
+}
+
+.trace {
+  stroke-dasharray: 1 1;
+  animation: trace 0.8s cubic-bezier(0.25, 1, 0.5, 1) 0.15s both;
+}
+
+@keyframes trace {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.glow {
+  opacity: 0.6;
+  animation: glow 0.4s ease-out 0.95s both;
+}
+
+@keyframes glow {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}
+
+.lift {
+  transform: translateY(-8px);
+  animation: lift 0.5s cubic-bezier(0.25, 1, 0.5, 1) 0.95s both;
+}
+
+@keyframes lift {
+  from {
+    transform: none;
+  }
+}
+
+.pop {
+  animation: pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.9);
+  }
+}
+
+.chip {
+  animation: chip 0.45s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes chip {
+  from {
+    opacity: 0;
+    transform: translateX(var(--from, -40px)) rotate(var(--rot, -4deg));
+  }
+}
+
+.check {
+  animation: check 0.2s ease-out both;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes check {
+  0% {
+    transform: scale(0);
+  }
+  70% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.failed {
+  background: #e6e1d8;
+  border: 2px dashed #8c8478;
+  color: #4a453e;
+  animation: desat 0.3s ease-out both;
+  animation-delay: var(--d, 0ms);
+}
+
+.failed svg {
+  filter: grayscale(1);
+  opacity: 0.75;
+}
+
+@keyframes desat {
+  from {
+    background: #fffdf8;
+    border-color: transparent;
+    color: #2a2118;
+  }
+}
+
+.fadeUp {
+  animation: fadeUp 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+.orbit {
+  animation: orbit 3s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
+}
+
+@keyframes orbit {
+  from {
+    transform: translateX(-60px);
+  }
+  to {
+    transform: translateX(60px);
+  }
+}
+
+.slide {
+  animation: slide 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both;
+}
+
+@keyframes slide {
+  from {
+    transform: translateY(-30px);
+    opacity: 0;
+  }
+}
+
+.settle {
+  animation: settle 0.6s cubic-bezier(0.25, 1, 0.5, 1) both;
+}
+
+@keyframes settle {
+  to {
+    transform: scale(1.06);
+  }
+}
