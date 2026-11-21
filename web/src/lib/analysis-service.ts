@@ -11,7 +11,7 @@ import { findParcelById } from "@/server/sources/parcel"
 import { loadSoilCategory } from "@/server/sources/soil"
 import { loadTerrain } from "@/server/sources/terrain"
 
-const ENGINE_VERSION = "v1"
+const ENGINE_VERSION = "v2"
 const WINDOW_DAYS = 45
 const HISTORY_YEARS = 10
 
@@ -76,6 +76,7 @@ async function computeLive(req: AnalysisRequest, id: string): Promise<AnalysisRe
     request: req,
     parcel,
     balance,
+    weather: { stations: weather.value.stations, recentFrom: weather.value.recentFrom },
     soil: soil.value,
     terrain: terrain.value,
     failed: { soil: soil.failed, terrain: terrain.failed },

@@ -11,6 +11,7 @@ import type {
 } from "@/lib/types"
 import { formatDatePl } from "@/lib/validation"
 import type { ParcelRecord } from "@/server/sources/parcel"
+import type { WeatherStation } from "@/server/sources/meteo"
 import type { SoilCategory } from "@/server/sources/soil"
 import type { TerrainSummary } from "@/server/sources/terrain"
 import { CROP_PROFILES, MONTHS_GEN_PL } from "./crop-profiles"
@@ -21,6 +22,7 @@ export type EngineInput = {
   request: AnalysisRequest
   parcel: ParcelRecord
   balance: BalanceResult
+  weather: { stations: WeatherStation[]; recentFrom: string | null }
   soil: SoilCategory | null
   terrain: TerrainSummary | null
   failed: { soil: boolean; terrain: boolean }
@@ -61,7 +63,10 @@ function round5(n: number): number {
 }
 
 export function buildAnalysis(input: EngineInput): Analysis {
-  const { request, parcel, balance, soil, terrain, historyYears } = input
+  const { request, parcel, balance, soil, terrain, historyYears, weather } = input
+  const nearest = weather.stations[0]
+  const stationNames = weather.stations.slice(0, 3).map((s) => `${s.name.charAt(0)}${s.name.slice(1).toLocaleLowerCase("pl-PL")} (${s.distanceKm.toLocaleString("pl-PL")} km)`).join(", ")
+  const meteoSource = weather.recentFrom ? "IMGW-PIB, Open-Meteo" : "IMGW-PIB"
   const month = Number(request.date.slice(5, 7))
   const year = Number(request.date.slice(0, 4))
   const crop = CROP_PROFILES[request.crop]
@@ -92,7 +97,7 @@ export function buildAnalysis(input: EngineInput): Analysis {
     riskMonths: balance.riskMonths,
     windowLabel: `Opad minus parowanie, ${W} dni przed ${request.date.slice(8, 10)}.${request.date.slice(5, 7)}, względem średniej`,
     years: yearsShown.map((w) => ({ year: w.year, balanceMm: Math.round(w.balance - balance.normal.balance) })),
-    source: `Open-Meteo (ERA5), ${yearsShown[0]?.year ?? year - historyYears}–${year} · pobrano ${fetched} · CC BY 4.0`,
+    source: `${meteoSource}, stacje: ${stationNames} · ${yearsShown[0]?.year ?? year - historyYears}–${year} · pobrano ${fetched}`,
   }
 
   const causes: Cause[] = []
@@ -103,7 +108,7 @@ export function buildAnalysis(input: EngineInput): Analysis {
       value: `${minus(balance.precipDeficitMm)} mm`,
       title: "Mniej deszczu niż zwykle",
       detail: `Od ${W} dni o ${Math.abs(balance.precipDeficitPct)}% mniej opadów niż średnio w tym okresie w latach ${balance.previous[0]?.year}–${year - 1}.`,
-      source: "Open-Meteo (ERA5)",
+      source: meteoSource,
     })
   }
   if (hot) {
@@ -113,7 +118,7 @@ export function buildAnalysis(input: EngineInput): Analysis {
       value: `+${balance.tmaxAnomaly.toLocaleString("pl-PL")} °C`,
       title: "Upał przyspiesza parowanie",
       detail: `Temperatura maksymalna była średnio o ${balance.tmaxAnomaly.toLocaleString("pl-PL")} °C wyższa niż zwykle, a z pola wyparowało ok. ${Math.round(balance.current.et0)} mm wody.`,
-      source: "Open-Meteo (ERA5)",
+      source: meteoSource,
     })
   }
   if (soil && soil.agricultural && soil.susceptibility) {
@@ -200,7 +205,7 @@ export function buildAnalysis(input: EngineInput): Analysis {
         sceneCaption: "Siewnik wysiewa międzyplon, a rośliny okrywają gołą glebę.",
         why: [
           ...(soilWhy ? [soilWhy] : []),
-          `Deficyt wody w tym okresie wystąpił tu w ${history.deficitYears} z ${history.totalYears} lat (Open-Meteo ERA5).`,
+          `Deficyt wody w tym okresie wystąpił tu w ${history.deficitYears} z ${history.totalYears} lat (${meteoSource}).`,
         ],
       })
     }
@@ -255,7 +260,7 @@ export function buildAnalysis(input: EngineInput): Analysis {
       sceneMode: "nawadnianie",
       sceneCaption: `Zraszacz podaje ok. ${dose} mm wody na pole.`,
       why: [
-        `W ostatnich 7 dniach ${cropName.toLocaleLowerCase("pl-PL")} zużyła ok. ${Math.round(etc)} mm wody, a spadło ${Math.round(balance.last7.precip)} mm (Open-Meteo ERA5, FAO-56).`,
+        `W ostatnich 7 dniach ${cropName.toLocaleLowerCase("pl-PL")} zużyła ok. ${Math.round(etc)} mm wody, a spadło ${Math.round(balance.last7.precip)} mm (${meteoSource}, FAO-56).`,
         ...(inCritical ? [`To okres ${crop.criticalLabel}, kiedy uprawa najbardziej potrzebuje wody.`] : []),
       ],
       note: "Pobór wody do nawadniania może wymagać zgody wodnoprawnej.",
@@ -263,7 +268,8 @@ export function buildAnalysis(input: EngineInput): Analysis {
   }
 
   const unknowns = [
-    "Dane pogodowe pochodzą z siatki ok. 9 km, a nie ze stacji na Twoim polu.",
+    `Pogodę liczymy z ${weather.stations.length} najbliższych stacji IMGW (najbliższa ${nearest ? nearest.distanceKm.toLocaleString("pl-PL") + " km" : "–"}), a nie z pomiaru na Twoim polu.`,
+    "Parowanie liczymy metodą Hargreavesa (FAO-56) z temperatury; to przybliżenie.",
     "Zdjęć satelitarnych (kondycji roślin) jeszcze nie analizujemy w tej wersji.",
     "Rowów i cieków przy działce jeszcze nie sprawdzamy.",
     "Nie znamy poziomu wód gruntowych pod działką.",
@@ -277,7 +283,10 @@ export function buildAnalysis(input: EngineInput): Analysis {
   const confidence: ConfidenceLevel = missing === 0 ? "srednia" : missing === 1 ? "srednia" : "niska"
 
   const sources: DataSource[] = [
-    { key: "pogoda", name: "Open-Meteo (ERA5)", what: `opady, parowanie i temperatura ${history.years[0]?.year ?? year}–${year}`, license: "CC BY 4.0", fetchedAt: input.fetchedAt },
+    { key: "pogoda", name: "IMGW-PIB", what: `dobowe opady i temperatury ze stacji: ${stationNames}`, license: "dane publiczne IMGW-PIB (źródło: IMGW-PIB)", fetchedAt: input.fetchedAt },
+    ...(weather.recentFrom
+      ? [{ key: "pogoda" as const, name: "Open-Meteo", what: `ostatnie dni od ${formatDatePl(weather.recentFrom)}, których nie ma jeszcze w archiwum IMGW`, license: "CC BY 4.0", fetchedAt: input.fetchedAt }]
+      : []),
     { key: "gleba", name: "IUNG-PIB", what: "kategoria podatności gleby na suszę", license: "dane publiczne IUNG-PIB (do potwierdzenia)", fetchedAt: input.fetchedAt },
     { key: "teren", name: "GUGiK (EGiB, NMT)", what: "granice działki i wysokości terenu", license: "dane otwarte GUGiK", fetchedAt: input.fetchedAt },
   ]
@@ -302,7 +311,7 @@ export function buildAnalysis(input: EngineInput): Analysis {
       precipDeficitMm: balance.precipDeficitMm,
       precipDeficitPct: balance.precipDeficitPct,
       headline,
-      source: `Open-Meteo (ERA5), siatka ok. 9 km · pobrano ${fetched} · CC BY 4.0`,
+      source: `${meteoSource}, najbliższa stacja ${nearest ? nearest.distanceKm.toLocaleString("pl-PL") + " km" : "–"} · pobrano ${fetched}`,
     },
     history,
     causes: causes.slice(0, 4),
