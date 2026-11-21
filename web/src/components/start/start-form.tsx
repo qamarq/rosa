@@ -2,6 +2,7 @@
 
 import { useRef, useState, useSyncExternalStore, useTransition } from "react"
 import { useRouter } from "next/navigation"
+import dynamic from "next/dynamic"
 import { ArrowRightIcon, CalendarDaysIcon, MapPinIcon } from "lucide-react"
 import { pl } from "react-day-picker/locale"
 import { cn } from "@/lib/utils"
@@ -15,14 +16,15 @@ import { Input } from "@/components/ui/input"
 import {
   Popover,
   PopoverContent,
-  PopoverDescription,
-  PopoverHeader,
-  PopoverTitle,
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { Spinner } from "@/components/ui/spinner"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { CropIcon } from "./crop-icons"
+import type { LocatedParcel } from "./map-picker/types"
+
+const loadMapPicker = () => import("./map-picker/map-picker")
+const MapPicker = dynamic(() => loadMapPicker().then((m) => m.MapPicker), { ssr: false })
 
 type DayMode = "dzis" | "inny"
 type DateError = "format" | "early" | "late"
@@ -92,6 +94,8 @@ export function StartForm({ className, initial }: { className?: string; initial?
 
   const parcelRef = useRef<HTMLInputElement>(null)
   const dateRef = useRef<HTMLInputElement>(null)
+  const cropSetRef = useRef<HTMLFieldSetElement>(null)
+  const pickedRef = useRef(false)
 
   const initialDate = initial?.date
   const [parcel, setParcel] = useState(initial?.parcel ?? "")
@@ -101,6 +105,7 @@ export function StartForm({ className, initial }: { className?: string; initial?
   const [dateText, setDateText] = useState(initialDate ? formatDatePl(initialDate) : DEFAULT_OTHER_DATE)
   const [dateTouched, setDateTouched] = useState(!!initialDate)
   const [mapOpen, setMapOpen] = useState(!!initial?.openMap)
+  const [mapMounted, setMapMounted] = useState(!!initial?.openMap)
 
   const day: DayMode = dayChoice ?? (today && initialDate === today ? "dzis" : "inny")
   const [calendarOpen, setCalendarOpen] = useState(false)
@@ -125,6 +130,24 @@ export function StartForm({ className, initial }: { className?: string; initial?
   function fillDemo() {
     setParcel(DEMO_REQUEST.parcelId)
     setParcelTouched(false)
+  }
+
+  function openMap() {
+    pickedRef.current = false
+    setMapMounted(true)
+    setMapOpen(true)
+  }
+
+  function pickParcel(picked: LocatedParcel) {
+    pickedRef.current = true
+    setParcel(picked.id)
+    setParcelTouched(true)
+    setMapOpen(false)
+  }
+
+  function focusAfterMap(): HTMLElement | boolean {
+    if (!pickedRef.current) return true
+    return cropSetRef.current?.querySelector<HTMLElement>('[aria-pressed="true"]') ?? true
   }
 
   function pickIso(iso: string) {
@@ -199,37 +222,21 @@ export function StartForm({ className, initial }: { className?: string; initial?
             aria-describedby={showParcelError ? "nr-msg" : "nr-hint"}
             className="h-14 w-full min-w-0 shrink-0 rounded-[18px] sm:w-auto sm:flex-1 border-2 border-border bg-white px-[18px] py-0 text-[19px] font-semibold text-foreground tabular-nums placeholder:text-[#7A6A56] focus-visible:border-primary focus-visible:ring-0 aria-invalid:border-destructive aria-invalid:ring-0 sm:h-[62px] sm:text-[21px] md:text-[21px]"
           />
-          <Popover open={mapOpen} onOpenChange={setMapOpen}>
-            <PopoverTrigger
-              className={cn(OUTLINE_BTN, "h-[52px] gap-2 rounded-[18px] px-4 text-[15px] whitespace-nowrap sm:h-[62px]")}
-            >
-              <MapPinIcon aria-hidden="true" className="size-[22px] text-primary" strokeWidth={2.2} />
-              albo wskaż na mapie
-            </PopoverTrigger>
-            <PopoverContent
-              align="end"
-              sideOffset={8}
-              className="w-[320px] gap-3 rounded-[20px] p-[18px] shadow-[0_24px_48px_-24px_rgba(110,70,30,0.4)] ring-border"
-            >
-              <PopoverHeader className="gap-1">
-                <PopoverTitle className="text-[17px] font-extrabold">Mapa będzie wkrótce</PopoverTitle>
-                <PopoverDescription className="text-[15px] leading-[1.45]">
-                  Wskazywanie pola na mapie jeszcze nie działa. Wpisz numer z wypisu z rejestru gruntów albo sprawdź
-                  przykładowe pole.
-                </PopoverDescription>
-              </PopoverHeader>
-              <button
-                type="button"
-                onClick={() => {
-                  fillDemo()
-                  setMapOpen(false)
-                }}
-                className="rosa-btn h-11 cursor-pointer rounded-[14px] bg-primary px-4 text-[15px] font-bold text-white"
-              >
-                Wpisz przykład
-              </button>
-            </PopoverContent>
-          </Popover>
+          <button
+            type="button"
+            onClick={openMap}
+            onPointerEnter={() => void loadMapPicker()}
+            onFocus={() => void loadMapPicker()}
+            aria-haspopup="dialog"
+            aria-expanded={mapOpen}
+            className={cn(OUTLINE_BTN, "h-[52px] gap-2 rounded-[18px] px-4 text-[15px] whitespace-nowrap sm:h-[62px]")}
+          >
+            <MapPinIcon aria-hidden="true" className="size-[22px] text-primary" strokeWidth={2.2} />
+            albo wskaż na mapie
+          </button>
+          {mapMounted && (
+            <MapPicker open={mapOpen} onOpenChange={setMapOpen} onSelect={pickParcel} finalFocus={focusAfterMap} />
+          )}
         </div>
         {showParcelError ? (
           <FieldError id="nr-msg" className="flex gap-2 text-[15px] leading-[1.45] text-[#7A2E18]">
@@ -259,7 +266,7 @@ export function StartForm({ className, initial }: { className?: string; initial?
         )}
       </Field>
 
-      <FieldSet className="gap-2">
+      <FieldSet ref={cropSetRef} className="gap-2">
         <FieldLegend className="mb-2 text-base font-bold">Co rośnie na polu?</FieldLegend>
         <ToggleGroup
           value={[crop]}
