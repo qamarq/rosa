@@ -6,7 +6,8 @@ import { formatDatePl } from "@/lib/validation"
 import type { Analysis } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { placeLine } from "./format"
-import { CalendarIcon, CropIcon, DownloadIcon, RosaLogo } from "./icons"
+import { FarmerLogo } from "./farmer-logo"
+import { CalendarIcon, CropIcon, DownloadIcon } from "./icons"
 
 export function LiteToggle({ className }: { className?: string }) {
   const { lite, toggle } = useLiteMode()
@@ -47,7 +48,7 @@ export function ResultHeader({ analysis }: { analysis: Analysis }) {
   return (
     <header className="no-print flex h-[76px] flex-none items-center gap-3.5 border-b border-input bg-[#FBF6EC] px-6 2xl:gap-[18px]">
       <Link href="/" className="flex flex-none items-center gap-2 text-foreground no-underline hover:text-foreground">
-        <RosaLogo />
+        <FarmerLogo size={42} level={analysis.status.level} />
         <span className="font-heading text-2xl font-extrabold tracking-[.02em]">ROSA</span>
       </Link>
       <span aria-hidden="true" className="h-9 w-px flex-none bg-border" />

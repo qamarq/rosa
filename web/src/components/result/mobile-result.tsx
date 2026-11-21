@@ -12,7 +12,8 @@ import { CountUp } from "./count-up"
 import { DataStatusPill } from "./data-status"
 import { DioramaStage, useCamera } from "./diorama-stage"
 import { CAUSE_STYLE, CONFIDENCE, LEVEL_STYLE, SCALE, analysisYear, daysPl, groupedRecommendations, signed, noActionsText, noCausesText } from "./format"
-import { ClockIcon, DownloadIcon, FullscreenIcon, LayersIcon, MenuIcon, RosaLogo } from "./icons"
+import { FarmerLogo } from "./farmer-logo"
+import { ClockIcon, DownloadIcon, FullscreenIcon, LayersIcon, MenuIcon } from "./icons"
 import { DemoBanner } from "./demo-banner"
 import { LiteBanner } from "./lite-banner"
 import { LiteSwitchVisual } from "./result-header"
@@ -27,7 +28,7 @@ function MobileHeader({ analysis }: { analysis: Analysis }) {
   return (
     <header className="no-print flex items-center gap-2.5 border-b border-input bg-[#FBF6EC] px-4 py-3.5">
       <Link href="/" aria-label="ROSA, strona główna" className="flex flex-none">
-        <RosaLogo size={26} />
+        <FarmerLogo size={36} level={analysis.status.level} />
       </Link>
       <div className="flex min-w-0 flex-1 flex-col">
         <span className="truncate text-[15px] font-extrabold tabular-nums">{analysis.parcel.id}</span>
