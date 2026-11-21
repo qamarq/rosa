@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>ROSA — widok mobilny</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400;500;600;700;800&display=swap">
+<style>
+body { margin: 0 }
+a { color: #0E6E73 }
+*:focus-visible { outline: 3px solid #0E6E73; outline-offset: 3px }
+.rosa-btn { transition: transform .32s cubic-bezier(.34,1.56,.64,1) }
+.rosa-btn:active { transform: scale(.96); transition-duration: .08s }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important } }
+</style>
+</helmet>
+<div style="width: 390px; height: 1880px; background: #FFFDF8; font-family: 'Figtree', system-ui, sans-serif; color: #2A2118; display: flex; flex-direction: column">
+
+  <header style="display: flex; align-items: center; gap: 10px; padding: 14px 16px; background: #FBF6EC; border-bottom: 1px solid #E8D9C0">
+    <svg width="26" height="26" viewBox="0 0 34 34" aria-hidden="true"><path d="M17 3 C 12 10, 6 16, 6 22 A 11 11 0 0 0 28 22 C 28 16, 22 10, 17 3 Z" fill="#0E6E73"></path><path d="M11.5 22 A 5.5 5.5 0 0 0 17 27.5" stroke="#9FDCE6" stroke-width="2.5" stroke-linecap="round" fill="none"></path></svg>
+    <div style="flex: 1; display: flex; flex-direction: column">
+      <span style="font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums">302604_5.0017.5196</span>
+      <span style="font-size: 13px; color: #6E5E4C">Mórka · kukurydza · 15.07.2025</span>
+    </div>
+    <button type="button" aria-label="Menu" style="width: 48px; height: 48px; border-radius: 16px; border: 2px solid #E3D3B8; background: #FFFDF8; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2A2118" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+  </header>
+
+  <section aria-label="Scena 3D działki" style="position: relative; height: 300px; background: #F3D9AE; overflow: hidden">
+    <div aria-hidden="true" style="position: absolute; left: 0; right: 0; bottom: 0; height: 90px; background: #E9C996"></div>
+    <div style="position: absolute; left: -10px; right: -10px; top: 24px">
+      <dc-import name="Diorama" mode="susza" labels="{{ false }}" hint-size="410px,292px"></dc-import>
+    </div>
+    <span style="position: absolute; left: 12px; top: 12px; display: flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border-radius: 12px; background: #FFFDF8; font-size: 13px; font-weight: 700">Upał · 45 dni: −38% deszczu</span>
+    <div style="position: absolute; right: 12px; bottom: 12px; display: flex; gap: 6px">
+      <button type="button" aria-label="Widok z góry" style="width: 44px; height: 44px; border-radius: 14px; border: 0; background: #2A2118; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFDF8" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5 9-5z"></path><path d="M3 13l9 5 9-5"></path></svg></button>
+      <button type="button" aria-label="Pełny ekran sceny" style="width: 44px; height: 44px; border-radius: 14px; border: 0; background: #FFFDF8; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2A2118" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"></path></svg></button>
+    </div>
+  </section>
+
+  <main style="flex: 1; display: flex; flex-direction: column; gap: 18px; padding: 20px 16px 24px">
+
+    <section aria-labelledby="m1" style="display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: 24px; background: #FBF1DA">
+      <h2 id="m1" style="margin: 0; font-size: 14px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #5B4D3E">1 · Stan wody teraz</h2>
+      <div style="display: flex; align-items: center; gap: 14px">
+        <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 64px; line-height: 1; font-weight: 800; font-variant-numeric: tabular-nums">3<span style="font-size: 24px; color: #6E5E4C">/5</span></span>
+        <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 26px; line-height: 1.05; font-weight: 800; color: #8A5A00">Susza umiarkowana</span>
+      </div>
+      <div role="img" aria-label="Skala 1–5: obecnie 3" style="display: flex; gap: 5px; align-items: center">
+        <span style="flex: 1; height: 12px; border-radius: 6px; background: #3C8D86"></span><span style="flex: 1; height: 12px; border-radius: 6px; background: #7FAE5A"></span><span style="flex: 1; height: 20px; border-radius: 8px; background: #E2B83E; box-shadow: 0 0 0 2px #FBF1DA, 0 0 0 4px #2A2118"></span><span style="flex: 1; height: 12px; border-radius: 6px; background: #D9822F"></span><span style="flex: 1; height: 12px; border-radius: 6px; background: #A8432A"></span>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 12px; color: #5B4D3E"><span>Mokro</span><span>Susza ekstremalna</span></div>
+      <p style="margin: 0; font-size: 17px; line-height: 1.45">Od 45 dni spadło 38% mniej deszczu niż zwykle, a upał przyspiesza parowanie.</p>
+      <p style="margin: 0; font-size: 12px; color: #6E5E4C">Open-Meteo (ERA5) · pobrano 21.11.2026 · CC BY 4.0</p>
+    </section>
+
+    <section aria-labelledby="m2" style="display: flex; flex-direction: column; gap: 10px; padding: 18px; border-radius: 24px; background: #F8F1E5">
+      <h2 id="m2" style="margin: 0; font-size: 14px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #5B4D3E">2 · Na tle 10 lat</h2>
+      <p style="margin: 0; font-size: 16px; line-height: 1.45">Deficyt w tym okresie był tu w <strong>6 z 10 lat</strong>. Najbardziej narażone: <strong>maj–lipiec</strong>.</p>
+      <div role="img" aria-label="Lata z deficytem: 6 z 10, w tym 2025" style="display: flex; gap: 5px">
+        <sc-for list="{{years}}" as="y" hint-placeholder-count="10">
+          <span style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px">
+            <span style="width: 100%; height: 28px; border-radius: 8px; background: {{y.col}}; box-shadow: {{y.ring}}"></span>
+            <span style="font-size: 12px; color: #5B4D3E; font-weight: {{y.fw}}">{{y.short}}</span>
+          </span>
+        </sc-for>
+      </div>
+      <div style="display: flex; gap: 14px; font-size: 12px; color: #5B4D3E"><span><span aria-hidden="true" style="display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: #D9822F"></span> rok z deficytem</span><span><span aria-hidden="true" style="display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: #CFE4E2"></span> bez deficytu</span></div>
+    </section>
+
+    <section aria-labelledby="m3" style="display: flex; flex-direction: column; gap: 10px">
+      <h2 id="m3" style="margin: 0 4px; font-size: 14px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #5B4D3E">3 · Dlaczego</h2>
+      <div style="display: flex; gap: 12px; align-items: center; padding: 14px; border-radius: 20px; background: #FBEFE6"><span style="flex: 0 0 96px; font-family: 'Bricolage Grotesque', sans-serif; font-size: 24px; font-weight: 800; color: #8A3A22">−62 mm</span><span style="font-size: 15px; line-height: 1.4">Od 45 dni o 38% mniej opadów niż zwykle.</span></div>
+      <div style="display: flex; gap: 12px; align-items: center; padding: 14px; border-radius: 20px; background: #F6EEDC"><span style="flex: 0 0 96px; font-family: 'Bricolage Grotesque', sans-serif; font-size: 24px; font-weight: 800; color: #6B4A10">Wysoka</span><span style="font-size: 15px; line-height: 1.4">Gleba lekka, piaszczysta — słabo trzyma wodę (IUNG).</span></div>
+      <div style="display: flex; gap: 12px; align-items: center; padding: 14px; border-radius: 20px; background: #EAF2EF"><span style="flex: 0 0 96px; font-family: 'Bricolage Grotesque', sans-serif; font-size: 24px; font-weight: 800; color: #0B5A5E">3–4%</span><span style="font-size: 15px; line-height: 1.4">Spadek w stronę rowu na wschodzie — woda szybko spływa.</span></div>
+    </section>
+
+    <section aria-labelledby="m4" style="display: flex; flex-direction: column; gap: 10px">
+      <h2 id="m4" style="margin: 0 4px; font-size: 14px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #5B4D3E">4 · Co zrobić</h2>
+      <span style="margin: 4px 4px 0; font-size: 15px; font-weight: 800; color: #0B5A5E">Zatrzymaj wodę</span>
+      <div style="padding: 14px 16px; border-radius: 20px; border: 2px solid #0E6E73; background: #EAF5F2; display: flex; flex-direction: column; gap: 6px">
+        <span style="font-size: 17px; font-weight: 800">Zastawka na rowie melioracyjnym</span>
+        <span style="font-size: 15px; color: #5B4D3E; line-height: 1.4">Przy wschodniej granicy, żeby woda nie uciekała z pola.</span>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px">
+          <span style="padding: 4px 10px; border-radius: 10px; background: #FFFDF8; font-size: 13px; font-weight: 700">Jak najszybciej</span>
+          <button type="button" class="rosa-btn" style="height: 44px; padding: 0 14px; border-radius: 14px; border: 0; background: #0E6E73; color: #FFFFFF; font: 700 14px 'Figtree', sans-serif">Pokaż na polu ↑</button>
+        </div>
+      </div>
+      <span style="margin: 8px 4px 0; font-size: 15px; font-weight: 800; color: #4A5420">Zadbaj o glebę</span>
+      <div style="padding: 14px 16px; border-radius: 20px; border: 2px solid #EFE3CF; display: flex; justify-content: space-between; align-items: center; gap: 10px"><span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 16px; font-weight: 800">Międzyplon po zbiorze</span><span style="font-size: 14px; color: #5B4D3E">Po zbiorze</span></span><span aria-hidden="true" style="font-size: 20px; color: #5B4D3E">›</span></div>
+      <div style="padding: 14px 16px; border-radius: 20px; border: 2px solid #EFE3CF; display: flex; justify-content: space-between; align-items: center; gap: 10px"><span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 16px; font-weight: 800">Zostaw resztki pożniwne</span><span style="font-size: 14px; color: #5B4D3E">Przy zbiorze</span></span><span aria-hidden="true" style="font-size: 20px; color: #5B4D3E">›</span></div>
+      <div style="padding: 14px 16px; border-radius: 20px; border: 2px solid #EFE3CF; display: flex; justify-content: space-between; align-items: center; gap: 10px"><span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 16px; font-weight: 800">Ogranicz orkę</span><span style="font-size: 14px; color: #5B4D3E">Jesień</span></span><span aria-hidden="true" style="font-size: 20px; color: #5B4D3E">›</span></div>
+      <span style="margin: 8px 4px 0; font-size: 15px; font-weight: 800; color: #245F7A">Nawadnianie <span style="font-weight: 600; color: #5B4D3E">· opcjonalnie</span></span>
+      <div style="padding: 14px 16px; border-radius: 20px; border: 2px solid #EFE3CF; display: flex; justify-content: space-between; align-items: center; gap: 10px"><span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 16px; font-weight: 800">Nawadnianie ok. 25 mm</span><span style="font-size: 14px; color: #5B4D3E">W ciągu 7 dni</span></span><span aria-hidden="true" style="font-size: 20px; color: #5B4D3E">›</span></div>
+    </section>
+
+    <section aria-labelledby="m5" style="display: flex; flex-direction: column; gap: 10px; padding: 18px; border-radius: 24px; background: #F8F1E5">
+      <h2 id="m5" style="margin: 0; font-size: 14px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #5B4D3E">5 · Pewność: średnia</h2>
+      <div role="img" aria-label="Pewność średnia" style="display: flex; gap: 4px"><span style="flex: 1; height: 10px; border-radius: 5px; background: #2A2118"></span><span style="flex: 1; height: 10px; border-radius: 5px; background: #2A2118"></span><span style="flex: 1; height: 10px; border-radius: 5px; background: #E3D3B8"></span></div>
+      <ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 15px; line-height: 1.4">
+        <li>Pogoda w siatce ok. 9 km.</li>
+        <li>Ostatnie bezchmurne zdjęcie satelitarne sprzed 12 dni.</li>
+      </ul>
+    </section>
+
+    <p style="margin: 0 4px; font-size: 12px; line-height: 1.5; color: #6E5E4C">Źródła: Open-Meteo (ERA5), Copernicus Sentinel-2, IUNG-PIB, GUGiK (ULDK, NMT), BDOT10k · pobrano 21.11.2026</p>
+  </main>
+
+  <div style="position: relative; display: flex; gap: 10px; padding: 12px 16px 20px; background: #FBF6EC; border-top: 1px solid #E8D9C0">
+    <a href="Raport-A4.dc.html" class="rosa-btn" style="flex: 1; height: 56px; border-radius: 18px; background: #0E6E73; color: #FFFFFF; font-size: 17px; font-weight: 800; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"></path></svg>Pobierz PDF</a>
+    <button type="button" class="rosa-btn" style="width: 110px; height: 56px; border-radius: 18px; border: 2px solid #E3D3B8; background: #FFFDF8; font: 700 16px 'Figtree', sans-serif; color: #2A2118">Drukuj</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1880}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const deficit = { 2016: true, 2018: true, 2019: true, 2021: true, 2022: true, 2025: true };
+    const years = [];
+    for (let y = 2016; y <= 2025; y++) {
+      const cur = y === 2025;
+      years.push({
+        short: '’' + String(y).slice(2),
+        col: deficit[y] ? (cur ? '#A8432A' : '#D9822F') : '#CFE4E2',
+        ring: cur ? '0 0 0 2px #F8F1E5, 0 0 0 4px #2A2118' : 'none',
+        fw: cur ? 800 : 500
+      });
+    }
+    return { years: years };
+  }
+}
+</script>
+</body>
+</html>

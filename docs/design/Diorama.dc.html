@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Diorama działki — scena</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400;500;600;700;800&display=swap">
+<style>
+body { margin: 0 }
+</style>
+</helmet>
+<div style="width: 100%; position: relative; font-family: 'Figtree', system-ui, sans-serif; color: #2A2118">
+<svg viewBox="0 0 900 640" width="100%" style="display: block; overflow: visible" role="img" aria-label="{{ariaLabel}}">
+<style>
+.rosa-sw0 { animation: rosaSway 2.6s ease-in-out infinite }
+.rosa-sw1 { animation: rosaSway 2.6s ease-in-out -0.9s infinite }
+.rosa-sw2 { animation: rosaSway 2.6s ease-in-out -1.7s infinite }
+@keyframes rosaSway { 0%, 100% { transform: translateX(0) } 50% { transform: translateX(1.6px) } }
+.rosa-gust { stroke-dasharray: 46 300; animation: rosaGust 5.5s linear infinite }
+@keyframes rosaGust { from { stroke-dashoffset: 346 } to { stroke-dashoffset: 0 } }
+.rosa-flow { stroke-dasharray: 6 14; animation: rosaFlow 1.4s linear infinite }
+@keyframes rosaFlow { to { stroke-dashoffset: -20 } }
+.rosa-drop { opacity: 0; animation: rosaDrop 3.6s cubic-bezier(.45,.05,.55,.95) infinite }
+.rosa-d1 { animation-delay: -0.9s } .rosa-d2 { animation-delay: -1.8s } .rosa-d3 { animation-delay: -2.7s }
+@keyframes rosaDrop { 0% { transform: translate(0,0); opacity: 0 } 12% { opacity: 1 } 85% { opacity: 1 } 100% { transform: translate(205px,102px); opacity: 0 } }
+.rosa-pulse { transform-box: fill-box; transform-origin: center; animation: rosaPulse 1.8s ease-out infinite }
+.rosa-pulse2 { animation-delay: -.9s }
+@keyframes rosaPulse { 0% { transform: scale(.6); opacity: .9 } 100% { transform: scale(2); opacity: 0 } }
+.rosa-bob { animation: rosaBob 1.8s ease-in-out infinite }
+@keyframes rosaBob { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-5px) } }
+.rosa-jelly { transform-box: fill-box; transform-origin: 50% 100%; animation: rosaJelly 2.4s cubic-bezier(.45,0,.55,1) infinite }
+@keyframes rosaJelly { 0%, 100% { transform: scale(1,1) } 30% { transform: scale(1.06,.94) } 60% { transform: scale(.97,1.04) } }
+.rosa-hop { transform-box: fill-box; transform-origin: 50% 100%; animation: rosaHop 1.1s cubic-bezier(.34,1.56,.64,1) infinite }
+@keyframes rosaHop { 0%, 100% { transform: translateY(0) scale(1.06,.94) } 45% { transform: translateY(-10px) scale(.95,1.06) } }
+.rosa-wipe { transform-box: fill-box; transform-origin: 0% 100%; animation: rosaWipe 1.6s ease-in-out infinite }
+@keyframes rosaWipe { 0%, 100% { transform: rotate(0deg) } 50% { transform: rotate(-16deg) } }
+.rosa-sweat { animation: rosaSweat 1.6s ease-in infinite }
+@keyframes rosaSweat { 0% { transform: translateY(0); opacity: 0 } 20% { opacity: 1 } 100% { transform: translateY(14px); opacity: 0 } }
+.rosa-shimmer { opacity: 0; animation: rosaShimmer 3s ease-in-out infinite }
+@keyframes rosaShimmer { 0% { transform: translateY(8px); opacity: 0 } 50% { opacity: .75 } 100% { transform: translateY(-16px); opacity: 0 } }
+.rosa-twinkle { transform-box: fill-box; transform-origin: center; animation: rosaTwinkle 2.2s ease-in-out infinite }
+@keyframes rosaTwinkle { 0%, 100% { transform: scale(.3); opacity: 0 } 50% { transform: scale(1); opacity: 1 } }
+.rosa-drift { animation: rosaDrift 14s ease-in-out infinite alternate }
+@keyframes rosaDrift { from { transform: translateX(-14px) } to { transform: translateX(20px) } }
+.rosa-dig { transform-box: fill-box; transform-origin: 0% 100%; animation: rosaDig 1.8s cubic-bezier(.65,0,.35,1) infinite }
+@keyframes rosaDig { 0%, 100% { transform: rotate(0deg) } 50% { transform: rotate(18deg) } }
+.rosa-rise { transform-box: fill-box; transform-origin: center; animation: rosaRise 2.4s cubic-bezier(.22,1,.36,1) .4s both }
+@keyframes rosaRise { from { transform: scale(.2); opacity: 0 } to { transform: scale(1); opacity: .9 } }
+.rosa-drive { animation: rosaDrive 8s linear infinite }
+@keyframes rosaDrive { from { transform: translate(0,0) } to { transform: translate(264px,132px) } }
+.rosa-rumble { animation: rosaRumble .35s ease-in-out infinite alternate }
+@keyframes rosaRumble { from { transform: translateY(0) } to { transform: translateY(-1.2px) } }
+.rosa-puff { transform-box: fill-box; transform-origin: center; opacity: 0; animation: rosaPuff 2.4s ease-out infinite }
+.rosa-puff2 { animation-delay: -1.2s }
+@keyframes rosaPuff { 0% { transform: translate(0,0) scale(.4); opacity: .85 } 100% { transform: translate(10px,-30px) scale(1.6); opacity: 0 } }
+.rosa-seed { animation: rosaSeed .9s ease-in infinite }
+@keyframes rosaSeed { from { transform: translateY(0); opacity: 1 } to { transform: translateY(10px); opacity: 0 } }
+.rosa-wag { transform-box: fill-box; transform-origin: 100% 100%; animation: rosaWag .4s ease-in-out infinite alternate }
+@keyframes rosaWag { from { transform: rotate(-14deg) } to { transform: rotate(18deg) } }
+.rosa-breathe { transform-box: fill-box; transform-origin: 50% 100%; animation: rosaJelly 3s cubic-bezier(.45,0,.55,1) -1s infinite }
+.rosa-spin { transform-box: fill-box; transform-origin: center; animation: rosaSpin 3.2s linear infinite }
+@keyframes rosaSpin { to { transform: rotate(360deg) } }
+.rosa-wet { animation: rosaWet 4s ease-in-out infinite alternate }
+.rosa-glow { animation: rosaWet 1.6s ease-in-out infinite alternate }
+@keyframes rosaWet { from { opacity: .45 } to { opacity: 1 } }
+@media (prefers-reduced-motion: reduce) { svg * { animation: none !important } .rosa-drop { opacity: 1 } .rosa-puff { opacity: .5 } }
+</style>
+<defs>
+  <linearGradient id="rosaParcel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="{{c.p1}}"></stop><stop offset="1" stop-color="{{c.p2}}"></stop></linearGradient>
+  <linearGradient id="rosaTop" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="{{c.g1}}"></stop><stop offset="1" stop-color="{{c.g2}}"></stop></linearGradient>
+  <radialGradient id="rosaWarm" cx="0.12" cy="0.08" r="0.95"><stop offset="0" stop-color="#FFD596" stop-opacity="0.42"></stop><stop offset="0.6" stop-color="#FFD596" stop-opacity="0"></stop></radialGradient>
+  <radialGradient id="rosaSpot" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#E9FBFF" stop-opacity="0.95"></stop><stop offset="1" stop-color="#E9FBFF" stop-opacity="0"></stop></radialGradient>
+  <linearGradient id="rosaGRed" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E8804F"></stop><stop offset="1" stop-color="#A9432A"></stop></linearGradient>
+  <linearGradient id="rosaGYellow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F8CF66"></stop><stop offset="1" stop-color="#CF8B27"></stop></linearGradient>
+  <linearGradient id="rosaGOlive" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A3B05E"></stop><stop offset="1" stop-color="#5F6B2E"></stop></linearGradient>
+  <linearGradient id="rosaGHay" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F3D67E"></stop><stop offset="1" stop-color="#C4953A"></stop></linearGradient>
+  <linearGradient id="rosaGlass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E9FBFE"></stop><stop offset="1" stop-color="#84C0CD"></stop></linearGradient>
+  <linearGradient id="rosaSilo" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#F4EFE5"></stop><stop offset="1" stop-color="#A39B8E"></stop></linearGradient>
+  <linearGradient id="rosaBarn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D6683E"></stop><stop offset="1" stop-color="#A9432A"></stop></linearGradient>
+  <radialGradient id="rosaTyre" cx="0.4" cy="0.35" r="0.7"><stop offset="0" stop-color="#5E4E3E"></stop><stop offset="1" stop-color="#1F1812"></stop></radialGradient>
+  <radialGradient id="rosaSkin" cx="0.38" cy="0.32" r="0.75"><stop offset="0" stop-color="#FFE4CC"></stop><stop offset="1" stop-color="#E7A67C"></stop></radialGradient>
+  <linearGradient id="rosaOver" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4AAAB2"></stop><stop offset="1" stop-color="#1E5A60"></stop></linearGradient>
+  <linearGradient id="rosaShirt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F09163"></stop><stop offset="1" stop-color="#C2562F"></stop></linearGradient>
+  <radialGradient id="rosaHat" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#FADC86"></stop><stop offset="1" stop-color="#CC922F"></stop></radialGradient>
+  <radialGradient id="rosaFur" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="#E7AD6C"></stop><stop offset="1" stop-color="#B57437"></stop></radialGradient>
+  <radialGradient id="rosaTree" cx="0.35" cy="0.3" r="0.8"><stop offset="0" stop-color="{{c.treeL}}"></stop><stop offset="1" stop-color="{{c.treeD}}"></stop></radialGradient>
+  <filter id="rosaBlur" x="-20%" y="-60%" width="140%" height="220%"><feGaussianBlur stdDeviation="14"></feGaussianBlur></filter>
+  <filter id="rosaSoft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4"></feGaussianBlur></filter>
+  <clipPath id="rosaClip"><polygon points="{{parcelPts}}"></polygon></clipPath>
+</defs>
+
+<ellipse cx="450" cy="566" rx="400" ry="52" fill="#6B4523" opacity="0.24" filter="url(#rosaBlur)"></ellipse>
+
+<g display="{{d.sunGold}}"><circle cx="118" cy="92" r="72" fill="#FFC978" opacity=".28"></circle><circle cx="118" cy="92" r="30" fill="#F8C56C"></circle><circle cx="110" cy="84" r="9" fill="#FFE7B8" opacity=".8"></circle></g>
+<g display="{{d.sunHot}}"><circle cx="806" cy="70" r="66" fill="#F6B444" opacity=".22"></circle><circle cx="806" cy="70" r="34" fill="#F4A93A"></circle><circle cx="796" cy="60" r="10" fill="#FFE1A6" opacity=".7"></circle></g>
+<g display="{{d.clouds}}" class="rosa-drift" fill="#FFF8EC">
+  <ellipse cx="640" cy="106" rx="56" ry="8" fill="#EAD8BD"></ellipse>
+  <ellipse cx="640" cy="90" rx="46" ry="20"></ellipse><ellipse cx="608" cy="98" rx="30" ry="15"></ellipse><ellipse cx="676" cy="99" rx="30" ry="13"></ellipse>
+  <ellipse cx="320" cy="78" rx="34" ry="5" fill="#EAD8BD"></ellipse>
+  <ellipse cx="320" cy="66" rx="28" ry="13"></ellipse><ellipse cx="298" cy="72" rx="18" ry="9"></ellipse>
+</g>
+
+<polygon points="80,305 450,490 450,566 80,381" fill="#B9834F"></polygon>
+<polygon points="450,490 820,305 820,381 450,566" fill="#946139"></polygon>
+<polygon points="80,305 450,490 450,505 80,320" fill="#6E4726" opacity=".55"></polygon>
+<polygon points="450,490 820,305 820,320 450,505" fill="#5E3B20" opacity=".5"></polygon>
+<polygon points="80,336 450,521 450,532 80,347" fill="#E4C38F" opacity=".45"></polygon>
+<polygon points="450,521 820,336 820,347 450,532" fill="#D8B37E" opacity=".35"></polygon>
+<g fill="#E8CFA6" opacity=".8"><circle cx="150" cy="362" r="3"></circle><circle cx="262" cy="426" r="2.5"></circle><circle cx="386" cy="478" r="3"></circle><circle cx="604" cy="452" r="2.6"></circle><circle cx="732" cy="386" r="3"></circle></g>
+<g stroke="#7A5230" stroke-width="2" fill="none" stroke-linecap="round" opacity=".55"><path d="M200 388 q 4 14 -2 24 M560 470 q -3 12 3 22 M700 408 q 4 10 0 20"></path></g>
+<polygon points="450,120 820,305 450,490 80,305" fill="url(#rosaTop)" stroke="{{c.g1}}" stroke-width="8" stroke-linejoin="round"></polygon>
+<polyline points="80,305 450,490 820,305" fill="none" stroke="#FFF3DC" stroke-opacity=".5" stroke-width="2"></polyline>
+
+<polygon points="443,131 494,157 324,242 272,216" fill="{{c.n1}}"></polygon>
+<polygon points="258,224 309,250 154,327 102,301" fill="{{c.n2}}"></polygon>
+<polygon points="768,294 798,309 457,479 428,464" fill="{{c.n3}}"></polygon>
+<polygon points="517,161 753,279 716,298 480,179" fill="{{c.n4}}"></polygon>
+<polygon points="213,312 443,427 395,451 165,337" fill="{{c.n5}}"></polygon>
+<path d="M468 144 L298 229 M481 151 L311 236 M271 231 L115 308 M284 237 L128 314 M778 299 L438 469 M788 304 L448 474 M505 168 L740 286 M492 174 L728 292 M200 318 L430 433 M186 325 L416 440" stroke="{{c.row}}" stroke-opacity=".35" stroke-width="2" stroke-linecap="round" fill="none"></path>
+
+<polygon points="{{parcelPts}}" fill="url(#rosaParcel)" stroke="{{c.edge}}" stroke-width="2.5" stroke-linejoin="round"></polygon>
+<g clip-path="url(#rosaClip)" fill="none" stroke="#FFFFFF" stroke-opacity=".3" stroke-width="1.4" stroke-dasharray="3 5">
+  <path d="M505 203 Q378 262 246 333"></path><path d="M580 222 Q430 292 283 370"></path><path d="M635 250 Q488 322 339 398"></path><path d="M690 277 Q545 350 394 425"></path>
+</g>
+<g display="{{d.cracks}}" clip-path="url(#rosaClip)" fill="none" stroke="#6E4726" stroke-opacity=".55" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M320 292 l18 6 l10 -8 l16 10 M356 326 l14 -6 l12 10 l20 -4 M420 246 l10 12 l18 -2 l8 10 M478 300 l16 4 l6 14 l18 2 M540 276 l12 10 l20 -6 M446 348 l18 -4 l10 10 M300 276 l12 8 l-4 12 M580 300 l-10 14 l14 8 M400 300 l8 12 l-10 10"></path>
+</g>
+<g display="{{d.irr}}" clip-path="url(#rosaClip)"><ellipse class="rosa-wet" cx="468" cy="296" rx="140" ry="70" fill="#3FA3B0" opacity=".32"></ellipse></g>
+<polygon display="{{d.hl}}" class="rosa-glow" points="{{parcelPts}}" fill="none" stroke="#FFF6D0" stroke-width="5" stroke-linejoin="round" filter="url(#rosaSoft)"></polygon>
+
+<path d="{{ditch}}" fill="none" stroke="#6B4A2E" stroke-width="16" stroke-linecap="round"></path>
+<path d="{{ditch}}" fill="none" stroke="{{c.water}}" stroke-width="{{c.ww}}" stroke-linecap="round"></path>
+<path class="rosa-flow" d="{{ditch}}" fill="none" stroke="#D8F3F7" stroke-width="2" stroke-linecap="round"></path>
+
+<g>
+  <ellipse cx="424" cy="174" rx="18" ry="5" fill="#5A3A1E" opacity=".25"></ellipse>
+  <rect x="408" y="112" width="30" height="62" rx="4" fill="url(#rosaSilo)"></rect>
+  <path d="M408 113 A 15 13 0 0 1 438 113 Z" fill="#C9C1B3"></path>
+  <ellipse cx="418" cy="106" rx="4" ry="2.5" fill="#FFFFFF" opacity=".6"></ellipse>
+  <path d="M408 132 h30 M408 152 h30" stroke="#8F8779" stroke-width="1.3"></path>
+  <rect x="413" y="116" width="4" height="54" rx="2" fill="#FFFFFF" opacity=".35"></rect>
+</g>
+<g>
+  <polygon points="334,202 368,219 414,196 380,179" fill="#5A3A1E" opacity=".22"></polygon>
+  <polygon points="332,164 349,148 389,128 372,144" fill="#7A5444"></polygon>
+  <polygon points="366,215 406,195 406,161 366,181" fill="#94402A"></polygon>
+  <polygon points="332,198 366,215 366,181 349,148 332,164" fill="url(#rosaBarn)"></polygon>
+  <polygon points="366,181 349,148 389,128 406,161" fill="#5E4034"></polygon>
+  <path d="M366 181 L349 148 L389 128 L406 161 Z M349 148 L332 164" fill="none" stroke="#3E2A20" stroke-width="2" stroke-linejoin="round"></path>
+  <path d="M352 154 L392 134" stroke="#FFFFFF" stroke-opacity=".25" stroke-width="2" stroke-linecap="round"></path>
+  <polygon points="342,203 357,210 357,188 342,181" fill="#7A2E18" stroke="#F3E6CF" stroke-width="2" stroke-linejoin="round"></polygon>
+  <path d="M342 203 L357 188 M342 181 L357 210" stroke="#F3E6CF" stroke-width="1.5"></path>
+  <circle cx="349" cy="166" r="3.5" fill="#F3E6CF"></circle>
+  <polygon points="380,196 392,190 392,181 380,187" fill="url(#rosaGlass)" stroke="#F3E6CF" stroke-width="1.5"></polygon>
+</g>
+
+<path d="{{fencePosts}}" stroke="#8A5A34" stroke-width="4" stroke-linecap="round" fill="none"></path>
+<path d="M100 301 L298 400 M100 306 L298 405" stroke="#B07C4E" stroke-width="2.5" stroke-linecap="round" fill="none"></path>
+
+<g display="{{d.gate}}">
+  <circle class="rosa-glow" cx="590" cy="362" r="80" fill="url(#rosaSpot)" opacity=".6"></circle>
+  <g transform="rotate(-26.6 633 346)"><ellipse class="rosa-rise" cx="633" cy="346" rx="54" ry="16" fill="#4FB3BF"></ellipse></g>
+  <g transform="rotate(-26.6 626 342)"><ellipse cx="626" cy="342" rx="18" ry="4" fill="#E9FBFF" opacity=".65"></ellipse></g>
+  <g transform="translate(583 373)">
+    <rect x="-17" y="-24" width="5" height="27" rx="2" fill="#6B4226"></rect><rect x="12" y="-24" width="5" height="27" rx="2" fill="#6B4226"></rect>
+    <rect x="-14" y="-18" width="28" height="18" rx="3" fill="#8A5A34"></rect>
+    <path d="M-14 -12 h28 M-14 -6 h28" stroke="#6B4226" stroke-width="1.5"></path>
+    <rect x="-12" y="-17" width="24" height="3" rx="1.5" fill="#F3D9A8" opacity=".7"></rect>
+  </g>
+</g>
+
+<g display="{{d.corn}}" fill="none" stroke-linecap="round">
+  <g class="rosa-sw0"><path d="{{corn.s0}}" stroke="{{c.stem}}" stroke-width="1.8"></path><path d="{{corn.l0}}" stroke="{{c.leaf}}" stroke-width="2.2"></path><path d="{{corn.t0}}" stroke="{{c.tassel}}" stroke-width="1.4"></path></g>
+  <g class="rosa-sw1"><path d="{{corn.s1}}" stroke="{{c.stem}}" stroke-width="1.8"></path><path d="{{corn.l1}}" stroke="{{c.leaf}}" stroke-width="2.2"></path><path d="{{corn.t1}}" stroke="{{c.tassel}}" stroke-width="1.4"></path></g>
+  <g class="rosa-sw2"><path d="{{corn.s2}}" stroke="{{c.stem}}" stroke-width="1.8"></path><path d="{{corn.l2}}" stroke="{{c.leaf}}" stroke-width="2.2"></path><path d="{{corn.t2}}" stroke="{{c.tassel}}" stroke-width="1.4"></path></g>
+</g>
+<g display="{{d.cover}}" fill="none" stroke-linecap="round">
+  <path d="{{cover.stub}}" stroke="#7E6238" stroke-width="1.6"></path>
+  <path class="rosa-sw1" d="{{cover.sprout}}" stroke="#7FB04A" stroke-width="2.2"></path>
+</g>
+
+<g display="{{d.particles}}" fill="#7CC6D6" stroke="#FFFFFF" stroke-width="1">
+  <g transform="translate(443 227)"><circle class="rosa-drop" r="3.4"></circle><circle class="rosa-drop rosa-d2" r="2.6"></circle></g>
+  <g transform="translate(387 255)"><circle class="rosa-drop rosa-d1" r="3.4"></circle><circle class="rosa-drop rosa-d3" r="2.6"></circle></g>
+  <g transform="translate(332 283)"><circle class="rosa-drop rosa-d3" r="3"></circle><circle class="rosa-drop rosa-d1" r="2.4"></circle></g>
+  <g transform="translate(287 305)"><circle class="rosa-drop" r="3"></circle><circle class="rosa-drop rosa-d2" r="2.4"></circle></g>
+</g>
+
+<g>
+  <g transform="translate(240 350)"><ellipse cx="0" cy="0" rx="14" ry="4" fill="#5A3A1E" opacity=".25"></ellipse><rect x="-13" y="-19" width="18" height="19" rx="7" fill="url(#rosaGHay)"></rect><circle cx="5" cy="-9.5" r="9.5" fill="#EFCB6C"></circle><path d="M5 -9.5 m-5 0 a5 5 0 1 1 5 5 a3 3 0 1 1 -3 -3" stroke="#C49536" stroke-width="1.4" fill="none"></path><rect x="-10" y="-17" width="10" height="3" rx="1.5" fill="#FFFFFF" opacity=".35"></rect></g>
+  <g transform="translate(266 364)"><ellipse cx="0" cy="0" rx="14" ry="4" fill="#5A3A1E" opacity=".25"></ellipse><rect x="-13" y="-19" width="18" height="19" rx="7" fill="url(#rosaGHay)"></rect><circle cx="5" cy="-9.5" r="9.5" fill="#EFCB6C"></circle><path d="M5 -9.5 m-5 0 a5 5 0 1 1 5 5 a3 3 0 1 1 -3 -3" stroke="#C49536" stroke-width="1.4" fill="none"></path></g>
+  <g transform="translate(250 340)"><ellipse cx="0" cy="0" rx="10" ry="3" fill="#5A3A1E" opacity=".18"></ellipse></g>
+</g>
+
+<g>
+  <g transform="translate(262 232)"><ellipse rx="12" ry="3.5" fill="#5A3A1E" opacity=".25"></ellipse><rect x="-2.5" y="-15" width="5" height="15" rx="2.5" fill="#7A5230"></rect><circle cx="-7" cy="-20" r="8" fill="url(#rosaTree)"></circle><circle cx="7" cy="-21" r="8" fill="url(#rosaTree)"></circle><circle cy="-27" r="11" fill="url(#rosaTree)"></circle><circle cx="-4" cy="-31" r="3.5" fill="#FFFFFF" opacity=".28"></circle></g>
+  <g transform="translate(298 212)"><ellipse rx="12" ry="3.5" fill="#5A3A1E" opacity=".25"></ellipse><rect x="-2.5" y="-16" width="5" height="16" rx="2.5" fill="#7A5230"></rect><circle cx="-8" cy="-22" r="9" fill="url(#rosaTree)"></circle><circle cx="8" cy="-23" r="9" fill="url(#rosaTree)"></circle><circle cy="-30" r="13" fill="url(#rosaTree)"></circle><circle cx="-5" cy="-35" r="4" fill="#FFFFFF" opacity=".28"></circle></g>
+  <g transform="translate(176 300)"><ellipse rx="12" ry="3.5" fill="#5A3A1E" opacity=".25"></ellipse><rect x="-2.5" y="-15" width="5" height="15" rx="2.5" fill="#7A5230"></rect><circle cx="-7" cy="-21" r="8" fill="url(#rosaTree)"></circle><circle cx="7" cy="-22" r="8" fill="url(#rosaTree)"></circle><circle cy="-28" r="12" fill="url(#rosaTree)"></circle><circle cx="-4" cy="-32" r="3.5" fill="#FFFFFF" opacity=".28"></circle></g>
+  <g transform="translate(214 280)"><ellipse rx="9" ry="3" fill="#5A3A1E" opacity=".25"></ellipse><rect x="-2" y="-12" width="4" height="12" rx="2" fill="#7A5230"></rect><circle cy="-20" r="9" fill="url(#rosaTree)"></circle><circle cx="-3" cy="-23" r="3" fill="#FFFFFF" opacity=".28"></circle></g>
+  <g transform="translate(706 350)"><ellipse rx="12" ry="3.5" fill="#5A3A1E" opacity=".25"></ellipse><rect x="-2.5" y="-16" width="5" height="16" rx="2.5" fill="#7A5230"></rect><circle cx="-8" cy="-22" r="8" fill="url(#rosaTree)"></circle><circle cx="8" cy="-23" r="8" fill="url(#rosaTree)"></circle><circle cy="-29" r="12" fill="url(#rosaTree)"></circle><circle cx="-4" cy="-33" r="3.5" fill="#FFFFFF" opacity=".28"></circle></g>
+  <g transform="translate(756 322)"><ellipse rx="12" ry="3.5" fill="#5A3A1E" opacity=".25"></ellipse><rect x="-2.5" y="-14" width="5" height="14" rx="2.5" fill="#7A5230"></rect><circle cx="-7" cy="-20" r="7" fill="url(#rosaTree)"></circle><circle cx="7" cy="-21" r="7" fill="url(#rosaTree)"></circle><circle cy="-26" r="11" fill="url(#rosaTree)"></circle><circle cx="-4" cy="-30" r="3.5" fill="#FFFFFF" opacity=".28"></circle></g>
+</g>
+
+<g display="{{d.marker}}">
+  <ellipse class="rosa-pulse" cx="583" cy="373" rx="24" ry="12" fill="none" stroke="#0E6E73" stroke-width="3"></ellipse>
+  <ellipse class="rosa-pulse rosa-pulse2" cx="583" cy="373" rx="24" ry="12" fill="none" stroke="#0E6E73" stroke-width="3"></ellipse>
+  <g transform="translate(583 350)"><g class="rosa-bob">
+    <path d="M0 0 C -4 -10, -14 -16, -14 -28 A 14 14 0 1 1 14 -28 C 14 -16, 4 -10, 0 0 Z" fill="#0E6E73" stroke="#FFFFFF" stroke-width="2.5"></path>
+    <path d="M0 -38 C -4 -32, -6 -29, -6 -26 A 6 6 0 0 0 6 -26 C 6 -29, 4 -32, 0 -38 Z" fill="#FFFFFF"></path>
+  </g></g>
+</g>
+
+<g display="{{d.gate}}" transform="translate(652 374) scale(-1 1)">
+  <ellipse rx="34" ry="7" fill="#5A3A1E" opacity=".28"></ellipse>
+  <rect x="-30" y="-12" width="60" height="14" rx="7" fill="#3B2F25"></rect>
+  <circle cx="-20" cy="-5" r="4" fill="#8C7A66"></circle><circle cx="0" cy="-5" r="4" fill="#8C7A66"></circle><circle cx="20" cy="-5" r="4" fill="#8C7A66"></circle>
+  <rect x="-24" y="-33" width="40" height="23" rx="8" fill="url(#rosaGYellow)"></rect>
+  <rect x="-19" y="-30" width="22" height="5" rx="2.5" fill="#FFFFFF" opacity=".4"></rect>
+  <rect x="-20" y="-54" width="22" height="22" rx="7" fill="url(#rosaGYellow)"></rect>
+  <rect x="-16" y="-50" width="14" height="12" rx="4" fill="url(#rosaGlass)"></rect>
+  <path d="M-13 -40 l6 -8" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity=".7"></path>
+  <g class="rosa-dig">
+    <path d="M12 -26 L 34 -50 L 54 -28" stroke="#C98425" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"></path>
+    <path d="M14 -28 L 34 -50" stroke="#F8D57A" stroke-width="2" stroke-linecap="round"></path>
+    <path d="M50 -30 l 11 3 l -3 10 l -11 -3 z" fill="#4A3A2C"></path>
+  </g>
+</g>
+
+<g transform="translate({{tr.x}} {{tr.y}}) scale(.72)"><g class="{{tr.cls}}"><g class="rosa-rumble">
+  <ellipse cx="-8" rx="52" ry="9" fill="#5A3A1E" opacity=".28"></ellipse>
+  <g display="{{tr.seed}}">
+    <path d="M-50 -18 h-10" stroke="#3B2F25" stroke-width="3"></path>
+    <rect x="-100" y="-36" width="44" height="24" rx="7" fill="url(#rosaGOlive)"></rect>
+    <path d="M-96 -36 l6 -11 h32 l6 11 z" fill="#B6C26E"></path>
+    <rect x="-94" y="-32" width="24" height="4" rx="2" fill="#FFFFFF" opacity=".35"></rect>
+    <circle cx="-88" cy="-9" r="8" fill="url(#rosaTyre)"></circle><circle cx="-66" cy="-9" r="8" fill="url(#rosaTyre)"></circle>
+    <g fill="#F1D27A"><circle class="rosa-seed" cx="-92" cy="-12" r="2"></circle><circle class="rosa-seed rosa-d1" cx="-78" cy="-12" r="2"></circle><circle class="rosa-seed rosa-d2" cx="-64" cy="-12" r="2"></circle></g>
+  </g>
+  <rect x="-32" y="-28" width="68" height="9" rx="4.5" fill="#6B2E1A"></rect>
+  <path d="M-8 -50 h36 q10 0 10 10 v13 q0 8 -8 8 h-38 z" fill="url(#rosaGRed)"></path>
+  <path d="M-2 -46 h28" stroke="#FFFFFF" stroke-opacity=".4" stroke-width="3" stroke-linecap="round"></path>
+  <path d="M10 -42 C 8 -38, 7 -36, 7 -34 A 3 3 0 0 0 13 -34 C 13 -36, 12 -38, 10 -42 Z" fill="#FFFFFF" opacity=".85"></path>
+  <rect x="35" y="-46" width="5" height="17" rx="2.5" fill="#6B2E1A"></rect>
+  <circle cx="38" cy="-47" r="3.6" fill="#FFF6C8" stroke="#6B2E1A" stroke-width="1.2"></circle>
+  <rect x="18" y="-70" width="5" height="22" rx="2.5" fill="#3B2F25"></rect>
+  <rect x="16" y="-72" width="9" height="4" rx="2" fill="#3B2F25"></rect>
+  <circle class="rosa-puff" cx="21" cy="-78" r="5" fill="#F4EADB"></circle>
+  <circle class="rosa-puff rosa-puff2" cx="21" cy="-78" r="5" fill="#F4EADB"></circle>
+  <path d="M-42 -50 v-30 q0 -9 9 -9 h24 q9 0 9 9 v30 z" fill="url(#rosaGRed)"></path>
+  <rect x="-37" y="-83" width="27" height="24" rx="6" fill="url(#rosaGlass)"></rect>
+  <g display="{{tr.driver}}"><circle cx="-24" cy="-67" r="6.5" fill="url(#rosaSkin)"></circle><ellipse cx="-24" cy="-73" rx="9" ry="2.6" fill="url(#rosaHat)"></ellipse><rect x="-29" y="-79" width="10" height="6" rx="3" fill="url(#rosaHat)"></rect></g>
+  <path d="M-33 -64 l10 -15 M-26 -62 l6 -9" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" opacity=".65"></path>
+  <rect x="-46" y="-96" width="46" height="9" rx="4.5" fill="#FFF1D6"></rect>
+  <rect x="-42" y="-94" width="24" height="3" rx="1.5" fill="#FFFFFF" opacity=".8"></rect>
+  <circle cx="28" cy="-13" r="13" fill="url(#rosaTyre)"></circle>
+  <circle cx="28" cy="-13" r="10" fill="none" stroke="#14100C" stroke-width="2.5" stroke-dasharray="3 3"></circle>
+  <circle cx="28" cy="-13" r="6" fill="url(#rosaGYellow)"></circle><circle cx="28" cy="-13" r="2.4" fill="#8A5A1A"></circle>
+  <circle cx="-20" cy="-22" r="22" fill="url(#rosaTyre)"></circle>
+  <circle cx="-20" cy="-22" r="18" fill="none" stroke="#14100C" stroke-width="3.5" stroke-dasharray="4 4"></circle>
+  <circle cx="-20" cy="-22" r="11" fill="url(#rosaGYellow)"></circle><circle cx="-20" cy="-22" r="4" fill="#8A5A1A"></circle>
+  <circle cx="-24" cy="-26" r="3" fill="#FFF1C8" opacity=".75"></circle>
+  <path d="M-46 -24 a 26 26 0 0 1 52 0" fill="none" stroke="#C8553A" stroke-width="7" stroke-linecap="round"></path>
+  <path d="M-40 -34 a 22 22 0 0 1 14 -12" fill="none" stroke="#FFFFFF" stroke-opacity=".35" stroke-width="2.5" stroke-linecap="round"></path>
+</g></g></g>
+
+<g display="{{d.irr}}">
+  <rect x="466" y="268" width="4" height="30" rx="2" fill="#5B4D3E"></rect>
+  <g transform="translate(468 266) scale(1 0.55)"><g class="rosa-spin" fill="none" stroke="#DDF5F9" stroke-width="3" stroke-dasharray="2 7" stroke-linecap="round">
+    <path d="M0 0 Q 50 -70 110 -8"></path><path d="M0 0 Q 50 -70 110 -8" transform="rotate(90)"></path><path d="M0 0 Q 50 -70 110 -8" transform="rotate(180)"></path><path d="M0 0 Q 50 -70 110 -8" transform="rotate(270)"></path>
+  </g></g>
+  <circle cx="468" cy="266" r="6" fill="#0E6E73" stroke="#FFFFFF" stroke-width="2"></circle>
+</g>
+
+<g transform="translate({{dog.x}} {{dog.y}}) scale(1.05)">
+  <ellipse rx="13" ry="3.5" fill="#5A3A1E" opacity=".25"></ellipse>
+  <g class="rosa-breathe">
+    <rect x="-7" y="-7" width="4" height="7" rx="2" fill="#B57437"></rect><rect x="4" y="-7" width="4" height="7" rx="2" fill="#B57437"></rect>
+    <path class="rosa-wag" d="M-9 -11 q -7 -3 -8 -11" stroke="#C98A4B" stroke-width="3.5" stroke-linecap="round" fill="none"></path>
+    <ellipse cx="0" cy="-11" rx="11" ry="7" fill="url(#rosaFur)"></ellipse>
+    <ellipse cx="-2" cy="-9" rx="6" ry="3.5" fill="#F3D3AE"></ellipse>
+    <circle cx="10" cy="-19" r="7.5" fill="url(#rosaFur)"></circle>
+    <ellipse cx="6" cy="-22" rx="3" ry="5.5" transform="rotate(20 6 -22)" fill="#8A5A34"></ellipse>
+    <ellipse cx="15.5" cy="-16.5" rx="4.5" ry="3.2" fill="#F3D3AE"></ellipse>
+    <circle cx="19.5" cy="-17.5" r="1.8" fill="#2A2118"></circle>
+    <circle cx="11.5" cy="-21" r="1.4" fill="#2A2118"></circle><circle cx="11.9" cy="-21.4" r=".5" fill="#FFFFFF"></circle>
+    <path d="M14 -13.5 q 2 2.5 4 0" stroke="#E06A6A" stroke-width="2" stroke-linecap="round" fill="none"></path>
+    <path d="M3 -14 h7" stroke="#0E6E73" stroke-width="2.5" stroke-linecap="round"></path>
+  </g>
+</g>
+
+<g transform="translate({{f.x}} {{f.y}}) scale(.86)">
+  <ellipse rx="18" ry="5" fill="#5A3A1E" opacity=".28"></ellipse>
+  <g class="{{f.cls}}">
+    <ellipse cx="-6.5" cy="-3" rx="6.5" ry="4" fill="#4A3A2C"></ellipse><ellipse cx="6.5" cy="-3" rx="6.5" ry="4" fill="#4A3A2C"></ellipse>
+    <ellipse cx="-8" cy="-4.5" rx="2.5" ry="1.2" fill="#FFFFFF" opacity=".3"></ellipse>
+    <rect x="-10" y="-17" width="8" height="14" rx="4" fill="#1E5A60"></rect><rect x="2" y="-17" width="8" height="14" rx="4" fill="#1E5A60"></rect>
+    <path d="M-15 -13 C -17 -35, -10 -45, 0 -45 C 10 -45, 17 -35, 15 -13 C 11 -7, -11 -7, -15 -13 Z" fill="url(#rosaShirt)"></path>
+    <path d="M-6 -45 l6 4 l6 -4" stroke="#A9432A" stroke-width="1.2" fill="none" opacity=".6"></path>
+    <path d="M-13.5 -15 C -14.5 -25, -12 -31, -8 -33 L 8 -33 C 12 -31, 14.5 -25, 13.5 -15 C 9 -9.5, -9 -9.5, -13.5 -15 Z" fill="url(#rosaOver)"></path>
+    <path d="M-7 -33 L -9 -44 M7 -33 L 9 -44" stroke="#2B7880" stroke-width="3" stroke-linecap="round"></path>
+    <circle cx="-7" cy="-32" r="1.7" fill="#F3D9A8"></circle><circle cx="7" cy="-32" r="1.7" fill="#F3D9A8"></circle>
+    <rect x="-4.5" y="-29" width="9" height="6.5" rx="2" fill="#2B7880"></rect>
+    <ellipse cx="-9" cy="-26" rx="2.5" ry="6" fill="#FFFFFF" opacity=".22"></ellipse>
+    <g display="{{f.down}}">
+      <path d="M-13 -37 Q -21 -27 -19 -17" fill="none" stroke="#D9693F" stroke-width="7" stroke-linecap="round"></path><circle cx="-19" cy="-15.5" r="3.8" fill="url(#rosaSkin)"></circle>
+      <path d="M13 -37 Q 21 -27 19 -17" fill="none" stroke="#D9693F" stroke-width="7" stroke-linecap="round"></path><circle cx="19" cy="-15.5" r="3.8" fill="url(#rosaSkin)"></circle>
+    </g>
+    <g display="{{f.wipe}}">
+      <path d="M-13 -37 Q -21 -27 -19 -17" fill="none" stroke="#D9693F" stroke-width="7" stroke-linecap="round"></path><circle cx="-19" cy="-15.5" r="3.8" fill="url(#rosaSkin)"></circle>
+    </g>
+    <g display="{{f.cheer}}">
+      <path d="M-13 -37 Q -25 -47 -22 -61" fill="none" stroke="#D9693F" stroke-width="7" stroke-linecap="round"></path><circle cx="-22" cy="-63" r="3.8" fill="url(#rosaSkin)"></circle>
+      <path d="M13 -37 Q 25 -47 22 -61" fill="none" stroke="#D9693F" stroke-width="7" stroke-linecap="round"></path><circle cx="22" cy="-63" r="3.8" fill="url(#rosaSkin)"></circle>
+    </g>
+    <circle cx="-13.5" cy="-57" r="3.6" fill="#EBAE86"></circle><circle cx="13.5" cy="-57" r="3.6" fill="#EBAE86"></circle>
+    <circle cy="-58" r="14" fill="url(#rosaSkin)"></circle>
+    <ellipse cx="-6" cy="-64" rx="4" ry="2.5" fill="#FFFFFF" opacity=".35"></ellipse>
+    <ellipse cx="-7.5" cy="-52.5" rx="3.2" ry="2.1" fill="#F08A72" opacity=".55"></ellipse><ellipse cx="7.5" cy="-52.5" rx="3.2" ry="2.1" fill="#F08A72" opacity=".55"></ellipse>
+    <ellipse cx="-5" cy="{{f.eyeY}}" rx="1.9" ry="2.5" fill="#2A2118"></ellipse><ellipse cx="5" cy="{{f.eyeY}}" rx="1.9" ry="2.5" fill="#2A2118"></ellipse>
+    <circle cx="-4.4" cy="{{f.glintY}}" r=".8" fill="#FFFFFF"></circle><circle cx="5.6" cy="{{f.glintY}}" r=".8" fill="#FFFFFF"></circle>
+    <path d="{{f.brows}}" stroke="#6E4726" stroke-width="1.6" stroke-linecap="round" fill="none"></path>
+    <ellipse cx="0" cy="-54.5" rx="2.8" ry="2.3" fill="#E38F68"></ellipse>
+    <path d="M-7 -50.5 q 3.5 -3.5 7 -0.5 q 3.5 -3 7 0.5 q -3.5 2.5 -7 0.8 q -3.5 1.7 -7 -0.8 z" fill="#8A5A34"></path>
+    <path d="{{f.mouth}}" fill="none" stroke="#7A3B2A" stroke-width="1.4" stroke-linecap="round"></path>
+    <ellipse cy="-66" rx="21" ry="5" fill="#B5802A" opacity=".55"></ellipse>
+    <ellipse cy="-68" rx="23" ry="6" fill="url(#rosaHat)"></ellipse>
+    <path d="M-12 -69 C -12 -82, 12 -82, 12 -69 Z" fill="url(#rosaHat)"></path>
+    <rect x="-12" y="-72.5" width="24" height="3.5" rx="1.5" fill="#B4532A"></rect>
+    <path d="M-17 -67 h6 M-5 -64.5 h6 M8 -66.5 h7" stroke="#C08A2C" stroke-width="1" stroke-linecap="round" opacity=".7"></path>
+    <ellipse cx="-5" cy="-78" rx="3.5" ry="1.6" fill="#FFFFFF" opacity=".45"></ellipse>
+    <g display="{{f.wipe}}">
+      <g class="rosa-wipe"><path d="M13 -37 Q 26 -49 11 -62" fill="none" stroke="#D9693F" stroke-width="7" stroke-linecap="round"></path><circle cx="10.5" cy="-63" r="3.8" fill="url(#rosaSkin)"></circle></g>
+      <path class="rosa-sweat" d="M-16 -66 C -18.5 -61.5, -19.5 -59, -16 -57.5 C -12.5 -59, -13.5 -61.5, -16 -66 Z" fill="#9ED8E4" stroke="#FFFFFF" stroke-width=".8"></path>
+    </g>
+  </g>
+</g>
+
+<g display="{{d.heat}}" fill="none" stroke="#FFF1D6" stroke-width="2.2" stroke-linecap="round">
+  <path class="rosa-shimmer" d="M300 236 q 20 -8 40 0 t 40 0 t 40 0 t 40 0 t 40 0 t 40 0"></path>
+  <path class="rosa-shimmer rosa-d1" d="M340 272 q 20 -8 40 0 t 40 0 t 40 0 t 40 0 t 40 0"></path>
+  <path class="rosa-shimmer rosa-d2" d="M380 204 q 20 -8 40 0 t 40 0 t 40 0 t 40 0"></path>
+</g>
+<g display="{{d.gust}}" fill="none" stroke="#FFFFFF" stroke-opacity=".8" stroke-width="2" stroke-linecap="round">
+  <path class="rosa-gust" d="M180 250 q 70 -26 140 -6 t 140 -4"></path>
+  <path class="rosa-gust rosa-d2" d="M330 330 q 70 -26 140 -6 t 140 -4"></path>
+</g>
+<g display="{{d.twinkle}}" fill="#FFFFFF">
+  <g transform="translate(380 250)"><path class="rosa-twinkle" d="M0 -5 L1.2 -1.2 L5 0 L1.2 1.2 L0 5 L-1.2 1.2 L-5 0 L-1.2 -1.2 Z"></path></g>
+  <g transform="translate(470 228)"><path class="rosa-twinkle rosa-d1" d="M0 -5 L1.2 -1.2 L5 0 L1.2 1.2 L0 5 L-1.2 1.2 L-5 0 L-1.2 -1.2 Z"></path></g>
+  <g transform="translate(522 300)"><path class="rosa-twinkle rosa-d2" d="M0 -5 L1.2 -1.2 L5 0 L1.2 1.2 L0 5 L-1.2 1.2 L-5 0 L-1.2 -1.2 Z"></path></g>
+  <g transform="translate(418 322)"><path class="rosa-twinkle rosa-d3" d="M0 -5 L1.2 -1.2 L5 0 L1.2 1.2 L0 5 L-1.2 1.2 L-5 0 L-1.2 -1.2 Z"></path></g>
+  <g transform="translate(590 266)"><path class="rosa-twinkle rosa-d1" d="M0 -5 L1.2 -1.2 L5 0 L1.2 1.2 L0 5 L-1.2 1.2 L-5 0 L-1.2 -1.2 Z"></path></g>
+  <g transform="translate(330 298)"><path class="rosa-twinkle rosa-d2" d="M0 -5 L1.2 -1.2 L5 0 L1.2 1.2 L0 5 L-1.2 1.2 L-5 0 L-1.2 -1.2 Z"></path></g>
+</g>
+
+<g display="{{d.labels}}" font-family="Figtree, sans-serif" font-size="13" font-weight="700">
+  <rect x="470" y="198" width="168" height="28" rx="14" fill="#FFFDF8" fill-opacity=".95" stroke="#E6D6BC"></rect>
+  <text x="554" y="217" text-anchor="middle" fill="#2A2118">Twoja działka · 17,6 ha</text>
+  <rect x="650" y="244" width="138" height="26" rx="13" fill="#FFFDF8" fill-opacity=".95" stroke="#E6D6BC"></rect>
+  <text x="719" y="262" text-anchor="middle" fill="#2A2118">Rów melioracyjny</text>
+  <path d="M394 277 L488 324 M488 324 l -6.6 -10 M488 324 l -12 0.7" stroke="#FFFDF8" stroke-width="6" stroke-linecap="round" fill="none" opacity=".85"></path>
+  <path d="M394 277 L488 324 M488 324 l -6.6 -10 M488 324 l -12 0.7" stroke="#2A2118" stroke-width="2.5" stroke-linecap="round" fill="none"></path>
+  <rect x="296" y="248" width="108" height="26" rx="13" fill="#2A2118"></rect>
+  <text x="350" y="266" text-anchor="middle" fill="#FFFDF8">Spadek 3–4%</text>
+  <g display="{{d.markLabel}}"><rect x="606" y="318" width="178" height="28" rx="14" fill="#0E6E73"></rect><text x="695" y="337" text-anchor="middle" fill="#FFFFFF">Tu warto zatrzymać wodę</text></g>
+  <g display="{{d.gateLabel}}"><rect x="606" y="402" width="186" height="28" rx="14" fill="#0E6E73"></rect><text x="699" y="421" text-anchor="middle" fill="#FFFFFF">Zastawka: woda zostaje</text></g>
+</g>
+
+<rect x="0" y="0" width="900" height="640" fill="url(#rosaWarm)" pointer-events="none"></rect>
+</svg>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"mode":{"editor":"enum","options":["hero","susza","zastawka","miedzyplon","nawadnianie"],"default":"susza"},"labels":{"editor":"boolean","default":true},"$preview":{"width":900,"height":640}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const mode = this.props.mode ?? 'susza';
+    const labels = this.props.labels ?? true;
+    const on = (b) => (b ? 'inline' : 'none');
+    const P = (u, v) => [450 + 370 * u - 370 * v, 120 + 185 * u + 185 * v];
+    const poly = [[0.18, 0.22], [0.72, 0.15], [0.8, 0.62], [0.55, 0.8], [0.22, 0.7]].map((q) => P(q[0], q[1]));
+    const inside = (x, y) => {
+      let c = false;
+      for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+        const xi = poly[i][0], yi = poly[i][1], xj = poly[j][0], yj = poly[j][1];
+        if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c = !c;
+      }
+      return c;
+    };
+    const ok = (x, y) => inside(x, y) && inside(x - 7, y) && inside(x + 7, y) && inside(x, y - 5) && inside(x, y + 3);
+    const r = (n) => n.toFixed(1);
+    const hero = mode === 'hero';
+    const isCover = mode === 'miedzyplon';
+    const h = hero ? 17 : 12;
+    const s = ['', '', ''], l = ['', '', ''], t = ['', '', ''];
+    let stub = '', sprout = '', i = 0;
+    for (let u = 0.2; u < 0.8; u += 0.034) {
+      for (let v = 0.17; v < 0.8; v += 0.046) {
+        const p = P(u, v);
+        const x = p[0], y = p[1];
+        if (!ok(x, y)) continue;
+        const g = i++ % 3;
+        s[g] += 'M' + r(x) + ' ' + r(y) + 'v' + (-h);
+        if (hero) {
+          l[g] += 'M' + r(x) + ' ' + r(y - h * 0.35) + 'q5 -4 9 -1M' + r(x) + ' ' + r(y - h * 0.6) + 'q-5 -4 -9 -1M' + r(x) + ' ' + r(y - h * 0.82) + 'q4 -3 6 0';
+          t[g] += 'M' + r(x) + ' ' + r(y - h) + 'l-2 -4M' + r(x) + ' ' + r(y - h) + 'l2 -4';
+        } else {
+          l[g] += 'M' + r(x) + ' ' + r(y - h * 0.4) + 'q5 -1 8 4M' + r(x) + ' ' + r(y - h * 0.65) + 'q-5 -1 -8 4';
+          t[g] += 'M' + r(x) + ' ' + r(y - h) + 'l1 -3';
+        }
+        stub += 'M' + r(x) + ' ' + r(y) + 'v-3';
+        if (u < 0.52) sprout += 'M' + r(x + 3) + ' ' + r(y + 1) + 'q-2 -3 -4 -4M' + r(x + 3) + ' ' + r(y + 1) + 'q2 -3 4 -4';
+      }
+    }
+    let fence = '';
+    for (let x = 100; x <= 298; x += 22) fence += 'M' + x + ' ' + r(305 + (x - 80) * 0.5 - 1) + 'v-14';
+    const lush = { g1: '#C6C383', g2: '#A9AC66', n1: '#93A957', n2: '#C9B35E', n3: '#8FA14F', n4: '#D7BF6A', n5: '#9DB25C', row: '#5E6B2E', p1: '#86AE4A', p2: '#5F8E36', edge: '#FFF4D8', stem: '#4C7A2A', leaf: '#7DB047', tassel: '#E7C567', treeL: '#93C25A', treeD: '#4E7A2C', water: '#3FA3B0', ww: 7 };
+    const dry = { g1: '#D9C38E', g2: '#C3A870', n1: '#BDA866', n2: '#D8BE7A', n3: '#B3A45E', n4: '#E0C67C', n5: '#C7B06A', row: '#8A6E3C', p1: '#CDAA5C', p2: '#A9773F', edge: '#FFF1D2', stem: '#8E7A3A', leaf: '#C0A04E', tassel: '#DCC07E', treeL: '#B4BE68', treeD: '#6E7A34', water: '#4E9BA3', ww: 4 };
+    const c = Object.assign({}, hero ? lush : dry);
+    if (isCover) { c.p1 = '#BC9C69'; c.p2 = '#9F7B4D'; }
+    if (mode === 'zastawka') c.ww = 6;
+    const pose = mode === 'susza' ? 'wipe' : (mode === 'zastawka' || mode === 'nawadnianie') ? 'cheer' : 'down';
+    const fp = mode === 'zastawka' ? [548, 432] : mode === 'nawadnianie' ? [380, 402] : [330, 414];
+    const happy = pose !== 'wipe';
+    const aria = {
+      hero: 'Diorama pola kukurydzy o złotej godzinie: zielone uprawy, stodoła z silosem, traktor, bele siana, rów z wodą, rolnik z psem.',
+      susza: 'Działka w suszy: spieczona kukurydza, pęknięcia gleby, upał. Rolnik ociera pot. Woda spływa w stronę rowu na wschodzie, znacznik pokazuje, gdzie ją zatrzymać.',
+      zastawka: 'Na rowie stoi zastawka, woda podnosi się w rowie, koparka kończy pracę, rolnik się cieszy.',
+      miedzyplon: 'Po zbiorze: traktor z siewnikiem wysiewa międzyplon, na polu kiełkują rośliny okrywowe.',
+      nawadnianie: 'Zraszacz nawadnia środek pola, gleba wokół ciemnieje od wody.'
+    };
+    return {
+      c: c,
+      ariaLabel: aria[mode] || aria.susza,
+      parcelPts: poly.map((p) => r(p[0]) + ',' + r(p[1])).join(' '),
+      ditch: 'M752 287 C 700 312, 690 330, 640 345 S 560 380, 520 400 S 450 440, 416 456',
+      fencePosts: fence,
+      corn: { s0: s[0], s1: s[1], s2: s[2], l0: l[0], l1: l[1], l2: l[2], t0: t[0], t1: t[1], t2: t[2] },
+      cover: { stub: stub, sprout: sprout },
+      tr: isCover ? { x: 300, y: 292, cls: 'rosa-drive', seed: 'inline', driver: 'inline' } : { x: 604, y: 238, cls: '', seed: 'none', driver: 'none' },
+      dog: { x: fp[0] + 28, y: fp[1] + 4 },
+      d: {
+        corn: on(!isCover), cover: on(isCover), cracks: on(mode === 'susza' || mode === 'zastawka'),
+        heat: on(mode === 'susza'), gust: on(hero || mode === 'susza'), twinkle: on(hero),
+        sunHot: on(!hero), sunGold: on(hero), clouds: on(hero), particles: on(!isCover),
+        marker: on(mode === 'susza' || mode === 'zastawka'), markLabel: on(labels && mode === 'susza'),
+        gate: on(mode === 'zastawka'), gateLabel: on(labels && mode === 'zastawka'),
+        irr: on(mode === 'nawadnianie'), hl: on(isCover || mode === 'nawadnianie'),
+        labels: on(labels)
+      },
+      f: {
+        x: fp[0], y: fp[1],
+        cls: pose === 'cheer' ? 'rosa-hop' : 'rosa-jelly',
+        down: on(pose === 'down'), wipe: on(pose === 'wipe'), cheer: on(pose === 'cheer'),
+        eyeY: happy ? -58.5 : -60.5,
+        glintY: happy ? -59.5 : -61.5,
+        brows: happy ? 'M-7.5 -63.5 q 2.5 -2 5 0 M2.5 -63.5 q 2.5 -2 5 0' : 'M-7.5 -64 l 5 -1.8 M2.5 -65.8 l 5 1.8',
+        mouth: happy ? 'M-3.5 -47.5 Q 0 -44.5 3.5 -47.5' : 'M-3 -46 Q 0 -48 3 -46'
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

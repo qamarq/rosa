@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>ROSA — start</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400;500;600;700;800&display=swap">
+<style>
+body { margin: 0 }
+a { color: #0E6E73 } a:hover { color: #094F53 }
+*:focus-visible { outline: 3px solid #0E6E73; outline-offset: 3px }
+input::placeholder { color: #7A6A56 }
+.rosa-clay { box-shadow: 0 24px 48px -24px rgba(110,70,30,.40), inset 0 2px 0 rgba(255,255,255,.9), inset 0 -6px 14px rgba(150,100,50,.10) }
+.rosa-claybtn { box-shadow: 0 12px 20px -10px rgba(14,110,115,.65), inset 0 2px 0 rgba(255,255,255,.35), inset 0 -4px 0 rgba(0,0,0,.20) }
+.rosa-btn { transition: transform .32s cubic-bezier(.34,1.56,.64,1), background-color .2s ease }
+.rosa-btn:hover { transform: translateY(-2px) scale(1.02) }
+.rosa-btn:active { transform: scale(.96); transition-duration: .08s }
+.rosa-in { animation: rosaIn .8s cubic-bezier(.22,1,.36,1) both }
+.rosa-in2 { animation-delay: .12s } .rosa-in3 { animation-delay: .24s } .rosa-in4 { animation-delay: .36s }
+@keyframes rosaIn { from { opacity: 0; transform: translateY(24px) } to { opacity: 1; transform: none } }
+.rosa-bob { animation: rosaBob 4s ease-in-out infinite } .rosa-bob2 { animation-delay: -1.3s } .rosa-bob3 { animation-delay: -2.6s }
+@keyframes rosaBob { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-8px) } }
+.rosa-dew { transform-box: fill-box; transform-origin: center; animation: rosaDew 2.8s cubic-bezier(.11,0,.5,0) infinite }
+@keyframes rosaDew { 0% { transform: translate(0,0) scale(.2); opacity: 0 } 20% { transform: translate(0,0) scale(1); opacity: 1 } 70% { transform: translate(-128px,104px) scale(1); opacity: 1 } 84% { transform: translate(-140px,122px) scale(1.05,.95); opacity: 1 } 100% { transform: translate(-146px,190px) scale(.9,1.15); opacity: 0 } }
+.rosa-ring { transform-box: fill-box; transform-origin: center; animation: rosaRing 2.8s ease-out infinite }
+@keyframes rosaRing { 0%, 88% { transform: scale(.2); opacity: 0 } 92% { opacity: .9 } 100% { transform: scale(1.6); opacity: 0 } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important } }
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; position: relative; overflow: hidden; background: #F7E8CE; font-family: 'Figtree', system-ui, sans-serif; color: #2A2118">
+
+  <div aria-hidden="true" style="position: absolute; right: -220px; top: -260px; width: 1000px; height: 1000px; border-radius: 50%; background: radial-gradient(circle, rgba(255,201,120,.60) 0%, rgba(255,201,120,0) 62%)"></div>
+  <div aria-hidden="true" style="position: absolute; left: 0; right: 0; bottom: 0; height: 210px; background: #EED8B2"></div>
+
+  <header style="position: absolute; left: 72px; right: 72px; top: 28px; display: flex; align-items: center; justify-content: space-between">
+    <a href="#" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #2A2118">
+      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><path d="M17 3 C 12 10, 6 16, 6 22 A 11 11 0 0 0 28 22 C 28 16, 22 10, 17 3 Z" fill="#0E6E73"></path><path d="M11.5 22 A 5.5 5.5 0 0 0 17 27.5" stroke="#9FDCE6" stroke-width="2.5" stroke-linecap="round" fill="none"></path><ellipse cx="13" cy="15" rx="2.2" ry="3.5" fill="#FFFFFF" opacity=".45"></ellipse></svg>
+      <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 30px; font-weight: 800; letter-spacing: .02em">ROSA</span>
+    </a>
+    <nav aria-label="Główna" style="display: flex; align-items: center; gap: 6px">
+      <a href="#" style="padding: 12px 16px; font-size: 16px; font-weight: 600; text-decoration: none; color: #2A2118; border-radius: 14px">Jak to działa</a>
+      <a href="#" style="padding: 12px 16px; font-size: 16px; font-weight: 600; text-decoration: none; color: #2A2118; border-radius: 14px">Źródła danych</a>
+      <button type="button" class="rosa-btn" aria-pressed="false" style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 18px 0 12px; border: 2px solid #E3D3B8; background: #FFFDF8; border-radius: 16px; font: 600 16px 'Figtree', sans-serif; color: #2A2118; cursor: pointer">
+        <span aria-hidden="true" style="width: 40px; height: 24px; border-radius: 12px; background: #D9C9AE; position: relative; display: inline-block"><span style="position: absolute; left: 3px; top: 3px; width: 18px; height: 18px; border-radius: 50%; background: #FFFFFF"></span></span>
+        Tryb lekki
+      </button>
+    </nav>
+  </header>
+
+  <div style="position: absolute; left: 584px; top: 92px; width: 900px">
+    <dc-import name="Diorama" mode="hero" labels="{{ false }}" hint-size="900px,640px"></dc-import>
+  </div>
+
+  <div class="rosa-bob" style="position: absolute; left: 650px; top: 176px; display: flex; align-items: center; gap: 10px; padding: 10px 16px 10px 10px; background: #FFFDF8; border-radius: 18px; font-size: 15px; font-weight: 700" >
+    <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><ellipse cx="16" cy="18" rx="12" ry="8" fill="#E9F3F5"></ellipse><circle cx="12" cy="15" r="6" fill="#E9F3F5"></circle><circle cx="19" cy="13" r="7" fill="#E9F3F5"></circle><ellipse cx="16" cy="24" rx="10" ry="2.5" fill="#BFD9DE"></ellipse><path d="M11 27 l-1 3 M16 27 l-1 3 M21 27 l-1 3" stroke="#3FA3B0" stroke-width="2" stroke-linecap="round"></path></svg>
+    10 lat pogody
+  </div>
+  <div class="rosa-bob rosa-bob2" style="position: absolute; left: 1236px; top: 150px; display: flex; align-items: center; gap: 10px; padding: 10px 16px 10px 10px; background: #FFFDF8; border-radius: 18px; font-size: 15px; font-weight: 700">
+    <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect x="12" y="11" width="8" height="10" rx="3" fill="#5B4D3E"></rect><rect x="2" y="13" width="9" height="6" rx="2" fill="#3FA3B0"></rect><rect x="21" y="13" width="9" height="6" rx="2" fill="#3FA3B0"></rect><circle cx="16" cy="24" r="2.5" fill="#E3A73C"></circle><rect x="13" y="12" width="3" height="4" rx="1.5" fill="#FFFFFF" opacity=".4"></rect></svg>
+    Zdjęcia satelitarne
+  </div>
+  <div class="rosa-bob rosa-bob3" style="position: absolute; left: 1290px; top: 470px; display: flex; align-items: center; gap: 10px; padding: 10px 16px 10px 10px; background: #FFFDF8; border-radius: 18px; font-size: 15px; font-weight: 700">
+    <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="6" width="24" height="6" rx="3" fill="#7DAF46"></rect><rect x="4" y="12" width="24" height="7" rx="2" fill="#9C6E45"></rect><rect x="4" y="19" width="24" height="7" rx="3" fill="#D8B37E"></rect><circle cx="10" cy="22" r="1.5" fill="#FFFFFF" opacity=".6"></circle><circle cx="20" cy="15" r="1.5" fill="#FFFFFF" opacity=".4"></circle></svg>
+    Gleba i teren
+  </div>
+
+  <svg width="250" height="230" viewBox="0 0 250 230" style="position: absolute; left: 1172px; top: 620px" aria-hidden="true">
+    <ellipse cx="80" cy="222" rx="70" ry="6" fill="#B58A55" opacity=".35"></ellipse>
+    <path d="M18 206 C 54 128, 140 46, 244 18 C 228 110, 150 196, 18 206 Z" fill="#7DAF46"></path>
+    <path d="M18 206 C 54 128, 140 46, 244 18 C 200 60, 120 120, 18 206 Z" fill="#8EC152" opacity=".8"></path>
+    <path d="M28 198 C 96 146, 168 84, 236 26" stroke="#5E8E33" stroke-width="3" stroke-linecap="round" fill="none"></path>
+    <path d="M70 150 l 30 6 M110 112 l 32 6 M150 76 l 28 6 M96 128 l -6 28 M136 94 l -6 26" stroke="#5E8E33" stroke-width="2" stroke-linecap="round" opacity=".6"></path>
+    <ellipse cx="178" cy="70" rx="22" ry="6" transform="rotate(-38 178 70)" fill="#FFFFFF" opacity=".35"></ellipse>
+    <g class="rosa-dew">
+      <circle cx="196" cy="56" r="10" fill="#CFEFF5" opacity=".85" stroke="#FFFFFF" stroke-width="1.5"></circle>
+      <circle cx="192" cy="52" r="3" fill="#FFFFFF"></circle>
+    </g>
+    <ellipse class="rosa-ring" cx="52" cy="222" rx="14" ry="4" fill="none" stroke="#7CC6D6" stroke-width="2"></ellipse>
+  </svg>
+
+  <div style="position: absolute; left: 826px; top: 742px; display: flex; align-items: center; gap: 14px; padding: 10px 12px 10px 18px; background: rgba(255,253,248,.92); border-radius: 18px">
+    <span style="font-size: 15px; color: #5B4D3E">Przykład: <strong style="color: #2A2118">Mórka, gm. Śrem</strong> · kukurydza · 17,6 ha</span>
+    <a href="Dzialka.dc.html" class="rosa-btn" style="display: inline-flex; align-items: center; height: 44px; padding: 0 16px; border-radius: 14px; background: #2A2118; color: #FFFDF8; font-weight: 700; font-size: 15px; text-decoration: none">Zobacz wynik</a>
+  </div>
+
+  <main style="position: absolute; left: 72px; top: 104px; width: 520px; display: flex; flex-direction: column; gap: 18px">
+    <p class="rosa-in" style="margin: 0; font-size: 14px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #0E6E73">Retencja · Opady · Susza · Analiza</p>
+    <h1 class="rosa-in rosa-in2" style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 62px; line-height: .98; font-weight: 800; letter-spacing: -0.025em; text-wrap: balance">Sprawdź, ile <span style="color: #0E6E73">wody</span> ma&nbsp;Twoje pole</h1>
+    <p class="rosa-in rosa-in3" style="margin: 0; font-size: 19px; line-height: 1.45; color: #5B4D3E; max-width: 480px">Wpisz numer działki. Pokażemy, ile wody jest w glebie, dlaczego jej brakuje i jak ją zatrzymać.</p>
+
+    <form class="rosa-clay rosa-in rosa-in4" style="margin: 0; background: #FFFDF8; border-radius: 28px; padding: 22px; display: flex; flex-direction: column; gap: 16px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <label for="nr" style="font-size: 16px; font-weight: 700">Numer działki</label>
+        <div style="display: flex; gap: 10px">
+          <input id="nr" type="text" autocomplete="off" spellcheck="false" placeholder="np. 302604_5.0017.5196" aria-describedby="nr-hint" style="flex: 1; min-width: 0; height: 62px; box-sizing: border-box; padding: 0 18px; border: 2px solid #E3D3B8; border-radius: 18px; background: #FFFFFF; font: 600 21px 'Figtree', sans-serif; font-variant-numeric: tabular-nums; color: #2A2118">
+          <button type="button" class="rosa-btn" style="display: flex; align-items: center; gap: 8px; height: 62px; padding: 0 16px; border: 2px solid #E3D3B8; background: #FFFDF8; border-radius: 18px; font: 700 15px 'Figtree', sans-serif; color: #2A2118; cursor: pointer; white-space: nowrap">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0E6E73" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"></path><circle cx="12" cy="9.5" r="2.5"></circle></svg>
+            albo wskaż na mapie
+          </button>
+        </div>
+        <p id="nr-hint" style="margin: 0; font-size: 14px; color: #6E5E4C">Numer znajdziesz w wypisie z rejestru gruntów. <a href="#">Wpisz przykład</a></p>
+      </div>
+
+      <fieldset style="margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 8px">
+        <legend style="padding: 0; margin-bottom: 8px; font-size: 16px; font-weight: 700">Co rośnie na polu?</legend>
+        <div style="display: flex; gap: 7px">
+          <button type="button" class="rosa-btn" aria-pressed="{{cs.pszenica.pressed}}" onClick="{{pick.pszenica}}" style="width: 76px; height: 84px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border-radius: 18px; border: 2px solid {{cs.pszenica.bd}}; background: {{cs.pszenica.bg}}; font: 600 13px 'Figtree', sans-serif; color: #2A2118; cursor: pointer">
+            <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true"><path d="M18 34 V10" stroke="#B88A2E" stroke-width="2.4" stroke-linecap="round"></path><ellipse cx="18" cy="7" rx="2.6" ry="4.4" fill="#E5B550"></ellipse><ellipse cx="14" cy="13" rx="2.8" ry="4.6" transform="rotate(-28 14 13)" fill="#E5B550"></ellipse><ellipse cx="22" cy="13" rx="2.8" ry="4.6" transform="rotate(28 22 13)" fill="#DDA944"></ellipse><ellipse cx="14" cy="20" rx="2.8" ry="4.6" transform="rotate(-28 14 20)" fill="#E5B550"></ellipse><ellipse cx="22" cy="20" rx="2.8" ry="4.6" transform="rotate(28 22 20)" fill="#DDA944"></ellipse><ellipse cx="13" cy="12" rx="1" ry="2" fill="#FFFFFF" opacity=".55"></ellipse></svg>
+            Pszenica
+          </button>
+          <button type="button" class="rosa-btn" aria-pressed="{{cs.kukurydza.pressed}}" onClick="{{pick.kukurydza}}" style="width: 76px; height: 84px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border-radius: 18px; border: 2px solid {{cs.kukurydza.bd}}; background: {{cs.kukurydza.bg}}; font: 600 13px 'Figtree', sans-serif; color: #2A2118; cursor: pointer">
+            <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true"><ellipse cx="18" cy="16" rx="6.5" ry="12" fill="#F0C24B"></ellipse><path d="M14 9 h8 M13 14 h10 M13 19 h10 M14 24 h8" stroke="#D9A52E" stroke-width="1.4"></path><ellipse cx="15.5" cy="11" rx="1.6" ry="4" fill="#FFFFFF" opacity=".5"></ellipse><path d="M9 33 C 7 23, 10 14, 15 9 C 13 17, 14 25, 17 33 Z" fill="#7FAE45"></path><path d="M27 33 C 29 23, 26 14, 21 9 C 23 17, 22 25, 19 33 Z" fill="#6E9B3A"></path></svg>
+            Kukurydza
+          </button>
+          <button type="button" class="rosa-btn" aria-pressed="{{cs.rzepak.pressed}}" onClick="{{pick.rzepak}}" style="width: 76px; height: 84px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border-radius: 18px; border: 2px solid {{cs.rzepak.bd}}; background: {{cs.rzepak.bg}}; font: 600 13px 'Figtree', sans-serif; color: #2A2118; cursor: pointer">
+            <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true"><path d="M18 34 V16 M18 22 L11 16 M18 20 L25 13" stroke="#6E9B3A" stroke-width="2.2" stroke-linecap="round"></path><circle cx="18" cy="10" r="5" fill="#F2CF3B"></circle><circle cx="10" cy="14" r="4" fill="#EBC22E"></circle><circle cx="26" cy="11" r="4" fill="#F2CF3B"></circle><circle cx="18" cy="10" r="1.8" fill="#D9A52E"></circle><circle cx="16" cy="8" r="1.3" fill="#FFFFFF" opacity=".6"></circle></svg>
+            Rzepak
+          </button>
+          <button type="button" class="rosa-btn" aria-pressed="{{cs.ziemniaki.pressed}}" onClick="{{pick.ziemniaki}}" style="width: 76px; height: 84px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border-radius: 18px; border: 2px solid {{cs.ziemniaki.bd}}; background: {{cs.ziemniaki.bg}}; font: 600 13px 'Figtree', sans-serif; color: #2A2118; cursor: pointer">
+            <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true"><ellipse cx="14" cy="20" rx="10" ry="8" fill="#C99A5E"></ellipse><ellipse cx="24" cy="23" rx="8" ry="6.5" fill="#B5844A"></ellipse><circle cx="11" cy="18" r="1.2" fill="#8A6234"></circle><circle cx="17" cy="23" r="1.2" fill="#8A6234"></circle><circle cx="26" cy="22" r="1.1" fill="#7A5228"></circle><ellipse cx="11" cy="16" rx="3" ry="1.6" fill="#FFFFFF" opacity=".45"></ellipse></svg>
+            Ziemniaki
+          </button>
+          <button type="button" class="rosa-btn" aria-pressed="{{cs.buraki.pressed}}" onClick="{{pick.buraki}}" style="width: 76px; height: 84px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border-radius: 18px; border: 2px solid {{cs.buraki.bd}}; background: {{cs.buraki.bg}}; font: 600 13px 'Figtree', sans-serif; color: #2A2118; cursor: pointer">
+            <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true"><path d="M18 14 C 12 2, 6 6, 8 10 C 10 13, 15 13, 18 14 Z" fill="#7FAE45"></path><path d="M18 14 C 22 2, 30 4, 28 9 C 26 12, 21 13, 18 14 Z" fill="#6E9B3A"></path><path d="M18 34 C 14 30, 9 25, 9 20 A 9 7 0 0 1 27 20 C 27 25, 22 30, 18 34 Z" fill="#A8344E"></path><ellipse cx="14" cy="19" rx="2.6" ry="1.6" fill="#FFFFFF" opacity=".4"></ellipse></svg>
+            Buraki
+          </button>
+          <button type="button" class="rosa-btn" aria-pressed="{{cs.laka.pressed}}" onClick="{{pick.laka}}" style="width: 76px; height: 84px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border-radius: 18px; border: 2px solid {{cs.laka.bd}}; background: {{cs.laka.bg}}; font: 600 13px 'Figtree', sans-serif; color: #2A2118; cursor: pointer">
+            <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true"><ellipse cx="18" cy="31" rx="15" ry="3.5" fill="#9DB25C"></ellipse><path d="M8 31 C 7 24, 5 20, 3 18 M12 31 C 12 22, 14 18, 16 15 M20 31 C 20 24, 22 20, 25 18 M27 31 C 28 25, 30 22, 33 20" stroke="#6E9B3A" stroke-width="2.4" stroke-linecap="round" fill="none"></path><circle cx="16" cy="12" r="3.5" fill="#F3EFE3"></circle><circle cx="16" cy="12" r="1.5" fill="#E2B83E"></circle></svg>
+            Łąka
+          </button>
+        </div>
+      </fieldset>
+
+      <fieldset style="margin: 0; padding: 0; border: 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+        <legend style="padding: 0; margin-bottom: 8px; font-size: 16px; font-weight: 700">Dzień analizy</legend>
+        <button type="button" class="rosa-btn" aria-pressed="{{dz.pressed}}" onClick="{{pickDzis}}" style="height: 48px; padding: 0 18px; border-radius: 14px; border: 2px solid #2A2118; background: {{dz.bg}}; color: {{dz.fg}}; font: 700 15px 'Figtree', sans-serif; cursor: pointer">Dziś</button>
+        <button type="button" class="rosa-btn" aria-pressed="{{inny.pressed}}" onClick="{{pickInny}}" style="height: 48px; padding: 0 18px; border-radius: 14px; border: 2px solid #2A2118; background: {{inny.bg}}; color: {{inny.fg}}; font: 700 15px 'Figtree', sans-serif; cursor: pointer">Inny dzień</button>
+        <sc-if value="{{showDate}}" hint-placeholder-val="{{ false }}">
+          <label for="data" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Data analizy</label>
+          <input id="data" type="text" value="15.07.2025" aria-describedby="data-hint" style="width: 132px; height: 48px; box-sizing: border-box; padding: 0 12px; border: 2px solid #E3D3B8; border-radius: 14px; font: 600 16px 'Figtree', sans-serif; font-variant-numeric: tabular-nums; color: #2A2118">
+        </sc-if>
+        <span id="data-hint" style="font-size: 14px; color: #6E5E4C">{{dateHint}}</span>
+      </fieldset>
+
+      <a href="Ladowanie.dc.html" class="rosa-btn rosa-claybtn" style="display: flex; align-items: center; justify-content: center; gap: 12px; height: 64px; border-radius: 20px; background: #0E6E73; color: #FFFFFF; font: 800 20px 'Figtree', sans-serif; text-decoration: none">
+        Sprawdź pole
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+      </a>
+    </form>
+  </main>
+
+  <p style="position: absolute; left: 72px; bottom: 26px; margin: 0; font-size: 13px; color: #5B4D3E">Otwarte dane: Open-Meteo (ERA5) · Copernicus Sentinel-2 · IUNG-PIB · GUGiK (ULDK, NMT) · BDOT10k</p>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { crop: 'kukurydza', day: 'dzis' };
+  }
+  renderVals() {
+    const ids = ['pszenica', 'kukurydza', 'rzepak', 'ziemniaki', 'buraki', 'laka'];
+    const cs = {};
+    const pick = {};
+    ids.forEach((id) => {
+      const on = this.state.crop === id;
+      cs[id] = { bg: on ? '#E3F1EE' : '#FFFDF8', bd: on ? '#0E6E73' : '#E8D9C0', pressed: on ? 'true' : 'false' };
+      pick[id] = () => this.setState({ crop: id });
+    });
+    const today = this.state.day === 'dzis';
+    const style = (on) => ({ bg: on ? '#2A2118' : '#FFFDF8', fg: on ? '#FFFDF8' : '#2A2118', pressed: on ? 'true' : 'false' });
+    return {
+      cs: cs,
+      pick: pick,
+      dz: style(today),
+      inny: style(!today),
+      pickDzis: () => this.setState({ day: 'dzis' }),
+      pickInny: () => this.setState({ day: 'inny' }),
+      showDate: !today,
+      dateHint: today ? 'dziś, 21.11.2026' : 'dowolny dzień z ostatnich 10 lat'
+    };
+  }
+}
+</script>
+</body>
+</html>

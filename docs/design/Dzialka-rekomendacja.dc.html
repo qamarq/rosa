@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>ROSA — działka, rekomendacje</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400;500;600;700;800&display=swap">
+<style>
+body { margin: 0 }
+a { color: #0E6E73 } a:hover { color: #094F53 }
+*:focus-visible { outline: 3px solid #0E6E73; outline-offset: 3px }
+.rosa-clay { box-shadow: 0 24px 48px -28px rgba(110,70,30,.45), inset 0 2px 0 rgba(255,255,255,.9), inset 0 -6px 14px rgba(150,100,50,.08) }
+.rosa-claybtn { box-shadow: 0 10px 18px -10px rgba(14,110,115,.65), inset 0 2px 0 rgba(255,255,255,.35), inset 0 -4px 0 rgba(0,0,0,.20) }
+.rosa-btn { transition: transform .32s cubic-bezier(.34,1.56,.64,1) }
+.rosa-btn:hover { transform: translateY(-2px) scale(1.02) }
+.rosa-btn:active { transform: scale(.96); transition-duration: .08s }
+.rosa-rec { transition: transform .32s cubic-bezier(.34,1.56,.64,1), background-color .2s ease, border-color .2s ease }
+.rosa-rec:hover { transform: translateY(-2px) }
+.rosa-open { animation: rosaOpen .42s cubic-bezier(.34,1.56,.64,1) both }
+@keyframes rosaOpen { from { opacity: 0; transform: translateY(-8px) } to { opacity: 1; transform: none } }
+.rosa-toast { animation: rosaToast .5s cubic-bezier(.34,1.56,.64,1) both }
+@keyframes rosaToast { from { opacity: 0; transform: translate(-50%,-16px) scale(.96) } to { opacity: 1; transform: translate(-50%,0) } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important } }
+</style>
+</helmet>
+<div style="width: 1440px; height: 1024px; background: #F1E5D2; font-family: 'Figtree', system-ui, sans-serif; color: #2A2118; display: flex; flex-direction: column">
+
+  <header style="height: 76px; flex: 0 0 76px; box-sizing: border-box; padding: 0 24px; display: flex; align-items: center; gap: 18px; background: #FBF6EC; border-bottom: 1px solid #E8D9C0">
+    <a href="Main.dc.html" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: #2A2118">
+      <svg width="28" height="28" viewBox="0 0 34 34" aria-hidden="true"><path d="M17 3 C 12 10, 6 16, 6 22 A 11 11 0 0 0 28 22 C 28 16, 22 10, 17 3 Z" fill="#0E6E73"></path><path d="M11.5 22 A 5.5 5.5 0 0 0 17 27.5" stroke="#9FDCE6" stroke-width="2.5" stroke-linecap="round" fill="none"></path></svg>
+      <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 24px; font-weight: 800; letter-spacing: .02em">ROSA</span>
+    </a>
+    <span aria-hidden="true" style="width: 1px; height: 36px; background: #E3D3B8"></span>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span style="font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums">Działka 302604_5.0017.5196</span>
+      <span style="font-size: 14px; color: #6E5E4C">Mórka, gm. Śrem, wielkopolskie · 17,6 ha</span>
+    </div>
+    <span style="display: flex; align-items: center; gap: 6px; height: 40px; padding: 0 14px 0 8px; border-radius: 14px; background: #F4ECDD; font-size: 15px; font-weight: 700">
+      <svg width="26" height="26" viewBox="0 0 36 36" aria-hidden="true"><ellipse cx="18" cy="16" rx="6.5" ry="12" fill="#F0C24B"></ellipse><path d="M14 9 h8 M13 14 h10 M13 19 h10 M14 24 h8" stroke="#D9A52E" stroke-width="1.4"></path><path d="M9 33 C 7 23, 10 14, 15 9 C 13 17, 14 25, 17 33 Z" fill="#7FAE45"></path><path d="M27 33 C 29 23, 26 14, 21 9 C 23 17, 22 25, 19 33 Z" fill="#6E9B3A"></path></svg>
+      Kukurydza
+    </span>
+    <span style="display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px; border-radius: 14px; background: #F4ECDD; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5B4D3E" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>
+      15.07.2025
+    </span>
+    <span style="flex: 1"></span>
+    <a href="Main.dc.html" class="rosa-btn" style="display: flex; align-items: center; height: 48px; padding: 0 18px; border-radius: 16px; border: 2px solid #E3D3B8; background: #FFFDF8; font-size: 16px; font-weight: 700; color: #2A2118; text-decoration: none">Zmień działkę</a>
+    <a href="Raport-A4.dc.html" class="rosa-btn rosa-claybtn" style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 20px; border-radius: 16px; background: #0E6E73; color: #FFFFFF; font-size: 16px; font-weight: 800; text-decoration: none">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"></path></svg>
+      Raport PDF
+    </a>
+  </header>
+
+  <div style="flex: 1; min-height: 0; display: flex; gap: 20px; padding: 20px; box-sizing: border-box">
+
+    <section aria-label="Scena 3D działki" style="flex: 1; min-width: 0; position: relative; border-radius: 28px; overflow: hidden; background: #F3D9AE">
+      <div aria-hidden="true" style="position: absolute; left: 0; right: 0; bottom: 0; height: 300px; background: #E9C996"></div>
+      <div style="position: absolute; left: 20px; right: 20px; top: 128px">
+        <dc-import name="Diorama" mode="{{sceneMode}}" labels="{{ true }}" hint-size="100%,560px"></dc-import>
+      </div>
+
+      <sc-if value="{{hasSel}}" hint-placeholder-val="{{ true }}">
+        <div class="rosa-toast" role="status" style="position: absolute; left: 50%; top: 20px; transform: translateX(-50%); width: 600px; box-sizing: border-box; display: flex; align-items: center; gap: 14px; padding: 14px 14px 14px 18px; border-radius: 22px; background: #FFFDF8; box-shadow: 0 20px 40px -20px rgba(60,40,20,.45)">
+          <span aria-hidden="true" style="width: 44px; height: 44px; flex: 0 0 44px; border-radius: 14px; background: {{sel.tint}}; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg></span>
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+            <span style="font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #0B5A5E">Pokazujemy na polu</span>
+            <span style="font-size: 17px; font-weight: 800">{{sel.title}}</span>
+            <span style="font-size: 15px; color: #5B4D3E; line-height: 1.35">{{sel.scene}}</span>
+          </div>
+          <button type="button" class="rosa-btn" onClick="{{clear}}" style="height: 44px; padding: 0 14px; border-radius: 14px; border: 2px solid #E3D3B8; background: #FFFDF8; font: 700 14px 'Figtree', sans-serif; color: #2A2118; cursor: pointer; white-space: nowrap">Pokaż suszę</button>
+        </div>
+      </sc-if>
+
+      <div role="toolbar" aria-label="Sterowanie kamerą" style="position: absolute; right: 20px; bottom: 20px; display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: 22px; background: #FFFDF8">
+        <button type="button" class="rosa-btn" aria-label="Przybliż" style="width: 48px; height: 48px; border-radius: 16px; border: 0; background: #F4ECDD; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2A2118" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+        <button type="button" class="rosa-btn" aria-label="Oddal" style="width: 48px; height: 48px; border-radius: 16px; border: 0; background: #F4ECDD; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2A2118" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg></button>
+        <button type="button" class="rosa-btn" style="height: 48px; padding: 0 16px; border-radius: 16px; border: 0; background: #2A2118; color: #FFFDF8; font: 700 15px 'Figtree', sans-serif; cursor: pointer; display: flex; align-items: center; gap: 8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFDF8" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5 9-5z"></path><path d="M3 13l9 5 9-5"></path></svg>Widok z góry</button>
+      </div>
+      <div style="position: absolute; left: 20px; bottom: 20px; display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 14px; border-radius: 16px; background: rgba(255,253,248,.85); font-size: 14px; color: #5B4D3E">Kliknij działanie po prawej, a pokażemy je na scenie</div>
+    </section>
+
+    <aside aria-label="Wynik analizy" class="rosa-clay" style="width: 540px; flex: 0 0 540px; border-radius: 28px; background: #FFFDF8; overflow-y: auto; box-sizing: border-box; padding: 28px; display: flex; flex-direction: column; gap: 20px">
+
+      <div style="display: flex; align-items: center; gap: 10px">
+        <span aria-hidden="true" style="width: 28px; height: 28px; border-radius: 10px; background: #2A2118; color: #FFFDF8; font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center">4</span>
+        <h2 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 22px; font-weight: 700">Co zrobić</h2>
+        <span style="margin-left: auto; font-size: 14px; color: #6E5E4C">od najważniejszego</span>
+      </div>
+
+      <sc-for list="{{groups}}" as="g" hint-placeholder-count="3">
+        <section style="display: flex; flex-direction: column; gap: 10px">
+          <div style="display: flex; align-items: center; gap: 10px">
+            <span aria-hidden="true" style="width: 36px; height: 36px; border-radius: 12px; background: {{g.tint}}; display: flex; align-items: center; justify-content: center">
+              <sc-if value="{{g.isWater}}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 3 C 9 8, 5 11, 5 15 A 7 7 0 0 0 19 15 C 19 11, 15 8, 12 3 Z" fill="#FFFFFF"></path></svg></sc-if>
+              <sc-if value="{{g.isSoil}}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round"><path d="M12 21v-9M12 12c0-4 3-6 7-6 0 4-3 6-7 6zM12 14c0-3-2.5-5-6-5 0 3 2.5 5 6 5z"></path></svg></sc-if>
+              <sc-if value="{{g.isIrr}}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round"><path d="M12 21v-8M12 13c-3-3-6-4-9-3M12 13c3-3 6-4 9-3M12 13V5"></path></svg></sc-if>
+            </span>
+            <h3 style="margin: 0; font-size: 18px; font-weight: 800">{{g.title}}</h3>
+            <sc-if value="{{g.isIrr}}" hint-placeholder-val="{{ false }}"><span style="padding: 3px 10px; border-radius: 999px; background: #F1E7D6; font-size: 13px; font-weight: 700; color: #5B4D3E">opcjonalnie</span></sc-if>
+          </div>
+          <sc-for list="{{g.items}}" as="r" hint-placeholder-count="1">
+            <div class="rosa-rec" style="border-radius: 20px; border: 2px solid {{r.bd}}; background: {{r.bg}}; overflow: hidden">
+              <button type="button" onClick="{{r.pick}}" aria-expanded="{{r.exp}}" style="width: 100%; text-align: left; display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border: 0; background: transparent; cursor: pointer; font: inherit; color: inherit">
+                <span aria-hidden="true" style="margin-top: 3px; width: 22px; height: 22px; flex: 0 0 22px; box-sizing: border-box; border-radius: 50%; border: 2px solid {{r.dotBd}}; background: {{r.dot}}; box-shadow: inset 0 0 0 3px {{r.bg}}"></span>
+                <span style="flex: 1; display: flex; flex-direction: column; gap: 4px">
+                  <span style="font-size: 17px; font-weight: 800; line-height: 1.25">{{r.title}}</span>
+                  <span style="font-size: 15px; color: #5B4D3E; line-height: 1.4">{{r.text}}</span>
+                  <span style="align-self: flex-start; margin-top: 4px; display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 10px; background: #F4ECDD; font-size: 13px; font-weight: 700"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5B4D3E" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>{{r.when}}</span>
+                </span>
+                <span style="margin-top: 2px; font-size: 14px; font-weight: 700; color: #0B5A5E; white-space: nowrap">{{r.cta}}</span>
+              </button>
+              <sc-if value="{{r.open}}" hint-placeholder-val="{{ false }}">
+                <div class="rosa-open" style="margin: 0 16px 16px 50px; padding: 14px 16px; border-radius: 16px; background: #FFFFFF; display: flex; flex-direction: column; gap: 8px">
+                  <span style="font-size: 14px; font-weight: 800">Dlaczego to polecamy</span>
+                  <ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; line-height: 1.45; color: #3A2F24">
+                    <sc-for list="{{r.why}}" as="w" hint-placeholder-count="2"><li>{{w}}</li></sc-for>
+                  </ul>
+                  <sc-if value="{{r.hasNote}}" hint-placeholder-val="{{ false }}"><p style="margin: 0; padding: 8px 10px; border-radius: 10px; background: #FBEFD8; font-size: 13px; line-height: 1.4; color: #5A3E0A">{{r.note}}</p></sc-if>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </section>
+      </sc-for>
+
+      <hr style="margin: 0; border: 0; border-top: 1px dashed #E3D3B8">
+
+      <section aria-labelledby="s5" style="display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; align-items: center; gap: 10px">
+          <span aria-hidden="true" style="width: 28px; height: 28px; border-radius: 10px; background: #2A2118; color: #FFFDF8; font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center">5</span>
+          <h2 id="s5" style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 22px; font-weight: 700">Pewność i czego nie wiemy</h2>
+        </div>
+        <div style="display: flex; align-items: center; gap: 14px">
+          <div role="img" aria-label="Pewność wyniku: średnia" style="display: flex; gap: 4px">
+            <span style="width: 34px; height: 12px; border-radius: 6px; background: #2A2118"></span>
+            <span style="width: 34px; height: 12px; border-radius: 6px; background: #2A2118"></span>
+            <span style="width: 34px; height: 12px; border-radius: 6px; background: #E3D3B8"></span>
+          </div>
+          <span style="font-size: 18px; font-weight: 800">Pewność: średnia</span>
+        </div>
+        <ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px">
+          <li style="display: flex; gap: 10px; font-size: 15px; line-height: 1.4"><span aria-hidden="true" style="flex: 0 0 22px; height: 22px; border-radius: 8px; background: #F1E7D6; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center">?</span>Dane pogodowe są w siatce ok. 9 km — na samym polu mogło spaść trochę więcej lub mniej.</li>
+          <li style="display: flex; gap: 10px; font-size: 15px; line-height: 1.4"><span aria-hidden="true" style="flex: 0 0 22px; height: 22px; border-radius: 8px; background: #F1E7D6; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center">?</span>Ostatnie bezchmurne zdjęcie satelitarne jest sprzed 12 dni.</li>
+          <li style="display: flex; gap: 10px; font-size: 15px; line-height: 1.4"><span aria-hidden="true" style="flex: 0 0 22px; height: 22px; border-radius: 8px; background: #F1E7D6; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center">?</span>Nie mierzymy wilgotności gleby na miejscu — liczymy ją z pogody i rodzaju gleby.</li>
+        </ul>
+      </section>
+
+      <footer style="display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border-radius: 16px; background: #F8F1E5">
+        <span style="font-size: 13px; font-weight: 800">Źródła</span>
+        <sc-for list="{{sources}}" as="s" hint-placeholder-count="5">
+          <span style="font-size: 12px; line-height: 1.4; color: #5B4D3E"><strong style="color: #2A2118">{{s.name}}</strong> — {{s.what}} · pobrano 21.11.2026 · {{s.lic}}</span>
+        </sc-for>
+      </footer>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1024}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { sel: 'zastawka' };
+  }
+  renderVals() {
+    const recs = {
+      zastawka: { group: 'woda', title: 'Zastawka na rowie melioracyjnym', text: 'Postaw zastawkę na rowie przy wschodniej granicy, żeby woda nie uciekała z pola.', when: 'Jak najszybciej, przed kolejnymi opadami', mode: 'zastawka', scene: 'Zastawka podnosi wodę w rowie, więc wsiąka ona w pole zamiast odpływać.', why: ['Pole opada o 3–4% w stronę rowu, więc woda z działki spływa na wschód (GUGiK NMT).', 'Rów melioracyjny biegnie wzdłuż wschodniej granicy działki (BDOT10k).', 'Gleba lekka słabo trzyma wodę, dlatego warto zatrzymać ją w rowie i w gruncie obok (IUNG-PIB).'], note: 'Przed budową zapytaj spółkę wodną lub Wody Polskie, czy potrzebna jest zgoda.' },
+      miedzyplon: { group: 'gleba', title: 'Międzyplon po zbiorze', text: 'Zaraz po zbiorze kukurydzy wysiej międzyplon: okryje glebę i ograniczy parowanie.', when: 'Po zbiorze', mode: 'miedzyplon', scene: 'Siewnik wysiewa międzyplon, a rośliny okrywają gołą glebę.', why: ['Gleba lekka, piaszczysta: korzenie i okrywa poprawiają jej strukturę i to, ile wody trzyma (IUNG-PIB).', 'Deficyt wody w tym okresie był tu w 6 z 10 lat, więc okrywa chroni przed kolejnym suchym sezonem (Open-Meteo ERA5).'], note: '' },
+      resztki: { group: 'gleba', title: 'Zostaw resztki pożniwne', text: 'Rozdrobnione resztki zostaw na polu jako ściółkę.', when: 'Przy zbiorze', mode: 'miedzyplon', scene: 'Resztki na polu osłaniają glebę przed słońcem i wiatrem.', why: ['Ściółka osłania glebę przed słońcem i wiatrem, więc mniej wody paruje.', 'Na spadku 3–4% resztki spowalniają spływ wody po deszczu (GUGiK NMT).'], note: '' },
+      orka: { group: 'gleba', title: 'Ogranicz orkę', text: 'Zamiast głębokiej orki wybierz uprawę uproszczoną.', when: 'Jesień', mode: 'miedzyplon', scene: 'Mniej orki to mniej przesuszonej wierzchniej warstwy gleby.', why: ['Każda orka przesusza wierzchnią warstwę gleby.', 'Gleba lekka szybko traci wodę po spulchnieniu (IUNG-PIB).'], note: '' },
+      nawadnianie: { group: 'irr', title: 'Nawadnianie ok. 25 mm', text: 'Jeśli masz dostęp do wody, podlej pole jedną dawką ok. 25 mm.', when: 'W ciągu 7 dni', mode: 'nawadnianie', scene: 'Zraszacz podaje ok. 25 mm wody na środek pola.', why: ['Od 45 dni spadło o 38% mniej deszczu niż zwykle (Open-Meteo ERA5).', 'W lipcu kukurydza kwitnie i wtedy najbardziej potrzebuje wody.'], note: 'Pobór wody do nawadniania może wymagać zgody wodnoprawnej.' }
+    };
+    const sel = this.state.sel;
+    const make = (id) => {
+      const r = recs[id];
+      const on = sel === id;
+      return {
+        title: r.title, text: r.text, when: r.when, why: r.why, note: r.note, hasNote: !!r.note,
+        open: on, exp: on ? 'true' : 'false',
+        bd: on ? '#0E6E73' : '#EFE3CF', bg: on ? '#EAF5F2' : '#FFFDF8',
+        dot: on ? '#0E6E73' : '#FFFFFF', dotBd: on ? '#0E6E73' : '#CDBB9C',
+        cta: on ? 'Na scenie' : 'Pokaż na polu',
+        pick: () => this.setState({ sel: on ? null : id })
+      };
+    };
+    const groups = [
+      { title: 'Zatrzymaj wodę', tint: '#0E6E73', isWater: true, isSoil: false, isIrr: false, items: ['zastawka'].map(make) },
+      { title: 'Zadbaj o glebę', tint: '#5F6B2E', isWater: false, isSoil: true, isIrr: false, items: ['miedzyplon', 'resztki', 'orka'].map(make) },
+      { title: 'Nawadnianie', tint: '#2F7DA0', isWater: false, isSoil: false, isIrr: true, items: ['nawadnianie'].map(make) }
+    ];
+    const cur = sel ? recs[sel] : null;
+    const tints = { woda: '#0E6E73', gleba: '#5F6B2E', irr: '#2F7DA0' };
+    return {
+      groups: groups,
+      hasSel: !!cur,
+      sceneMode: cur ? cur.mode : 'susza',
+      sel: cur ? { title: cur.title, scene: cur.scene, tint: tints[cur.group] } : { title: '', scene: '', tint: '#0E6E73' },
+      clear: () => this.setState({ sel: null }),
+      sources: [
+        { name: 'Open-Meteo (ERA5)', what: 'opady i parowanie 2016–2025', lic: 'CC BY 4.0' },
+        { name: 'Copernicus Sentinel-2', what: 'kondycja roślin (NDVI), zdjęcie z 03.07.2025', lic: 'dane Copernicus, wolny dostęp' },
+        { name: 'IUNG-PIB', what: 'gleba i podatność na suszę', lic: '[LICENCJA — do potwierdzenia]' },
+        { name: 'GUGiK (ULDK, NMT)', what: 'granice działki i wysokości terenu', lic: 'dane otwarte GUGiK' },
+        { name: 'BDOT10k', what: 'rowy i cieki', lic: 'dane otwarte GUGiK' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
