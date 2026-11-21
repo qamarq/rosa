@@ -1,25 +1,8 @@
 import "server-only"
 import { sql } from "drizzle-orm"
 import { db } from "@/server/db"
+import { VOIVODESHIPS } from "@/lib/voivodeships"
 
-const VOIVODESHIPS: Record<string, string> = {
-  "02": "dolnośląskie",
-  "04": "kujawsko-pomorskie",
-  "06": "lubelskie",
-  "08": "lubuskie",
-  "10": "łódzkie",
-  "12": "małopolskie",
-  "14": "mazowieckie",
-  "16": "opolskie",
-  "18": "podkarpackie",
-  "20": "podlaskie",
-  "22": "pomorskie",
-  "24": "śląskie",
-  "26": "świętokrzyskie",
-  "28": "warmińsko-mazurskie",
-  "30": "wielkopolskie",
-  "32": "zachodniopomorskie",
-}
 
 export type ParcelRecord = {
   id: string

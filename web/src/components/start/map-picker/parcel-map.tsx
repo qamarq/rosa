@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 import { useLiteMode } from "@/components/lite-mode"
 import { Spinner } from "@/components/ui/spinner"
 import { mapStyle, PARCELS_ZOOM, PICK_ZOOM, POLAND_BOUNDS, POLAND_CENTER, POLAND_ZOOM } from "./map-style"
+import { PlaceSearch, type PlaceHit } from "./place-search"
 import { formatArea, parcelBounds, parcelPlace, type LocatedParcel } from "./types"
 
 setWorkerUrl(new URL("maplibre-gl/dist/maplibre-gl-worker.mjs", import.meta.url).href)
@@ -231,6 +232,25 @@ export default function ParcelMap({ onSelect }: { onSelect: (parcel: LocatedParc
     )
   }
 
+  function goToPlace(hit: PlaceHit) {
+    const map = mapRef.current
+    if (!map) return
+    setNotice(null)
+    if (hit.kind === "parcel") {
+      map.flyTo({ center: [hit.lon, hit.lat], zoom: Math.max(map.getZoom(), 16.5), duration: duration(1400) })
+      void locate(hit.lon, hit.lat)
+      return
+    }
+    clearParcel(map)
+    setStatus({ kind: "idle" })
+    if (hit.bbox) {
+      const [w, s, e, n] = hit.bbox
+      map.fitBounds([[w, s], [e, n]], { padding: fitPadding(map), maxZoom: hit.kind === "gmina" ? 12.5 : 15, duration: duration(1400) })
+    } else {
+      map.flyTo({ center: [hit.lon, hit.lat], zoom: 14, duration: duration(1400) })
+    }
+  }
+
   function reject() {
     const map = mapRef.current
     if (map) clearParcel(map)
@@ -282,6 +302,8 @@ export default function ParcelMap({ onSelect }: { onSelect: (parcel: LocatedParc
       )}
 
       <div className="pointer-events-none absolute inset-x-3 top-3 flex items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-1 flex-col items-start gap-2 sm:max-w-[440px]">
+        <PlaceSearch onPick={goToPlace} className="w-full" />
         <div role="status" aria-live="polite" className="min-w-0">
           {message && (
             <p
@@ -295,6 +317,7 @@ export default function ParcelMap({ onSelect }: { onSelect: (parcel: LocatedParc
             </p>
           )}
           {found && <span className="sr-only">{`Znaleziono działkę ${found.id} · ${place} · ${area}`}</span>}
+        </div>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-2">
           <button
