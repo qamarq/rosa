@@ -1,5 +1,5 @@
 import type { Cause, CropId, RecommendationGroup } from "@/lib/types"
-import { Leaf, Sprout, Wheat } from "lucide-react"
+import { CropIcon as CropArt } from "@/components/start/crop-icons"
 
 export function RosaLogo({ size = 28 }: { size?: number }) {
   return (
@@ -11,22 +11,7 @@ export function RosaLogo({ size = 28 }: { size?: number }) {
 }
 
 export function CropIcon({ crop }: { crop: CropId }) {
-  if (crop === "kukurydza") {
-    return (
-      <svg width="26" height="26" viewBox="0 0 36 36" aria-hidden="true">
-        <ellipse cx="18" cy="16" rx="6.5" ry="12" fill="#F0C24B" />
-        <path d="M14 9 h8 M13 14 h10 M13 19 h10 M14 24 h8" stroke="#D9A52E" strokeWidth="1.4" />
-        <path d="M9 33 C 7 23, 10 14, 15 9 C 13 17, 14 25, 17 33 Z" fill="#7FAE45" />
-        <path d="M27 33 C 29 23, 26 14, 21 9 C 23 17, 22 25, 19 33 Z" fill="#6E9B3A" />
-      </svg>
-    )
-  }
-  const Icon = crop === "pszenica" || crop === "rzepak" ? Wheat : crop === "laka" ? Leaf : Sprout
-  return (
-    <span className="flex size-[26px] items-center justify-center" aria-hidden="true">
-      <Icon className="size-5 text-[#6E9B3A]" strokeWidth={2.4} />
-    </span>
-  )
+  return <CropArt crop={crop} className="size-[26px] flex-none" />
 }
 
 export function CalendarIcon() {

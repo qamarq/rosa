@@ -40,8 +40,11 @@ export function createPlantMaterial(time: TimeUniforms, grow: { value: number },
   const material = depth ? new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking }) : new THREE.MeshStandardMaterial({ roughness: 0.62, metalness: 0 })
   return patchMaterial(material, "rosa-plant-" + depth, {
     uniforms: { ...time, uGrow: grow },
-    vertexHead: "uniform float uTime;\nuniform float uGustStart;\nuniform float uGrow;",
+    vertexHead: "uniform float uTime;\nuniform float uGustStart;\nuniform float uGrow;\nattribute vec4 aAccent;\nvarying vec4 vAccent;",
+    fragmentHead: "varying vec4 vAccent;",
+    fragmentColor: "diffuseColor.rgb = mix(diffuseColor.rgb, vAccent.rgb, vAccent.a);",
     vertexBody: `
+      vAccent = aAccent;
       vec3 ip = vec3(instanceMatrix[3][0], instanceMatrix[3][1], instanceMatrix[3][2]);
       float d = length(ip.xz) * 0.11;
       float g = clamp(uGrow * 1.7 - d, 0.0, 1.0);
