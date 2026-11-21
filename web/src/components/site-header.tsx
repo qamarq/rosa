@@ -78,16 +78,17 @@ const NAV_LINK =
 
 const STEPS = [
   { title: "Wpisz numer działki", text: "Wybierz, co rośnie na polu i na jaki dzień ma być ocena." },
-  { title: "Zbieramy otwarte dane", text: "10 lat pogody, zdjęcia satelitarne, gleba, ukształtowanie terenu i rowy." },
+  { title: "Zbieramy otwarte dane", text: "10 lat pogody, zdjęcia satelitarne, gleba, teren, rowy, rzeki i wody gruntowe." },
   { title: "Dostajesz wynik", text: "Ile wody jest w glebie, dlaczego jej brakuje i jak ją zatrzymać na polu." },
 ]
 
 const SOURCES = [
-  { name: "Open-Meteo (ERA5)", what: "opady i parowanie z 10 lat" },
+  { name: "IMGW-PIB", what: "opady i temperatury z 10 lat, stany rzek z wodowskazów" },
   { name: "Copernicus Sentinel-2", what: "kondycja roślin ze zdjęć satelitarnych" },
   { name: "IUNG-PIB", what: "gleba i podatność na suszę" },
-  { name: "GUGiK (ULDK, NMT)", what: "granice działki i wysokości terenu" },
-  { name: "BDOT10k", what: "rowy i cieki" },
+  { name: "PIG-PIB", what: "głębokość wód gruntowych" },
+  { name: "GUGiK (EGiB, NMT, BDOT10k)", what: "granice działek, teren, rowy i cieki" },
+  { name: "Open-Meteo", what: "pogoda z ostatnich dni" },
 ]
 
 function HowItWorks() {

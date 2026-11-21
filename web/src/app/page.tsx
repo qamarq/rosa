@@ -57,7 +57,7 @@ export default function StartPage() {
             className="relative z-10 bg-sand-deep px-4 pt-2 pb-6 sm:px-8 xl:absolute xl:bottom-[26px] xl:left-[72px] xl:bg-transparent xl:p-0"
           >
             <p className="m-0 text-[13px] leading-[1.5] text-muted-foreground">
-              Otwarte dane: Open-Meteo (ERA5) · Copernicus Sentinel-2 · IUNG-PIB · GUGiK (ULDK, NMT) · BDOT10k
+              Otwarte dane: IMGW-PIB · Copernicus Sentinel-2 · IUNG-PIB · PIG-PIB · GUGiK (EGiB, NMT, BDOT10k) · Open-Meteo
             </p>
           </footer>
         </div>
