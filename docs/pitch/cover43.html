@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><title>ROSA cover</title>
+<style>
+@font-face { font-family: "Bricolage Grotesque"; src: url(fonts/BricolageGrotesque-700.ttf); font-weight: 700; }
+@font-face { font-family: "Bricolage Grotesque"; src: url(fonts/BricolageGrotesque-800.ttf); font-weight: 800; }
+@font-face { font-family: "Figtree"; src: url(fonts/Figtree-600.ttf); font-weight: 600; }
+@font-face { font-family: "Figtree"; src: url(fonts/Figtree-700.ttf); font-weight: 700; }
+:root { --accent: #0E6E73; --sun: #E9B949; --ink: #2A2118; --card: #FFFDF8 }
+* { margin: 0; padding: 0; box-sizing: border-box }
+body { width: 1600px; height: 1200px; overflow: hidden; background: var(--accent); color: #fff; font-family: Figtree, sans-serif; position: relative }
+.bg { position: absolute; inset: 0; background: radial-gradient(1100px 800px at 88% 62%, rgba(233,185,73,.22), transparent 70%) }
+.rings { position: absolute; right: -560px; top: 58%; width: 1500px; height: 1500px; transform: translateY(-50%); border-radius: 50%;
+  background: repeating-radial-gradient(circle, rgba(255,255,255,.09) 0 2px, transparent 2px 150px) }
+.brand { position: absolute; left: 90px; top: 80px; display: flex; align-items: center; gap: 24px }
+.brand img { width: 120px; height: 120px; border-radius: 30px; background: var(--card); padding: 8px }
+.acro { position: absolute; left: 86px; top: 236px; display: flex; flex-direction: column; gap: 2px }
+.acro div { display: flex; align-items: baseline; white-space: nowrap }
+.acro b { font: 800 128px/.9 "Bricolage Grotesque"; letter-spacing: -.04em; width: 110px }
+.acro span { font: 700 54px/1 "Bricolage Grotesque"; letter-spacing: -.03em; color: var(--sun) }
+.tag { position: absolute; left: 90px; top: 760px; width: 680px; font: 700 40px/1.1 "Bricolage Grotesque"; letter-spacing: -.02em }
+.pills { position: absolute; left: 90px; bottom: 132px; display: flex; flex-wrap: wrap; gap: 12px; width: 700px }
+.pill { background: rgba(255,255,255,.16); border-radius: 999px; padding: 11px 22px; font: 700 24px Figtree }
+.pill.solid { background: var(--sun); color: var(--ink) }
+.foot { position: absolute; left: 90px; bottom: 76px; font: 700 24px Figtree; opacity: .9 }
+.browser { position: absolute; border-radius: 18px; overflow: hidden; background: #EDE2CF; width: 760px; left: 790px; top: 250px; transform: rotate(-3deg) }
+.bar { height: 36px; display: flex; align-items: center; gap: 9px; padding: 0 16px; background: #E3D3B8 }
+.bar i { width: 12px; height: 12px; border-radius: 50%; background: #C9B593; display: block }
+.bar span { margin-left: 16px; font: 600 15px Figtree; color: #6B5A45; background: #F6EBD9; padding: 4px 14px; border-radius: 8px }
+.browser img { display: block; width: 100% }
+.phone { position: absolute; aspect-ratio: 390/844; border-radius: 50px; border: 12px solid #1d1712; background: #1d1712; overflow: hidden; width: 290px; left: 1230px; top: 560px; transform: rotate(6deg) }
+.phone img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; border-radius: 38px }
+</style></head><body>
+<div class="bg"></div><div class="rings"></div>
+<div class="brand"><img src="img/farmer.svg"><div style="font:700 30px/1.2 Figtree;opacity:.92">HackNation 2026 · KOWR<br>Solvro Kamil</div></div>
+<div class="acro">
+  <div><b>R</b><span>etencja</span></div>
+  <div><b>O</b><span>pady</span></div>
+  <div><b>S</b><span>usza</span></div>
+  <div><b>A</b><span>naliza</span></div>
+</div>
+<div class="tag">Ile wody ma Twoje pole i&nbsp;jak ją na nim zatrzymać. Każda działka w&nbsp;Polsce, w&nbsp;kilka sekund.</div>
+<div class="pills"><span class="pill solid">38,9 mln działek</span><span class="pill solid">Metoda IUNG</span><span class="pill">Model 3D działki</span><span class="pill">Rekomendacje KOWR</span><span class="pill">Raport PDF</span></div>
+<div class="foot">rosa.kamilmarczak.pl</div>
+<div class="browser"><div class="bar"><i></i><i></i><i></i><span>rosa.kamilmarczak.pl/dzialka/…</span></div><img src="img/w-zastawka.jpg"></div>
+<div class="phone"><img src="img/m-result.jpg"></div>
+</body></html>
