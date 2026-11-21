@@ -8,7 +8,7 @@ import type { SceneActorsProps, Vec3, WorldContext } from "../contract"
 import { Dog, Farmer } from "./characters"
 import { Dew, Dust, Rain, Shimmer, SunGlow, WaterFlow } from "./effects"
 import { Barn, Silo, Tree } from "./farmstead"
-import { computeLayout, farmerSpot, MACHINE, yawX } from "./layout"
+import { computeLayout, farmerSpot } from "./layout"
 import type { Layout, P } from "./layout"
 import { ClockContext, ShadowContext, STATIC_T } from "./motion"
 import type { ActorClock } from "./motion"
@@ -71,25 +71,11 @@ export function SceneActors({ ctx, mode, weather, ndvi, animate, quality }: Scen
     if (c.animate) c.t += Math.min(dt, 0.1)
   }, -1)
 
-  const { k, kc, km, toy } = layout
+  const { kc, km, kb, toy } = layout
   const spots = useMemo(() => farmerSpot(ctx, layout, mode), [ctx, layout, mode])
   const farmerAt = useMemo(() => world(ctx, spots.farmer), [ctx, spots])
   const dogAt = useMemo(() => world(ctx, spots.dog), [ctx, spots])
-  const parked = useMemo(() => {
-    const home = farmerSpot(ctx, layout, "hero")
-    const d: P = [home.dog[0] - home.farmer[0], home.dog[1] - home.farmer[1]]
-    const l = Math.hypot(d[0], d[1]) || 1
-    const side: P = [d[0] / l, d[1] / l]
-    const inward: P = [-side[1], side[0]]
-    const r = 4.5 * toy * MACHINE
-    for (const [a, b] of [[-1, 0], [1, 0], [-0.7, 0.7], [-0.7, -0.7], [0, 1], [0, -1]]) {
-      const p: P = [home.farmer[0] + (side[0] * a + inward[0] * b) * r, home.farmer[1] + (side[1] * a + inward[1] * b) * r]
-      if (ctx.insideParcel(p[0], p[1]) && layout.edgeDistance(p[0], p[1]) > 2 * toy * MACHINE) {
-        return { position: world(ctx, p), yaw: yawX(ctx, p, side) }
-      }
-    }
-    return null
-  }, [ctx, layout, toy])
+  const parked = useMemo(() => (layout.parked ? { position: world(ctx, layout.parked.pos), yaw: layout.parked.yaw } : null), [ctx, layout])
   const centre = useMemo(() => world(ctx, layout.inner), [ctx, layout])
 
   const happyAt = useMemo(() => {
@@ -111,17 +97,17 @@ export function SceneActors({ ctx, mode, weather, ndvi, animate, quality }: Scen
     <ClockContext.Provider value={clock}>
       <ShadowContext.Provider value={high}>
         {layout.barn && (
-          <group position={world(ctx, layout.barn.pos)} rotation={[0, layout.barn.yaw, 0]} scale={k}>
+          <group position={world(ctx, layout.barn.pos)} rotation={[0, layout.barn.yaw, 0]} scale={kb}>
             <Barn />
           </group>
         )}
         {layout.silo && (
-          <group position={world(ctx, layout.silo.pos)} scale={k}>
+          <group position={world(ctx, layout.silo.pos)} scale={kb}>
             <Silo />
           </group>
         )}
         {layout.trees.map((tree, i) => (
-          <group key={i} position={world(ctx, tree.pos)} rotation={[0, tree.yaw, 0]} scale={k * tree.scale}>
+          <group key={i} position={world(ctx, tree.pos)} rotation={[0, tree.yaw, 0]} scale={kb * tree.scale}>
             <Tree seed={i} dry={dry} />
           </group>
         ))}

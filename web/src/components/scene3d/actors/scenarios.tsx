@@ -5,7 +5,7 @@ import * as THREE from "three"
 import type { Vec3, WorldContext } from "../contract"
 import { WaterRibbon, Glow, Spray, WetDisc } from "./effects"
 import { COLORS, getKit } from "./kit"
-import { buildTrack, MACHINE, rng, sampleTrack, yawX } from "./layout"
+import { buildTrack, rng, sampleTrack, yawX } from "./layout"
 import type { Layout, P, TrackSample } from "./layout"
 import { ExcavatorModel, GateModel, Marker, newRig, SprinklerModel, TractorModel } from "./machines"
 import { angleLerp, easeInOutCubic, lerp, span, springOut, useActorFrame } from "./motion"
@@ -14,8 +14,8 @@ export const ZASTAWKA = { drive0: 0.5, drive1: 2.0, dig: 2.0, digLen: 0.9, gate:
 export const NAWADNIANIE = { appear: 0.2, spray: 0.8, grow: 4, happy: 5.0 }
 export const MIEDZYPLON_START = 0.4
 
-export function miedzyplonPass(length: number, toy: number) {
-  return Math.max(10, Math.min(16, length / (toy * 7)))
+export function miedzyplonPass(length: number, unit: number) {
+  return Math.max(10, Math.min(16, length / (unit * 7)))
 }
 
 function digPose(u: number, out: { boom: number; stick: number; bucket: number }) {
@@ -40,7 +40,7 @@ function digPose(u: number, out: { boom: number; stick: number; bucket: number }
 const offset = (p: P, a: P, da: number, b: P, db: number): P => [p[0] + a[0] * da + b[0] * db, p[1] + a[1] * da + b[1] * db]
 
 export function Zastawka({ ctx, layout }: { ctx: WorldContext; layout: Layout }) {
-  const { gate, toy, k, km } = layout
+  const { gate, toy, k, km, tm } = layout
   const track = useMemo(() => buildTrack(ctx, [gate.start, gate.approach], toy * 0.5), [ctx, gate, toy])
   const faceYaw = useMemo(() => yawX(ctx, gate.approach, [-gate.side[0], -gate.side[1]]), [ctx, gate])
   const gateYaw = useMemo(() => yawX(ctx, gate.pos, gate.along), [ctx, gate])
@@ -49,10 +49,10 @@ export function Zastawka({ ctx, layout }: { ctx: WorldContext; layout: Layout })
   const mounds = useMemo(
     () =>
       [
-        offset(gate.pos, gate.side, 1.5 * toy * MACHINE, gate.along, 1.4 * toy * MACHINE),
-        offset(gate.pos, gate.side, 1.8 * toy * MACHINE, gate.along, -1.2 * toy * MACHINE),
+        offset(gate.pos, gate.side, 1.5 * tm, gate.along, 1.4 * tm),
+        offset(gate.pos, gate.side, 1.8 * tm, gate.along, -1.2 * tm),
       ].map((p) => ctx.toWorld(p[0], p[1])),
-    [ctx, gate, toy],
+    [ctx, gate, tm],
   )
   const rig = useRef(newRig())
   const exc = useRef<THREE.Group>(null)
@@ -111,7 +111,7 @@ export function Zastawka({ ctx, layout }: { ctx: WorldContext; layout: Layout })
           visible={false}
         />
       ))}
-      <WaterRibbon ctx={ctx} points={gate.ribbon} halfWidth={toy * 0.85} k={k} riseAt={ZASTAWKA.rise} duration={ZASTAWKA.riseLen} />
+      <WaterRibbon ctx={ctx} points={gate.ribbon} halfWidth={Math.max(toy * 0.85, tm * 0.75)} k={k} riseAt={ZASTAWKA.rise} duration={ZASTAWKA.riseLen} />
       <Glow position={glowAt} size={k * 9} startAt={ZASTAWKA.rise} />
     </group>
   )
@@ -159,11 +159,11 @@ function buildTufts(ctx: WorldContext, layout: Layout, cap: number, lag: number)
 const dummy = new THREE.Object3D()
 
 export function Miedzyplon({ ctx, layout, quality }: { ctx: WorldContext; layout: Layout; quality: "high" | "low" }) {
-  const { toy, k, km } = layout
+  const { toy, k, km, tm } = layout
   const track = useMemo(() => buildTrack(ctx, layout.path, toy * 0.6), [ctx, layout, toy])
   const pass = miedzyplonPass(track.length, toy)
   const speed = track.length / pass
-  const tufts = useMemo(() => buildTufts(ctx, layout, quality === "high" ? 900 : 320, 2.8 * toy * MACHINE), [ctx, layout, quality, toy])
+  const tufts = useMemo(() => buildTufts(ctx, layout, quality === "high" ? 900 : 320, 2.8 * tm), [ctx, layout, quality, tm])
   const material = useMemo(() => new THREE.MeshStandardMaterial({ color: "#FFFFFF", roughness: 0.7 }), [])
   useEffect(() => () => material.dispose(), [material])
   const inst = useRef<THREE.InstancedMesh>(null)
@@ -202,7 +202,7 @@ export function Miedzyplon({ ctx, layout, quality }: { ctx: WorldContext; layout
     const r = rig.current
     r.moving = true
     r.seeding = leg === 0
-    r.roll = (tt * speed) / (toy * MACHINE * 0.64)
+    r.roll = (tt * speed) / (tm * 0.64)
     const m = inst.current
     if (!m || grown.current) return
     const done = MIEDZYPLON_START + (tufts.reveal[tufts.count - 1] ?? 0) / speed + 1

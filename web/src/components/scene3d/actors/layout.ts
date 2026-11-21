@@ -3,8 +3,12 @@ import type { WorldContext } from "../contract"
 
 export type P = [number, number]
 
-export const CHAR = 1.7
-export const MACHINE = 1.4
+const ACTOR = 0.085
+const MACHINE = 0.8
+const BUILDING = 0.34
+const VIEW_AZ = -0.38
+export const VIEW: P = [Math.sin(VIEW_AZ), -Math.cos(VIEW_AZ)]
+export const LATERAL: P = [-VIEW[1], VIEW[0]]
 
 export function rng(seed: number) {
   let a = seed >>> 0
@@ -186,8 +190,12 @@ export type Layout = {
   rEq: number
   toy: number
   k: number
+  tc: number
+  tm: number
+  tb: number
   kc: number
   km: number
+  kb: number
   bbox: [number, number, number, number]
   barn: Site | null
   silo: Site | null
@@ -198,6 +206,7 @@ export type Layout = {
   path: P[]
   sprinkler: P
   wetR: number
+  parked: Site | null
   edgeDistance: (x: number, y: number) => number
   randomInside: (rand: () => number) => P
 }
@@ -207,13 +216,24 @@ export function computeLayout(ctx: WorldContext): Layout {
   const area = signedArea(ring)
   const ccw = area > 0
   const rEq = Math.max(20, Math.sqrt(Math.abs(area) / Math.PI))
-  const toy = Math.max(1, Math.min(16, rEq / 26))
+  const H = ctx.scene.halfExtentM
+  const viewR = Math.min(H * 1.2, Math.max(ctx.parcelRadiusM * 1.6, H * 0.35))
+  const tc = viewR * ACTOR
+  const tm = tc * MACHINE
+  const tb = tc * BUILDING
+  const toy = Math.max(1, rEq / 26, viewR * 0.012)
   const k = toy * ctx.metersToWorld
   let centre = areaCentroid(ring)
   const xs = ring.map((p) => p[0])
   const ys = ring.map((p) => p[1])
   const bbox: [number, number, number, number] = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)]
-  const half = ctx.scene.halfExtentM * 0.94
+  const cornerM = 0.2 * H
+  const innerH = H - cornerM
+  const islandSdf = (x: number, y: number) => {
+    const qx = Math.abs(x) - innerH
+    const qy = Math.abs(y) - innerH
+    return Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - cornerM
+  }
   const edgeDistance = (x: number, y: number) => closestOnPolyline(ring, x, y, true).d
   const inside = (x: number, y: number) => ctx.insideParcel(x, y)
 
@@ -233,6 +253,9 @@ export function computeLayout(ctx: WorldContext): Layout {
     }
   }
   if (!inside(centre[0], centre[1])) centre = inner
+  const lowP = ctx.lowestParcelPoint as P
+  const ditchLine = ctx.nearestDitch && ctx.nearestDitch.points.length >= 2 ? (ctx.nearestDitch.points as P[]) : null
+  const ditchLabel = ditchLine ? closestOnPolyline(ditchLine, lowP[0], lowP[1]) : null
 
   const randomInside = (rand: () => number): P => {
     for (let n = 0; n < 60; n++) {
@@ -246,8 +269,15 @@ export function computeLayout(ctx: WorldContext): Layout {
   const water = ctx.scene.waterLines.map((w) => w.points as P[]).filter((p) => p.length >= 2)
   const waterAreas = ctx.scene.waterAreas.map((r) => openRing(r as P[]))
   const taken: { p: P; r: number }[] = []
+  const landOk = (x: number, y: number, clear: number) => {
+    if (islandSdf(x, y) > -clear - H * 0.04) return false
+    for (const w of water) if (closestOnPolyline(w, x, y).d < clear + toy * 1.5) return false
+    for (const a of waterAreas) if (pointInRing(a, x, y) || closestOnPolyline(a, x, y, true).d < clear) return false
+    for (const t of taken) if (Math.hypot(t.p[0] - x, t.p[1] - y) < t.r + clear) return false
+    return true
+  }
   const siteOk = (x: number, y: number, clear: number) => {
-    if (Math.abs(x) > half - clear || Math.abs(y) > half - clear) return false
+    if (islandSdf(x, y) > -clear - H * 0.04) return false
     if (inside(x, y) || edgeDistance(x, y) < clear) return false
     for (const w of water) if (closestOnPolyline(w, x, y).d < clear + toy * 1.5) return false
     for (const a of waterAreas) if (pointInRing(a, x, y) || closestOnPolyline(a, x, y, true).d < clear) return false
@@ -273,13 +303,14 @@ export function computeLayout(ctx: WorldContext): Layout {
     return out
   }
 
-  const northScore = (p: P) => (p[1] - centre[1]) / rEq - 0.15 * Math.abs(p[0] - centre[0]) / rEq
+  const backScore = (p: P) => -((p[0] - centre[0]) * VIEW[0] + (p[1] - centre[1]) * VIEW[1]) / rEq
+  const barnScore = (p: P) => Math.abs((p[0] - centre[0]) * LATERAL[0] + (p[1] - centre[1]) * LATERAL[1]) / rEq + 0.6 * backScore(p)
 
   let barn: Site | null = null
   let silo: Site | null = null
   const trees: Site[] = []
-  const barnClear = 6 * toy
-  const barnCands = edgeCands(barnClear + toy).sort((a, b) => northScore(b.p) - northScore(a.p))
+  const barnClear = 5.6 * tb
+  const barnCands = edgeCands(barnClear + tb).sort((a, b) => barnScore(b.p) - barnScore(a.p))
   let barnCand: Cand | null = null
   for (const c of barnCands) {
     if (siteOk(c.p[0], c.p[1], barnClear)) {
@@ -292,62 +323,108 @@ export function computeLayout(ctx: WorldContext): Layout {
     barn = { pos: barnCand.p, yaw: yawZ(ctx, barnCand.p, inward), scale: 1 }
     taken.push({ p: barnCand.p, r: barnClear })
     const siloCands: P[] = []
-    for (const d of [8.4, 10])
+    for (const d of [7.8, 9.5])
       for (const out of [0, 1.5])
         for (const sign of [1, -1])
           siloCands.push([
-            barnCand.p[0] + barnCand.t[0] * sign * d * toy + barnCand.n[0] * out * toy,
-            barnCand.p[1] + barnCand.t[1] * sign * d * toy + barnCand.n[1] * out * toy,
+            barnCand.p[0] + barnCand.t[0] * sign * d * tb + barnCand.n[0] * out * tb,
+            barnCand.p[1] + barnCand.t[1] * sign * d * tb + barnCand.n[1] * out * tb,
           ])
     for (const p of siloCands) {
       const sign = (p[0] - barnCand.p[0]) * barnCand.t[0] + (p[1] - barnCand.p[1]) * barnCand.t[1] > 0 ? 1 : -1
-      if (siteOk(p[0], p[1], 1.6 * toy)) {
+      if (siteOk(p[0], p[1], 1.6 * tb)) {
         silo = { pos: p, yaw: 0, scale: 1 }
-        taken.push({ p, r: 1.6 * toy })
-        const q: P = [p[0] + barnCand.t[0] * sign * 4 * toy + barnCand.n[0] * toy, p[1] + barnCand.t[1] * sign * 4 * toy + barnCand.n[1] * toy]
-        if (siteOk(q[0], q[1], 2.2 * toy)) {
+        taken.push({ p, r: 1.6 * tb })
+        const q: P = [p[0] + barnCand.t[0] * sign * 4 * tb + barnCand.n[0] * tb, p[1] + barnCand.t[1] * sign * 4 * tb + barnCand.n[1] * tb]
+        if (siteOk(q[0], q[1], 2.2 * tb)) {
           trees.push({ pos: q, yaw: 0, scale: 1.15 })
-          taken.push({ p: q, r: 2.2 * toy })
+          taken.push({ p: q, r: 2.2 * tb })
         }
         break
       }
     }
     for (const sign of [-1, 1]) {
       const p: P = [
-        barnCand.p[0] - barnCand.t[0] * sign * 8.5 * toy + barnCand.n[0] * 2 * toy,
-        barnCand.p[1] - barnCand.t[1] * sign * 8.5 * toy + barnCand.n[1] * 2 * toy,
+        barnCand.p[0] - barnCand.t[0] * sign * 8 * tb + barnCand.n[0] * 2 * tb,
+        barnCand.p[1] - barnCand.t[1] * sign * 8 * tb + barnCand.n[1] * 2 * tb,
       ]
-      if (siteOk(p[0], p[1], 2.2 * toy)) {
+      if (siteOk(p[0], p[1], 2.2 * tb)) {
         trees.push({ pos: p, yaw: 0, scale: 1 })
-        taken.push({ p, r: 2.2 * toy })
+        taken.push({ p, r: 2.2 * tb })
         break
       }
     }
   }
-  const treeCands = edgeCands(3.2 * toy).sort((a, b) => northScore(b.p) - northScore(a.p))
+  const treeCands = edgeCands(3 * tb).sort((a, b) => backScore(b.p) - backScore(a.p))
   const rand = rng(7)
   for (const c of treeCands) {
     if (trees.length >= 7) break
     if (trees.some((t) => Math.hypot(t.pos[0] - c.p[0], t.pos[1] - c.p[1]) < rEq * 0.4)) continue
-    if (!siteOk(c.p[0], c.p[1], 2.2 * toy)) continue
+    if (!siteOk(c.p[0], c.p[1], 2.2 * tb)) continue
     trees.push({ pos: c.p, yaw: rand() * 6.28, scale: 0.85 + rand() * 0.35 })
-    taken.push({ p: c.p, r: 2.2 * toy })
-    const q: P = [c.p[0] + c.t[0] * 3.2 * toy + c.n[0] * 1.2 * toy, c.p[1] + c.t[1] * 3.2 * toy + c.n[1] * 1.2 * toy]
-    if (siteOk(q[0], q[1], 1.8 * toy)) {
+    taken.push({ p: c.p, r: 2.2 * tb })
+    const q: P = [c.p[0] + c.t[0] * 3.2 * tb + c.n[0] * 1.2 * tb, c.p[1] + c.t[1] * 3.2 * tb + c.n[1] * 1.2 * tb]
+    if (siteOk(q[0], q[1], 1.8 * tb)) {
       trees.push({ pos: q, yaw: rand() * 6.28, scale: 0.7 + rand() * 0.2 })
-      taken.push({ p: q, r: 1.8 * toy })
+      taken.push({ p: q, r: 1.8 * tb })
     }
   }
 
+  const anchor: P = barn?.pos ?? [centre[0] - VIEW[0] * rEq, centre[1] - VIEW[1] * rEq]
   let home: P = inner
-  const anchor = barn?.pos ?? [centre[0], bbox[3]]
-  const edge = closestOnPolyline(ring, anchor[0], anchor[1], true)
-  const toCentre = norm(inner[0] - edge.x, inner[1] - edge.y)
-  for (const d of [6, 9, 12]) {
-    const p: P = [edge.x + toCentre[0] * d * toy, edge.y + toCentre[1] * d * toy]
-    if (inside(p[0], p[1]) && edgeDistance(p[0], p[1]) > 2.5 * toy) {
-      home = p
-      break
+  let homeScore = -Infinity
+  if (barn) {
+    for (let i = 0; i < 24; i++) {
+      const a = (i / 24) * Math.PI * 2
+      const dir: P = [Math.cos(a), Math.sin(a)]
+      const x = barn.pos[0] + dir[0] * (4.6 * tb + 1.1 * tc)
+      const y = barn.pos[1] + dir[1] * (4.6 * tb + 1.1 * tc)
+      if (!landOk(x, y, 0.6 * tc)) continue
+      if (ditchLabel && Math.hypot(x - ditchLabel.x, y - ditchLabel.y) < 2.5 * tc) continue
+      if (Math.hypot(x - centre[0], y - centre[1]) < 2.5 * tc) continue
+      const e = inside(x, y) ? 0 : edgeDistance(x, y)
+      const score = -e / rEq + 0.8 * (dir[0] * VIEW[0] + dir[1] * VIEW[1])
+      if (score > homeScore) {
+        homeScore = score
+        home = [x, y]
+      }
+    }
+  }
+  if (homeScore === -Infinity) {
+  const G = 28
+  for (let i = 0; i <= G; i++) {
+    for (let j = 0; j <= G; j++) {
+      const x = bbox[0] + ((bbox[2] - bbox[0]) * i) / G
+      const y = bbox[1] + ((bbox[3] - bbox[1]) * j) / G
+      if (!inside(x, y)) continue
+      const e = edgeDistance(x, y)
+      if (e < 1.2 * tc) continue
+      const front = ((x - centre[0]) * VIEW[0] + (y - centre[1]) * VIEW[1]) / rEq
+      const near = Math.hypot(x - anchor[0], y - anchor[1]) / rEq
+      const label = Math.hypot(x - centre[0], y - centre[1]) < 2.5 * tc ? 1 : 0
+      const ditchD = ditchLabel ? Math.hypot(x - ditchLabel.x, y - ditchLabel.y) : Infinity
+      const score = -near + 0.35 * front - 0.25 * (e / rEq) - label - (ditchD < 3.5 * tc ? 1 : 0)
+      if (score > homeScore) {
+        homeScore = score
+        home = [x, y]
+      }
+    }
+  }
+  }
+  taken.push({ p: home, r: 1.2 * tc })
+
+  let parked: Site | null = null
+  {
+    const toInner = (home[0] - inner[0]) * LATERAL[0] + (home[1] - inner[1]) * LATERAL[1]
+    const away = toInner > 0 ? 1 : -1
+    const r = 2.6 * tm
+    for (const [a, b] of [[-1, -0.3], [-0.8, -0.8], [-1.4, 0], [1, -0.9], [0, -1.3], [-0.6, 0.9], [1.4, 0.4]]) {
+      const p: P = [home[0] + (LATERAL[0] * a * away + VIEW[0] * b) * r, home[1] + (LATERAL[1] * a * away + VIEW[1] * b) * r]
+      const ok = landOk(p[0], p[1], 1.2 * tm) && (!inside(p[0], p[1]) || edgeDistance(p[0], p[1]) > 0.5 * tm)
+      if (ok && Math.hypot(p[0] - centre[0], p[1] - centre[1]) > 1.5 * tc && (!ditchLabel || Math.hypot(p[0] - ditchLabel.x, p[1] - ditchLabel.y) > 2 * tc)) {
+        parked = { pos: p, yaw: yawX(ctx, p, [LATERAL[0] * a * away + VIEW[0] * 0.6, LATERAL[1] * a * away + VIEW[1] * 0.6]), scale: 1 }
+        break
+      }
     }
   }
 
@@ -365,7 +442,7 @@ export function computeLayout(ctx: WorldContext): Layout {
     const cum = cumulative(ditch)
     const sQ = cum[q.i] + q.t * (cum[q.i + 1] - cum[q.i])
     const ribbon: P[] = []
-    const L = 7 * toy
+    const L = Math.max(7 * toy, 3.5 * tm)
     for (let s = sQ - L; s <= sQ + L + 1e-6; s += Math.max(toy * 0.7, 0.5)) ribbon.push(pointAt(ditch, cum, s))
     const pos: P = [q.x, q.y]
     gate = {
@@ -373,8 +450,8 @@ export function computeLayout(ctx: WorldContext): Layout {
       along,
       side,
       onDitch: true,
-      approach: [pos[0] + side[0] * 3.1 * toy * MACHINE, pos[1] + side[1] * 3.1 * toy * MACHINE],
-      start: [pos[0] + side[0] * 14 * toy + along[0] * 4 * toy, pos[1] + side[1] * 14 * toy + along[1] * 4 * toy],
+      approach: [pos[0] + side[0] * 3.1 * tm, pos[1] + side[1] * 3.1 * tm],
+      start: [pos[0] + side[0] * 9 * tm + along[0] * 3 * tm, pos[1] + side[1] * 9 * tm + along[1] * 3 * tm],
       ribbon,
     }
   } else {
@@ -387,9 +464,9 @@ export function computeLayout(ctx: WorldContext): Layout {
       along,
       side,
       onDitch: false,
-      approach: [low[0] + side[0] * 3.1 * toy * MACHINE, low[1] + side[1] * 3.1 * toy * MACHINE],
-      start: [low[0] + side[0] * 14 * toy, low[1] + side[1] * 14 * toy],
-      ribbon: [-5, -2.5, 0, 2.5, 5].map((s): P => [low[0] + along[0] * s * toy, low[1] + along[1] * s * toy]),
+      approach: [low[0] + side[0] * 3.1 * tm, low[1] + side[1] * 3.1 * tm],
+      start: [low[0] + side[0] * 9 * tm, low[1] + side[1] * 9 * tm],
+      ribbon: [-3, -1.5, 0, 1.5, 3].map((s): P => [low[0] + along[0] * s * tm, low[1] + along[1] * s * tm]),
     }
   }
 
@@ -450,7 +527,7 @@ export function computeLayout(ctx: WorldContext): Layout {
         s1 = hits[i + 1]
       }
     }
-    const margin = 2.5 * toy
+    const margin = Math.max(2.5 * toy, 1.5 * tm)
     if (s1 - s0 < margin * 3) continue
     s0 += margin
     s1 -= margin
@@ -470,27 +547,27 @@ export function computeLayout(ctx: WorldContext): Layout {
   }
 
   const sprinkler = inner
-  const wetR = Math.max(2.5 * toy, Math.min(7 * toy, edgeDistance(inner[0], inner[1]) * 1.1))
+  const wetR = Math.max(2.2 * tm, Math.min(7 * toy, edgeDistance(inner[0], inner[1]) * 1.1))
 
-  return { ring, centre, inner, rEq, toy, k, kc: k * CHAR, km: k * MACHINE, bbox, barn, silo, trees, home, gate, rows, path, sprinkler, wetR, edgeDistance, randomInside }
+  return { ring, centre, inner, rEq, toy, k, tc, tm, tb, kc: tc * ctx.metersToWorld, km: tm * ctx.metersToWorld, kb: tb * ctx.metersToWorld, bbox, barn, silo, trees, home, gate, rows, path, sprinkler, wetR, parked, edgeDistance, randomInside }
 }
 
 export function farmerSpot(ctx: WorldContext, layout: Layout, mode: SceneMode): { farmer: P; dog: P } {
-  const { toy, gate, home, sprinkler, wetR } = layout
+  const { tc, tm, gate, home, sprinkler, wetR } = layout
   let farmer = home
   if (mode === "zastawka") {
     farmer = [
-      gate.pos[0] + gate.side[0] * 3 * toy * MACHINE + gate.along[0] * 4.2 * toy * MACHINE,
-      gate.pos[1] + gate.side[1] * 3 * toy * MACHINE + gate.along[1] * 4.2 * toy * MACHINE,
+      gate.pos[0] + gate.side[0] * 3 * tm + gate.along[0] * 4.2 * tm,
+      gate.pos[1] + gate.side[1] * 3 * tm + gate.along[1] * 4.2 * tm,
     ]
   } else if (mode === "nawadnianie") {
     const d = norm(home[0] - sprinkler[0], home[1] - sprinkler[1])
-    const p: P = [sprinkler[0] + d[0] * (wetR + 2 * toy * CHAR), sprinkler[1] + d[1] * (wetR + 2 * toy * CHAR)]
+    const p: P = [sprinkler[0] + d[0] * (wetR + 1.2 * tc), sprinkler[1] + d[1] * (wetR + 1.2 * tc)]
     if (ctx.insideParcel(p[0], p[1])) farmer = p
   }
-  const t = norm(farmer[0] - layout.inner[0], farmer[1] - layout.inner[1])
-  const side: P = t[0] === 0 && t[1] === 0 ? [1, 0] : [-t[1], t[0]]
-  const dog: P = [farmer[0] + side[0] * 1.3 * toy * CHAR, farmer[1] + side[1] * 1.3 * toy * CHAR]
+  const toInner = (farmer[0] - layout.inner[0]) * LATERAL[0] + (farmer[1] - layout.inner[1]) * LATERAL[1]
+  const s = toInner > 0 ? -1 : 1
+  const dog: P = [farmer[0] + LATERAL[0] * s * 0.75 * tc + VIEW[0] * 0.25 * tc, farmer[1] + LATERAL[1] * s * 0.75 * tc + VIEW[1] * 0.25 * tc]
   return { farmer, dog }
 }
 
