@@ -14,7 +14,7 @@ import type { ParcelRecord } from "@/server/sources/parcel"
 import type { WeatherStation } from "@/server/sources/meteo"
 import type { SoilCategory } from "@/server/sources/soil"
 import type { TerrainSummary } from "@/server/sources/terrain"
-import { CROP_PROFILES, MONTHS_GEN_PL } from "./crop-profiles"
+import { CROP_PROFILES, MONTHS_PL } from "./crop-profiles"
 import type { BalanceResult } from "./water-balance"
 
 export type EngineInput = {
@@ -152,7 +152,7 @@ export function buildAnalysis(input: EngineInput): Analysis {
     causes.push({
       id: "uprawa",
       kind: "uprawa",
-      value: MONTHS_GEN_PL[month - 1],
+      value: capitalize(MONTHS_PL[month - 1]),
       title: `${cropName}: okres krytyczny`,
       detail: `To okres ${crop.criticalLabel}, kiedy ${cropName.toLocaleLowerCase("pl-PL")} najbardziej potrzebuje wody.`,
       source: "FAO-56, wiedza agronomiczna",
