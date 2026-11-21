@@ -2,7 +2,7 @@
 
 Narzędzie webowe dla rolnika: wpisujesz numer działki ewidencyjnej, wybierasz uprawę i dzień analizy, a ROSA w kilka sekund ocenia sytuację wodną działki na tle ostatnich 10 lat, wyjaśnia przyczyny niedoboru wody i podpowiada, jak zatrzymać wodę na polu (retencja → agrotechnika → ewentualnie nawadnianie). Wynik można pobrać jako raport A4 (PDF lub wydruk).
 
-**Wersja działająca:** https://rosa.kamilmarczak.pl
+**Wersja działająca (zalecana do oceny):** https://rosa.kamilmarczak.pl — pełne dane dla całej Polski. Uruchomienie lokalne bez bazy danych daje tylko tryb demonstracyjny (sekcja 1).
 
 Zadanie: Krajowy Ośrodek Wsparcia Rolnictwa, „Zatrzymaj Wodę, Chroń Plony”, HackNation 2026.
 
@@ -12,7 +12,7 @@ Zadanie: Krajowy Ośrodek Wsparcia Rolnictwa, „Zatrzymaj Wodę, Chroń Plony�
 
 ### Wymagania
 - Node.js 22+ i pnpm 11 (`corepack enable`)
-- PostgreSQL 16+ z PostGIS 3.4+ z zaimportowanymi danymi (sekcja 5). Bez bazy aplikacja działa w trybie demonstracyjnym na danych przykładowych.
+- PostgreSQL 16+ z PostGIS 3.4+ z zaimportowanymi danymi (sekcja 5). Bez bazy aplikacja działa w **trybie demonstracyjnym**: obsługuje wyłącznie działkę przykładową, wynik ma widoczny baner „Dane przykładowe”, a każdy inny numer działki dostaje komunikat z odnośnikiem do wersji działającej. Tryb demonstracyjny nie jest oceną dowolnej działki.
 - Docker (opcjonalnie: obraz produkcyjny i skrypty importu)
 
 ### Lokalnie
@@ -37,7 +37,7 @@ Wdrożenie produkcyjne: Coolify na własnym serwerze, aplikacja budowana z `web/
 | Zmienna | Opis |
 |---|---|
 | `DATABASE_URL` | Połączenie z PostgreSQL/PostGIS (`postgres://user:hasło@host:port/baza`). Brak = tryb demonstracyjny. |
-| `ROSA_DATA_MODE=mock` | Wymusza dane przykładowe, np. do prezentacji bez sieci. |
+| `ROSA_DATA_MODE=mock` | Wymusza tryb demonstracyjny (tylko działka przykładowa, z banerem „Dane przykładowe”), np. do prezentacji bez sieci. |
 | `ROSA_SATELLITE_BUDGET_MS` | Limit czasu na pobranie zdjęcia Sentinel-2 w tle (domyślnie 15000 ms, na produkcji 20000 ms). |
 
 ### Import danych do bazy (jednorazowo, potem okresowo w tle)
@@ -59,18 +59,19 @@ docker run --rm -e PGHOST=... -e PGPASSWORD=... -v /dane/bdot:/work -v $PWD/scri
    - **Wyszukiwarka na mapie**: wieś lub obręb i gmina (podpowiedzi od 2 liter, bez polskich znaków), adres z numerem („Poznań, Głogowska 10”, „Małachowo 12”), ulica, „obręb + numer działki” („Małachowo 399”) albo pełny identyfikator działki.
 2. **Przelot do działki (~5 s, jedno ujęcie 3D)**: kamera leci nad Polską do pinezki, obrys działki rysuje się na ortofotomapie, teren unosi się w 3D, źródła danych „przylatują”, a na końcu panel wyniku wjeżdża z prawej bez przeładowania strony. Animacja ładuje dane w trakcie: jeśli dany etap nie jest gotowy, ujęcie płynnie czeka (kamera krąży, scena żyje), bez widocznych wskaźników ładowania. Opcjonalne dźwięki (Web Audio, generowane w kodzie) z przyciskiem wyciszenia. Bez WebGL, w trybie lekkim lub przy ograniczonym ruchu: wersja SVG.
 3. **Model 3D działki**: budowany na żywo z danych tej działki: teren z NMT GUGiK (siatka 33×33 punkty, rzeźba przewyższona ×1,5–12 z informacją o krotności), granica działki i sąsiednie działki z EGiB, rowy, cieki i zbiorniki z BDOT10k, kierunek spływu, uprawa wybrana przez użytkownika w kolorze wynikającym z NDVI lub poziomu suszy, pogoda z wyniku analizy. Farma, drzewa, postacie i maszyny są poglądowe. Obrót przeciąganiem, przybliżanie gestem (pinch, kółko, touchpad) i przyciskami.
-4. **Wskaźnik kompletności danych** na scenie: „Dane: komplet ✓”, „4/5 · dociągam zdjęcie satelitarne” albo „4/5 · brak: …”, z listą źródeł i ich stanem po kliknięciu.
-5. **Stan wody teraz** (dla dat z przeszłości: „Stan wody <data>”): poziom suszy w skali 1–5 (Mokro, W normie, Susza umiarkowana / silna / ekstremalna). W sezonie (21.III–30.IX) liczony metodą IUNG z rozporządzenia MRiRW: klimatyczny bilans wodny z 60 dni porównany z progiem dla uprawy i kategorii gleby (im dalej poniżej progu, tym wyższy poziom). Poza sezonem albo gdy IUNG nie wyznacza progu: bilans wodny porównany z tym samym okresem w 10 poprzednich latach.
-6. **Na tle 10 lat**: wykres odchyleń bilansu wodnego rok po roku, liczba lat z deficytem i najbardziej narażone miesiące.
-7. **Dlaczego brakuje wody**: przyczyny wyliczone z danych: mniej deszczu niż zwykle, upał, lekka gleba, spływ wody po spadku terenu, okres krytyczny uprawy.
-8. **Co zrobić**: rekomendacje w kolejności wymaganej przez KOWR:
+4. **Kondycja roślin z satelity, z uwzględnieniem uprawy**: NDVI z Sentinel-2 porównujemy z typowym NDVI wybranej uprawy w danym miesiącu (profile dla 6 upraw). Gdy rośliny są wyraźnie słabsze niż typowo (poniżej 80% normy), a bilans wodny pokazuje suszę, pojawia się przyczyna „Rośliny już reagują na brak wody” i rośnie pewność wyniku. Gdy satelita i bilans wodny się nie zgadzają albo uprawa w tym okresie nie pokrywa pola (np. ściernisko po żniwach), informujemy o tym w „Czego nie wiemy” zamiast wyciągać wnioski. Poziom suszy liczymy metodą IUNG z bilansu wodnego, a NDVI jej nie zastępuje.
+5. **Wskaźnik kompletności danych** na scenie: „Dane: komplet ✓”, „4/5 · dociągam zdjęcie satelitarne” albo „4/5 · brak: …”, z listą źródeł i ich stanem po kliknięciu.
+6. **Stan wody teraz** (dla dat z przeszłości: „Stan wody <data>”): poziom suszy w skali 1–5 (Mokro, W normie, Susza umiarkowana / silna / ekstremalna). W sezonie (21.III–30.IX) liczony metodą IUNG z rozporządzenia MRiRW: klimatyczny bilans wodny z 60 dni porównany z progiem dla uprawy i kategorii gleby (im dalej poniżej progu, tym wyższy poziom). Poza sezonem albo gdy IUNG nie wyznacza progu: bilans wodny porównany z tym samym okresem w 10 poprzednich latach.
+7. **Na tle 10 lat**: wykres odchyleń bilansu wodnego rok po roku, liczba lat z deficytem i najbardziej narażone miesiące.
+8. **Dlaczego brakuje wody**: przyczyny wyliczone z danych: mniej deszczu niż zwykle, upał, lekka gleba, spływ wody po spadku terenu, okres krytyczny uprawy, słabsza niż typowo roślinność na zdjęciu satelitarnym.
+9. **Co zrobić**: rekomendacje w kolejności wymaganej przez KOWR:
    - zatrzymanie wody: zastawka na rowie przy działce (gdy BDOT10k pokazuje rów do 30 m od działki), zatrzymanie spływu w dolnej części pola (spadek ≥ 1,5%), utrzymanie wody gruntowej na glebach organicznych;
    - agrotechnika: międzyplon, resztki pożniwne, ograniczenie orki, wysokość koszenia łąki;
    - nawadnianie (opcjonalnie): dawka z zapotrzebowania uprawy (ET0 × Kc wg FAO-56) minus opad z ostatnich 7 dni.
    Każda rekomendacja ma „Dlaczego to polecamy” z liczbami i źródłem. Kliknięcie pokazuje działanie na modelu 3D działki (np. koparka przy zastawce na najbliższym prawdziwym rowie), bez zmiany ujęcia kamery.
-9. **Pewność i „Czego nie wiemy”**: jawny poziom pewności i lista ograniczeń dla tej konkretnej analizy (odległość do stacji, brak zdjęcia satelitarnego, działka nierolnicza itd.).
-10. **Raport**: plik PDF generowany na serwerze jednym kliknięciem („Pobierz PDF”, `GET /api/analyses/<id>/pdf`: plan działki z rowami, stan wody, historia, przyczyny, rekomendacje, źródła z datami pobrania i licencjami) oraz wersja HTML A4 do druku. Każda analiza ma stały link `/dzialka/<id>`.
-11. **Tryb lekki**: bez animacji, dla słabszych komputerów i wolnego łącza; włącza się sam przy `prefers-reduced-motion` lub wolnym połączeniu.
+10. **Pewność i „Czego nie wiemy”**: jawny poziom pewności i lista ograniczeń dla tej konkretnej analizy (odległość do stacji, brak zdjęcia satelitarnego, działka nierolnicza itd.).
+11. **Raport**: plik PDF generowany na serwerze jednym kliknięciem („Pobierz PDF”, `GET /api/analyses/<id>/pdf`: plan działki z rowami, stan wody, historia, przyczyny, rekomendacje, źródła z datami pobrania i licencjami) oraz wersja HTML A4 do druku. Każda analiza ma stały link `/dzialka/<id>`.
+12. **Tryb lekki**: bez animacji, dla słabszych komputerów i wolnego łącza; włącza się sam przy `prefers-reduced-motion` lub wolnym połączeniu.
 
 ---
 
@@ -113,8 +114,9 @@ Szczegóły: `docs/architektura.md`, `docs/concept.md`.
 | Adresy i ulice | GUGiK, Usługa Geokodowania (UUG, `services.gugik.gov.pl/uug`), dane PRG | cała Polska | wyszukiwanie adresu z numerem i ulicy |
 | Nazwy obrębów i gmin | wyliczone z tabeli działek EGiB (tabela `rosa_place`) | 54 144 obręby, 3 221 jednostek gminnych | wyszukiwarka nazw z podpowiedziami |
 | Rowy melioracyjne, cieki, kanały, wody powierzchniowe | GUGiK, BDOT10k (paczki GPKG na powiat, warstwy `OT_SWRM_L`, `OT_SWRS_L`, `OT_SWKN_L`, `OT_PTWP_A`) | cała Polska, 380 powiatów: 1,64 mln rowów, 506 tys. cieków, 8,9 tys. kanałów, 606 tys. wód powierzchniowych (1,1 GB) | zastawka na rowie, sąsiedztwo wody |
-| Kondycja roślin (NDVI) | Copernicus Sentinel-2 L2A: COG z rejestru AWS Open Data (katalog STAC Earth Search, Element 84) oraz archiwum Microsoft Planetary Computer (zdjęcia od 2016) | najnowsza scena z 30 dni przed dniem analizy (dla dat starszych niż 30 dni: z 60 dni), zachmurzenie < 60%, min. 50% bezchmurnych pikseli w granicy działki | kondycja roślin na scenie i w raporcie |
+| Kondycja roślin (NDVI) | Copernicus Sentinel-2 L2A: COG z rejestru AWS Open Data (katalog STAC Earth Search, Element 84) oraz archiwum Microsoft Planetary Computer (zdjęcia od 2016) | najnowsza scena z 30 dni przed dniem analizy (dla dat starszych niż 30 dni: z 60 dni), zachmurzenie < 60%, min. 50% bezchmurnych pikseli w granicy działki | kondycja roślin względem typowej dla uprawy i miesiąca; przyczyna „rośliny reagują na brak wody”, korekta pewności |
 | Współczynniki upraw Kc, okresy krytyczne | FAO-56 (Allen i in.), uproszczone dla Polski | 6 upraw | nawadnianie, przyczyna „okres krytyczny” |
+| Typowe NDVI upraw w miesiącach | profile własne na podstawie typowych krzywych NDVI dla upraw w Europie Środkowej (fenologia: siew, pełnia wegetacji, dojrzewanie, zbiór) | 6 upraw × 12 miesięcy | interpretacja NDVI zależna od uprawy (`web/src/server/analysis/crop-profiles.ts`) |
 
 ---
 
@@ -234,4 +236,41 @@ GUGiK (opendata.geoportal.gov.pl, services.gugik.gov.pl), IMGW-PIB (danepubliczn
 - **Wyszukiwarka**: sprawdzona na nazwach z polskimi znakami i bez, adresach z numerem, „obręb + numer działki” i pełnych identyfikatorach; czas odpowiedzi 0,1–0,5 s.
 - **Wydajność i niezawodność**: logi czasu każdego źródła (`[rosa] source …`); nowa analiza 0,7–2,5 s przy bazie zdalnej, z cache ~0,15 s; awaria źródła nie przerywa analizy (sprawdzone na przypadkach braku zdjęcia i limitu Open-Meteo).
 - **Zgodność z SMSR IUNG-PIB**: w sezonie (21.III–30.IX) poziom suszy liczymy metodą z Rozporządzenia MRiRW z 11.04.2019 (KBW z 60 dni vs. progi IUNG dla uprawy i kategorii gleby). Porównanie z oficjalnymi wykazami IUNG dla 39 losowych gmin z lat 2020–2025 (53 346 porównań): trafność 97,4%, precyzja 0,72, czułość 0,60, F1 0,65 przy współczynniku parowania k = 0,95. Szczegóły i skrypt: `docs/walidacja-iung.md`, `web/scripts/validate-iung.mjs`.
+- **NDVI względem uprawy**: progi pochodzą z typowych profili, nie z pomiarów na tej działce; kolejny krok to porównanie z NDVI tej samej działki z lat 2017+ (archiwum Sentinel-2) i kalibracja profili na danych IUNG lub ARiMR.
 - **Do zrobienia przed wdrożeniem**: przegląd reguł rekomendacji z ekspertami KOWR (agrotechnika, retencja); ET0 metodą Penmana-Monteitha ze stacji synoptycznych zamiast Hargreavesa.
+
+---
+
+## 10. Skalowalność i koszty
+
+- **Architektura pod wielu użytkowników**: aplikacja jest bezstanowa (Next.js w kontenerze Docker), więc można uruchomić wiele instancji za load balancerem. Stan i wyniki są w PostgreSQL (tabela `rosa_cache`). Ciężkie dane (38,9 mln działek, 2,8 mln obiektów wodnych, 2,3 mln pomiarów IMGW) są w bazie z indeksami przestrzennymi, a nie pobierane z zewnętrznych usług przy każdym zapytaniu.
+- **Zmierzone czasy** (serwer produkcyjny, baza na tym samym serwerze):
+  - nowa analiza: 0,7–2,5 s; ponownie ta sama: ok. 0,15 s (cache);
+  - zdjęcie satelitarne w tle: kilka sekund;
+  - kafelek granic działek: 60–200 ms;
+  - wyszukiwarka: 0,1–0,5 s;
+  - raport PDF: 0,5–1,7 s.
+- **Co rośnie z ruchem**: pierwsze otwarcie nowej działki pyta GUGiK (NMT, około 10 zapytań), IUNG i Sentinel-2. Wyniki trafiają do cache, więc kolejne analizy tej samej działki i okolicy są tanie. Pogoda, działki i wody są w bazie i odświeżane w tle (sekcja 5), więc liczba użytkowników nie zwiększa liczby zapytań do IMGW ani GUGiK.
+- **Infrastruktura i koszt (szacunek)**:
+  - obecnie: 1 serwer VPS (4 vCPU, 8 GB RAM, 75 GB SSD; baza ok. 20 GB z indeksami; zwykle kilkadziesiąt zł miesięcznie); wystarcza na tysiące analiz dziennie;
+  - dla dziesiątek tysięcy rolników: 2–3 instancje aplikacji, baza 8 vCPU / 32 GB RAM z repliką do odczytu, CDN przed kafelkami i plikami statycznymi; rząd kilkuset zł miesięcznie;
+  - usługi płatne przy wdrożeniu komercyjnym: Open-Meteo (plan komercyjny, tylko ostatnie dni pogody) albo zastąpienie go danymi IMGW; własny serwer kafelków mapy zamiast publicznych kafelków OpenStreetMap. Dane GUGiK, IMGW, IUNG i Copernicus są bezpłatne.
+- **Wąskie gardła i plan**: pobieranie zdjęć Sentinel-2 (transfer z AWS/Azure; alternatywa: Sentinel Hub w Copernicus Data Space, który zwraca gotowe NDVI dla poligonu); pierwsze wywołania NMT dla nowych działek (można wstępnie policzyć siatki dla działek rolnych); limit zapytań na użytkownika (do dodania w proxy).
+
+---
+
+## 11. Bezpieczeństwo
+
+- **Brak kont i danych osobowych**: aplikacja nie wymaga logowania i nie zbiera danych osobowych. Numer działki i jej granice to publiczne dane ewidencyjne. Nie używamy plików cookie śledzących; zapamiętujemy tylko ustawienia interfejsu (tryb lekki, dźwięk) w przeglądarce.
+- **Walidacja danych wejściowych** na serwerze:
+  - numer działki (format TERYT), uprawa z zamkniętej listy, data w zakresie ostatnich 10 lat;
+  - współrzędne w granicach Polski, współrzędne kafelków w dozwolonym zakresie;
+  - zapytanie wyszukiwarki skrócone do 80 znaków.
+- **Baza danych**: wszystkie zapytania są parametryzowane (Drizzle ORM, szablony `sql`), bez sklejania tekstu SQL z danymi użytkownika. Aplikacja łączy się z bazą przez wewnętrzną sieć Dockera. Publiczny port bazy, używany w czasie budowy rozwiązania, należy wyłączyć przy wdrożeniu u KOWR.
+- **Źródła zewnętrzne**:
+  - stałe adresy usług; użytkownik przekazuje tylko zakodowane parametry, nie adresy URL (brak SSRF);
+  - każde wywołanie ma limit czasu, a awaria źródła nie przerywa analizy;
+  - komunikaty błędów dla użytkownika nie ujawniają szczegółów technicznych.
+- **Sekrety**: hasło do bazy i tokeny tylko w zmiennych środowiskowych (Coolify, `.env.local` poza repozytorium); w repozytorium jest wyłącznie `.env.example` z pustym szablonem.
+- **Transport**: HTTPS z certyfikatem Let's Encrypt (Traefik w Coolify).
+- **Do dodania przed wdrożeniem**: limit liczby zapytań na adres IP (rate limiting w proxy), nagłówki bezpieczeństwa (Content-Security-Policy) i regularny audyt zależności (`pnpm audit`).
