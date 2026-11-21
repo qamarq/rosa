@@ -7,7 +7,7 @@ import { CheckIcon, CrosshairIcon, LocateFixedIcon, MinusIcon, PlusIcon } from "
 import { cn } from "@/lib/utils"
 import { useLiteMode } from "@/components/lite-mode"
 import { Spinner } from "@/components/ui/spinner"
-import { mapStyle, PARCELS_ZOOM, PICK_ZOOM, POLAND_BOUNDS, POLAND_CENTER, POLAND_ZOOM } from "./map-style"
+import { mapStyle, PARCEL_TILES_ZOOM, PARCELS_ZOOM, PICK_ZOOM, POLAND_BOUNDS, POLAND_CENTER, POLAND_ZOOM } from "./map-style"
 import { PlaceSearch, type PlaceHit } from "./place-search"
 import { formatArea, parcelBounds, parcelPlace, type LocatedParcel } from "./types"
 
@@ -34,6 +34,34 @@ const MAP_LABEL =
 function inPoland(lng: number, lat: number): boolean {
   const [[w, s], [e, n]] = POLAND_BOUNDS
   return lng > w && lng < e && lat > s && lat < n
+}
+
+const prefetched = new Set<string>()
+
+function prefetchParcelTiles(map: MapLibre) {
+  const zoom = map.getZoom()
+  if (zoom < PARCEL_TILES_ZOOM - 1.6 || zoom >= PARCEL_TILES_ZOOM) return
+  const z = PARCEL_TILES_ZOOM
+  const n = 2 ** z
+  const bounds = map.getBounds()
+  const tx = (lng: number) => Math.floor(((lng + 180) / 360) * n)
+  const ty = (lat: number) => {
+    const r = (lat * Math.PI) / 180
+    return Math.floor(((1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2) * n)
+  }
+  const [x0, x1] = [tx(bounds.getWest()), tx(bounds.getEast())]
+  const [y0, y1] = [ty(bounds.getNorth()), ty(bounds.getSouth())]
+  const center = map.getCenter()
+  const [cx, cy] = [tx(center.lng), ty(center.lat)]
+  const tiles: [number, number][] = []
+  for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) tiles.push([x, y])
+  tiles.sort((a, b) => Math.hypot(a[0] - cx, a[1] - cy) - Math.hypot(b[0] - cx, b[1] - cy))
+  for (const [x, y] of tiles.slice(0, 16)) {
+    const url = `/api/tiles/parcels/${z}/${x}/${y}`
+    if (prefetched.has(url)) continue
+    prefetched.add(url)
+    void fetch(url, { priority: "low" }).catch(() => prefetched.delete(url))
+  }
 }
 
 function source(map: MapLibre, id: "parcel" | "point"): GeoJSONSource | undefined {
@@ -173,6 +201,7 @@ export default function ParcelMap({ onSelect }: { onSelect: (parcel: LocatedParc
       setZoom(map.getZoom())
     })
     map.on("zoomend", () => setZoom(map.getZoom()))
+    map.on("moveend", () => prefetchParcelTiles(map))
     map.on("click", (event) => pickRef.current(event.lngLat.lng, event.lngLat.lat))
 
     return () => {
