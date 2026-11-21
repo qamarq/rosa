@@ -4,12 +4,14 @@ import { useFrame, useThree } from "@react-three/fiber"
 import { useEffect, useMemo, useRef } from "react"
 import * as THREE from "three"
 import type { SceneMode } from "@/lib/types"
-import { focusOf, type World } from "./world"
+import { focusOf, islandRadiusM, type World } from "./world"
 
 export type CameraState = { zoom: number; rotation: number; topView: boolean }
 
 export const FLY_IN_S = 1.8
 const BASE_AZ = -0.38
+const FILL_W = 0.62
+const FILL_H = 0.56
 const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
 
 type Pose = { az: number; el: number; dist: number; target: THREE.Vector3 }
@@ -22,8 +24,10 @@ export function CameraRig({ world, mode, camera, tilt, animate }: { world: World
   const focus = useMemo(() => {
     const f = focusOf(world, mode)
     const [x, y, z] = world.toWorld(f.point[0], f.point[1])
-    return { target: new THREE.Vector3(x, y, z), radius: f.radiusM * world.metersToWorld }
+    return { target: new THREE.Vector3(x, y, z), radius: f.radiusM * world.metersToWorld, parcel: !!f.parcel }
   }, [world, mode])
+  const ring = useMemo(() => world.parcelOuterRing.map(([x, y]) => [x * world.metersToWorld, -y * world.metersToWorld] as const), [world])
+  const island = useMemo(() => ({ target: new THREE.Vector3(0, world.relief * 0.4, 0), radius: islandRadiusM(world) * world.metersToWorld }), [world])
 
   useEffect(() => {
     invalidate()
@@ -33,17 +37,46 @@ export function CameraRig({ world, mode, camera, tilt, animate }: { world: World
     const persp = cam as THREE.PerspectiveCamera
     const vHalf = THREE.MathUtils.degToRad(persp.fov / 2)
     const hHalf = Math.atan(Math.tan(vHalf) * (size.width / Math.max(size.height, 1)))
-    const fit = focus.radius / Math.sin(Math.min(vHalf, hHalf))
-    const desired: Pose = {
-      az: BASE_AZ + THREE.MathUtils.degToRad(camera.rotation),
-      el: THREE.MathUtils.degToRad(THREE.MathUtils.clamp((camera.topView ? 82 : 40) + tilt, 16, 86)),
-      dist: fit / camera.zoom,
-      target: focus.target,
+    const az = BASE_AZ + THREE.MathUtils.degToRad(camera.rotation)
+    const el = THREE.MathUtils.degToRad(THREE.MathUtils.clamp((camera.topView ? 82 : 40) + tilt, 16, 86))
+    const islandDist = island.radius / Math.sin(Math.min(vHalf, hHalf))
+    let dist = focus.radius / Math.sin(Math.min(vHalf, hHalf))
+    let target = focus.target
+    if (focus.parcel && ring.length > 2) {
+      const rx = Math.cos(az)
+      const rz = -Math.sin(az)
+      let minU = Infinity
+      let maxU = -Infinity
+      let minV = Infinity
+      let maxV = -Infinity
+      for (const [x, z] of ring) {
+        const u = x * rx + z * rz
+        const v = -x * rz + z * rx
+        minU = Math.min(minU, u)
+        maxU = Math.max(maxU, u)
+        minV = Math.min(minV, v)
+        maxV = Math.max(maxV, v)
+      }
+      const cu = (minU + maxU) / 2
+      const cv = (minV + maxV) / 2
+      const cx = cu * rx - cv * rz
+      const cz = cu * rz + cv * rx
+      const s = world.metersToWorld
+      target = new THREE.Vector3(cx, world.heightAt(cx / s, -cz / s), cz)
+      dist = Math.max((maxU - minU) / 2 / FILL_W / Math.tan(hHalf), ((maxV - minV) * Math.sin(el)) / 2 / FILL_H / Math.tan(vHalf), 2.5)
     }
+    if (camera.zoom < 1 && focus.parcel) {
+      const k = THREE.MathUtils.clamp((1 - camera.zoom) / 0.15, 0, 1)
+      dist = THREE.MathUtils.lerp(dist, Math.max(dist, islandDist), k)
+      target = target.clone().lerp(island.target, k)
+    } else {
+      dist /= camera.zoom
+    }
+    const desired: Pose = { az, el, dist, target }
 
     if (!pose.current) {
       if (animate) {
-        const from: Pose = { az: desired.az - 0.9, el: THREE.MathUtils.degToRad(84), dist: desired.dist * 2.3, target: new THREE.Vector3(0, 0, 0) }
+        const from: Pose = { az: desired.az - 0.9, el: THREE.MathUtils.degToRad(84), dist: Math.max(islandDist * 1.25, desired.dist * 2.3), target: new THREE.Vector3(0, 0, 0) }
         start.current = { pose: from, t: clock.elapsedTime }
         pose.current = { ...from, target: from.target.clone() }
       } else {

@@ -258,13 +258,14 @@ export function createWorld(scene: ParcelScene): World {
   }
 }
 
-export function focusOf(world: World, mode: SceneMode): { point: [number, number]; radiusM: number } {
-  const wide = Math.max(world.parcelRadiusM * 1.2, world.halfM * 1.18)
+export const islandRadiusM = (world: World) => world.halfM * 1.18
+
+export function focusOf(world: World, mode: SceneMode): { point: [number, number]; radiusM: number; parcel?: boolean } {
   if (mode === "zastawka") {
     const low = world.lowestParcelPoint
     const point = world.nearestDitch && world.nearestDitch.distanceM < world.halfM * 0.3 ? closestOnLine(world.nearestDitch.points, low[0], low[1]) : low
     return { point, radiusM: Math.max(world.halfM * 0.3, world.parcelRadiusM * 0.45) }
   }
   if (mode === "nawadnianie" || mode === "miedzyplon") return { point: world.parcelCenter, radiusM: Math.max(world.parcelRadiusM * 0.85, world.halfM * 0.34) }
-  return { point: world.parcelCenter, radiusM: wide }
+  return { point: world.parcelCenter, radiusM: world.parcelRadiusM, parcel: true }
 }
