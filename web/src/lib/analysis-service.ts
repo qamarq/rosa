@@ -13,7 +13,7 @@ import { loadSatellite, type SatelliteResult } from "@/server/sources/satellite"
 import { loadSoilCategory } from "@/server/sources/soil"
 import { loadTerrain } from "@/server/sources/terrain"
 
-const ENGINE_VERSION = "v4"
+const ENGINE_VERSION = "v5"
 const WINDOW_DAYS = 45
 const HISTORY_YEARS = 10
 const SATELLITE_BUDGET_MS = Number(process.env.ROSA_SATELLITE_BUDGET_MS ?? 15000)

@@ -179,7 +179,7 @@ export function buildAnalysis(input: EngineInput): Analysis {
       sceneMode: "zastawka",
       sceneCaption: "Zastawka podnosi wodę w rowie, więc wsiąka ona w pole zamiast odpływać.",
       why: [
-        `${ditchName?.kind === "kanał" ? "Kanał" : "Rów melioracyjny"} biegnie ${hydro.ditchM === 0 ? "przez działkę" : `ok. ${hydro.ditchM} m od działki`}${hydro.ditchSide ? `, po stronie ${hydro.ditchSide}` : ""} (BDOT10k).`,
+        `${ditchName?.kind === "kanał" ? "Kanał" : "Rów melioracyjny"} biegnie ${hydro.ditchM != null && hydro.ditchM <= 2 ? "tuż przy działce" : `ok. ${hydro.ditchM} m od działki`}${hydro.ditchSide ? `, po stronie ${hydro.ditchSide}` : ""} (BDOT10k).`,
         ...(terrain && terrain.slopePct >= 1 ? [`Pole opada o ok. ${terrain.slopePct.toLocaleString("pl-PL")}% na ${terrain.downslope} (GUGiK NMT).`] : []),
         ...(soilWhy ? [soilWhy] : []),
       ],
