@@ -4,7 +4,7 @@ import { db } from "@/server/db"
 import { VOIVODESHIPS } from "@/lib/voivodeships"
 
 export type PlaceHit = {
-  kind: "obreb" | "gmina" | "parcel"
+  kind: "obreb" | "gmina" | "parcel" | "address" | "street"
   id: string
   label: string
   detail: string
@@ -80,13 +80,49 @@ async function parcelHits(q: string): Promise<PlaceHit[]> {
   }))
 }
 
+type UugRow = { city?: string; street?: string; number?: string; commune?: string; voivodeship?: string; x: string; y: string }
+
+async function addressHits(raw: string): Promise<PlaceHit[]> {
+  if (!/\d|,/.test(raw)) return []
+  const res = await fetch(`https://services.gugik.gov.pl/uug/?request=GetAddress&address=${encodeURIComponent(raw)}`, {
+    signal: AbortSignal.timeout(2500),
+    next: { revalidate: 86400 },
+  }).catch(() => null)
+  if (!res?.ok) return []
+  const data = (await res.json().catch(() => null)) as { type?: string; results?: Record<string, UugRow> | null } | null
+  if (!data?.results || (data.type !== "address" && data.type !== "street")) return []
+  const rows = Object.values(data.results).slice(0, 5)
+  const pts = rows.map((r) => [Number(r.x), Number(r.y)] as const).filter(([x, y]) => Number.isFinite(x) && Number.isFinite(y))
+  if (!pts.length) return []
+  const xs = pts.map((p) => p[0])
+  const ys = pts.map((p) => p[1])
+  const geo = await db().execute<{ i: number; lon: number; lat: number }>(sql`
+    SELECT i::int AS i, ST_X(g)::float8 AS lon, ST_Y(g)::float8 AS lat
+    FROM (SELECT i, ST_Transform(ST_SetSRID(ST_MakePoint(x, y), 2180), 4326) AS g
+      FROM unnest(${`{${xs.join(",")}}`}::float8[], ${`{${ys.join(",")}}`}::float8[]) WITH ORDINALITY AS t(x, y, i)) s`)
+  return [...geo].map((p) => {
+    const r = rows[p.i - 1]
+    const isAddress = data.type === "address"
+    const place = r.street ? `${r.street}${isAddress && r.number ? " " + r.number : ""}` : `${r.city ?? ""}${r.number ? " " + r.number : ""}`
+    return {
+      kind: isAddress ? ("address" as const) : ("street" as const),
+      id: `a:${r.x},${r.y}`,
+      label: r.street ? `ul. ${place}` : place,
+      detail: [r.street ? r.city : null, r.commune && r.commune !== r.city ? `gm. ${r.commune}` : null, r.voivodeship ? `woj. ${r.voivodeship}` : null].filter(Boolean).join(", "),
+      lon: p.lon,
+      lat: p.lat,
+    }
+  })
+}
+
 export async function GET(request: NextRequest) {
   const raw = (request.nextUrl.searchParams.get("q") ?? "").trim().slice(0, 80)
   if (raw.length < 2) return Response.json({ results: [] })
   const q = norm(raw)
   try {
-    const [parcels, places] = await Promise.all([
+    const [parcels, addresses, places] = await Promise.all([
       parcelHits(raw),
+      addressHits(raw).catch(() => []),
       db().execute<PlaceRow>(sql`
         SELECT id, kind, name, gmina, woj, lon, lat, min_lon, min_lat, max_lon, max_lat
         FROM rosa_place WHERE name_norm LIKE ${q.replace(/[%_\\]/g, "") + "%"}::text
@@ -94,7 +130,7 @@ export async function GET(request: NextRequest) {
     ])
     const seen = new Set<string>()
     const hits: PlaceHit[] = []
-    for (const hit of [...parcels, ...[...places].map(toHit)]) {
+    for (const hit of [...parcels, ...addresses, ...[...places].map(toHit)]) {
       const key = `${hit.label}|${hit.detail}`
       if (seen.has(key)) continue
       seen.add(key)

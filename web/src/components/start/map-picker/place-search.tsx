@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useId, useRef, useState } from "react"
-import { MapPinIcon, SearchIcon, SquareDashedIcon, XIcon } from "lucide-react"
+import { HouseIcon, MapPinIcon, SearchIcon, SquareDashedIcon, XIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Spinner } from "@/components/ui/spinner"
 import type { PlaceHit } from "@/app/api/places/search/route"
@@ -45,7 +45,7 @@ export function PlaceSearch({ onPick, className }: { onPick: (hit: PlaceHit) => 
 
   function pick(hit: PlaceHit) {
     setOpen(false)
-    setQuery(hit.kind === "parcel" ? `${hit.label}, ${hit.detail}` : hit.label)
+    setQuery(hit.kind === "parcel" || hit.kind === "address" ? `${hit.label}, ${hit.detail}` : hit.label)
     inputRef.current?.blur()
     onPick(hit)
   }
@@ -80,8 +80,8 @@ export function PlaceSearch({ onPick, className }: { onPick: (hit: PlaceHit) => 
           aria-controls={listId}
           aria-autocomplete="list"
           aria-activedescendant={showList && results[active] ? `${listId}-${active}` : undefined}
-          aria-label="Szukaj miejscowości, gminy albo działki"
-          placeholder="Miejscowość, gmina albo „Małachowo 399”"
+          aria-label="Szukaj miejscowości, adresu, gminy albo działki"
+          placeholder="Wieś, adres („Poznań, Głogowska 10”) albo działka"
           value={query}
           onChange={(event) => {
             setQuery(event.target.value)
@@ -119,7 +119,7 @@ export function PlaceSearch({ onPick, className }: { onPick: (hit: PlaceHit) => 
           className="absolute inset-x-0 top-[calc(100%+6px)] z-10 m-0 max-h-[min(360px,50vh)] list-none overflow-y-auto rounded-2xl border-2 border-border bg-card p-1.5 shadow-[0_18px_30px_-16px_rgba(110,70,30,0.6)]"
         >
           {results.length === 0 ? (
-            <li className="px-3 py-2.5 text-[15px] text-ink-soft">Nic nie znaleźliśmy. Spróbuj nazwy wsi albo „wieś numer działki”.</li>
+            <li className="px-3 py-2.5 text-[15px] text-ink-soft">Nic nie znaleźliśmy. Spróbuj „wieś numer”, „miasto, ulica numer” albo numeru działki.</li>
           ) : (
             results.map((hit, i) => (
               <li
@@ -134,6 +134,8 @@ export function PlaceSearch({ onPick, className }: { onPick: (hit: PlaceHit) => 
               >
                 {hit.kind === "parcel" ? (
                   <SquareDashedIcon aria-hidden="true" className="size-5 shrink-0 text-primary" strokeWidth={2.4} />
+                ) : hit.kind === "address" ? (
+                  <HouseIcon aria-hidden="true" className="size-5 shrink-0 text-primary" strokeWidth={2.2} />
                 ) : (
                   <MapPinIcon aria-hidden="true" className="size-5 shrink-0 text-ink-soft" strokeWidth={2.2} />
                 )}

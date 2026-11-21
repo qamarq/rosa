@@ -236,7 +236,7 @@ export default function ParcelMap({ onSelect }: { onSelect: (parcel: LocatedParc
     const map = mapRef.current
     if (!map) return
     setNotice(null)
-    if (hit.kind === "parcel") {
+    if (hit.kind === "parcel" || hit.kind === "address") {
       map.flyTo({ center: [hit.lon, hit.lat], zoom: Math.max(map.getZoom(), 16.5), duration: duration(1400) })
       void locate(hit.lon, hit.lat)
       return
