@@ -418,6 +418,7 @@ export function MobileResult({
         <p className="mx-1 my-0 text-xs leading-[1.5] text-ink-soft">
           Źródła: {analysis.sources.map((s) => s.name).join(", ")}
           {fetched ? ` · pobrano ${formatDatePl(fetched)}` : ""}
+          {analysis.sources.some((s) => s.name === "IMGW-PIB") && <span className="mt-1 block">{analysis.sources.find((s) => s.name === "IMGW-PIB")?.license}</span>}
         </p>
       </main>
       <div className="no-print sticky bottom-0 z-10 flex gap-2.5 border-t border-input bg-[#FBF6EC] px-4 pt-3 pb-[max(20px,env(safe-area-inset-bottom))]">

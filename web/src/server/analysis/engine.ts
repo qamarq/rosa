@@ -334,7 +334,7 @@ export function buildAnalysis(input: EngineInput): Analysis {
   const confidence: ConfidenceLevel = missing === 0 && weather.stations[0] && weather.stations[0].distanceKm <= 15 ? "wysoka" : missing <= 1 ? "srednia" : "niska"
 
   const sources: DataSource[] = [
-    { key: "pogoda", name: "IMGW-PIB", what: `dobowe opady i temperatury ze stacji: ${stationNames}`, license: "dane publiczne IMGW-PIB (źródło: IMGW-PIB)", fetchedAt: input.fetchedAt },
+    { key: "pogoda", name: "IMGW-PIB", what: `dobowe opady i temperatury ze stacji: ${stationNames}`, license: "Źródłem pochodzenia danych jest Instytut Meteorologii i Gospodarki Wodnej – Państwowy Instytut Badawczy. Dane Instytutu Meteorologii i Gospodarki Wodnej – Państwowego Instytutu Badawczego zostały przetworzone.", fetchedAt: input.fetchedAt },
     ...(weather.recentFrom
       ? [{ key: "pogoda" as const, name: "Open-Meteo", what: `ostatnie dni od ${formatDatePl(weather.recentFrom)}, których nie ma jeszcze w archiwum IMGW`, license: "CC BY 4.0", fetchedAt: input.fetchedAt }]
       : []),
