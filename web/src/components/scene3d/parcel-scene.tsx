@@ -9,7 +9,7 @@ import type { ParcelScene } from "@/lib/scene3d"
 import type { Analysis, CropId, SceneMode } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { SceneActors } from "./actors"
-import { CameraRig, FLY_IN_S, type CameraState } from "./camera-rig"
+import { CameraRig, clampZoom, FLY_IN_S, type CameraState } from "./camera-rig"
 import type { SceneWeather } from "./contract"
 import { CropField, rowGapFor } from "./crop-field"
 import { SceneErrorBoundary } from "./error-boundary"
@@ -153,6 +153,24 @@ export function SceneLights({ shadows }: { shadows: boolean }) {
   )
 }
 
+function ActorScaler({ factor, children }: { factor?: { value: number }; children: React.ReactNode }) {
+  const group = useRef<THREE.Group>(null)
+  const applied = useRef({ value: 1, count: 0 })
+  useFrame(() => {
+    const g = group.current
+    if (!g || !factor) return
+    const nodes: THREE.Object3D[] = []
+    g.traverse((o) => {
+      if (typeof o.userData.actorScale === "number") nodes.push(o)
+    })
+    const f = factor.value
+    if (Math.abs(f - applied.current.value) < 1e-4 && nodes.length === applied.current.count) return
+    applied.current = { value: f, count: nodes.length }
+    nodes.forEach((o) => o.scale.setScalar(o.userData.actorScale * f))
+  })
+  return <group ref={group}>{children}</group>
+}
+
 export type ParcelWorldProps = {
   world: World
   crop: CropId
@@ -164,10 +182,11 @@ export type ParcelWorldProps = {
   outlineAt: number
   cropAt: number
   actors: boolean
+  actorScale?: { value: number }
   ortho?: { map: THREE.Texture | null; mix: { value: number } }
 }
 
-export function ParcelWorld({ world, crop, analysis, mode, animate, quality, time, outlineAt, cropAt, actors, ortho }: ParcelWorldProps) {
+export function ParcelWorld({ world, crop, analysis, mode, animate, quality, time, outlineAt, cropAt, actors, actorScale, ortho }: ParcelWorldProps) {
   const gl = useThree((s) => s.gl)
   const level = analysis?.status.level ?? 2
   const ndvi = analysis?.vegetation?.ndvi ?? null
@@ -191,7 +210,9 @@ export function ParcelWorld({ world, crop, analysis, mode, animate, quality, tim
       <ParcelOutline world={world} animate={animate} revealAt={outlineAt} />
       {actors && (
         <SceneErrorBoundary>
-          <SceneActors ctx={world} mode={mode} crop={crop} weather={weather} ndvi={ndvi} animate={animate} quality={quality} />
+          <ActorScaler factor={actorScale}>
+            <SceneActors ctx={world} mode={mode} crop={crop} weather={weather} ndvi={ndvi} animate={animate} quality={quality} />
+          </ActorScaler>
         </SceneErrorBoundary>
       )}
     </>
@@ -218,11 +239,12 @@ function World3D({
   intro: boolean
 }) {
   const time = useMemo(() => createTimeUniforms(), [])
+  const actorScale = useMemo(() => ({ value: 1 }), [])
   return (
     <>
       <SceneLights shadows={quality === "high"} />
       <Ticker time={time} animate={animate} />
-      <CameraRig world={world} mode={mode} camera={camera} tilt={tilt} animate={animate} intro={intro} />
+      <CameraRig world={world} mode={mode} camera={camera} tilt={tilt} animate={animate} intro={intro} actorScale={actorScale} />
       <ParcelWorld
         world={world}
         crop={analysis.request.crop}
@@ -234,6 +256,7 @@ function World3D({
         outlineAt={intro ? FLY_IN_S * 0.45 : -10}
         cropAt={intro ? FLY_IN_S * 0.7 : -10}
         actors
+        actorScale={actorScale}
       />
     </>
   )
@@ -245,6 +268,7 @@ export type ParcelScene3DProps = {
   mode: SceneMode
   camera: CameraState
   onRotate: (deg: number) => void
+  onZoom?: (zoom: number) => void
   labels?: boolean
   onReady?: () => void
   onError?: () => void
@@ -252,7 +276,7 @@ export type ParcelScene3DProps = {
   className?: string
 }
 
-export function ParcelScene3D({ scene, analysis, mode, camera, onRotate, labels = false, onReady, onError, intro = true, className }: ParcelScene3DProps) {
+export function ParcelScene3D({ scene, analysis, mode, camera, onRotate, onZoom, labels = false, onReady, onError, intro = true, className }: ParcelScene3DProps) {
   const { lite } = useLiteMode()
   const reduced = useReducedMotion()
   const [still, setStill] = useState(false)
@@ -264,6 +288,10 @@ export function ParcelScene3D({ scene, analysis, mode, camera, onRotate, labels 
   const [inView, setInView] = useState(true)
   const wrapRef = useRef<HTMLDivElement>(null)
   const drag = useRef<{ x: number; y: number; rot: number; tilt: number; captured: boolean } | null>(null)
+  const touches = useRef(new Map<number, { x: number; y: number }>())
+  const pinch = useRef<{ dist: number; zoom: number } | null>(null)
+  const zoomNow = useRef(camera.zoom)
+  const zoomCb = useRef(onZoom)
   const labelNodes = useRef<(HTMLDivElement | null)[]>([])
   const labelList = useMemo(() => (labels ? sceneLabels(world, analysis) : []), [labels, world, analysis])
   const [labelsShown, setLabelsShown] = useState(!animate || !intro)
@@ -282,7 +310,35 @@ export function ParcelScene3D({ scene, analysis, mode, camera, onRotate, labels 
     return () => io.disconnect()
   }, [])
 
-  const end = () => {
+  useEffect(() => {
+    zoomNow.current = camera.zoom
+    zoomCb.current = onZoom
+  }, [camera.zoom, onZoom])
+
+  useEffect(() => {
+    const el = wrapRef.current
+    if (!el) return
+    const onWheel = (e: WheelEvent) => {
+      const cb = zoomCb.current
+      if (!cb) return
+      e.preventDefault()
+      const delta = e.deltaY * (e.deltaMode === 1 ? 16 : 1)
+      const next = clampZoom(zoomNow.current * Math.exp(-delta * (e.ctrlKey ? 0.012 : 0.0016)))
+      zoomNow.current = next
+      cb(next)
+    }
+    el.addEventListener("wheel", onWheel, { passive: false })
+    return () => el.removeEventListener("wheel", onWheel)
+  }, [])
+
+  const spread = () => {
+    const [a, b] = [...touches.current.values()]
+    return a && b ? Math.hypot(a.x - b.x, a.y - b.y) : 0
+  }
+
+  const end = (e: React.PointerEvent) => {
+    touches.current.delete(e.pointerId)
+    if (touches.current.size < 2) pinch.current = null
     drag.current = null
     setDragging(false)
   }
@@ -298,9 +354,25 @@ export function ParcelScene3D({ scene, analysis, mode, camera, onRotate, labels 
       )}
       onPointerDown={(e) => {
         if (e.pointerType === "mouse" && e.button !== 0) return
+        if (e.pointerType === "touch") {
+          touches.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+          if (touches.current.size === 2 && onZoom) {
+            pinch.current = { dist: spread(), zoom: camera.zoom }
+            drag.current = null
+            setDragging(false)
+            return
+          }
+        }
         drag.current = { x: e.clientX, y: e.clientY, rot: camera.rotation, tilt, captured: false }
       }}
       onPointerMove={(e) => {
+        if (touches.current.has(e.pointerId)) touches.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+        const pz = pinch.current
+        if (pz) {
+          const dist = spread()
+          if (pz.dist > 0 && dist > 0) onZoom?.(clampZoom(pz.zoom * (dist / pz.dist)))
+          return
+        }
         const d = drag.current
         if (!d) return
         const dx = e.clientX - d.x

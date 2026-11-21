@@ -97,17 +97,17 @@ export function SceneActors({ ctx, mode, weather, ndvi, animate, quality }: Scen
     <ClockContext.Provider value={clock}>
       <ShadowContext.Provider value={high}>
         {layout.barn && (
-          <group position={world(ctx, layout.barn.pos)} rotation={[0, layout.barn.yaw, 0]} scale={kb}>
+          <group position={world(ctx, layout.barn.pos)} rotation={[0, layout.barn.yaw, 0]} scale={kb} userData={{ actorScale: kb }}>
             <Barn />
           </group>
         )}
         {layout.silo && (
-          <group position={world(ctx, layout.silo.pos)} scale={kb}>
+          <group position={world(ctx, layout.silo.pos)} scale={kb} userData={{ actorScale: kb }}>
             <Silo />
           </group>
         )}
         {layout.trees.map((tree, i) => (
-          <group key={i} position={world(ctx, tree.pos)} rotation={[0, tree.yaw, 0]} scale={kb * tree.scale}>
+          <group key={i} position={world(ctx, tree.pos)} rotation={[0, tree.yaw, 0]} scale={kb * tree.scale} userData={{ actorScale: kb * tree.scale }}>
             <Tree seed={i} dry={dry} />
           </group>
         ))}

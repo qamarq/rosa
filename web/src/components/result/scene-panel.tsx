@@ -79,6 +79,7 @@ export function DesktopScene({
         labels
         camera={cam.camera}
         onRotate={cam.setRotation}
+        onZoom={cam.setZoom}
         className={cn("absolute inset-x-5 bottom-[104px] transition-[top] duration-500 ease-spring", selected ? "top-32" : "top-28")}
       />
 

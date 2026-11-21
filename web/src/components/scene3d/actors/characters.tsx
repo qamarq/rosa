@@ -76,7 +76,7 @@ export function Farmer({ position, scale, worried, wipe, happyAt }: CharacterPro
   })
 
   return (
-    <group ref={root} position={position} scale={scale}>
+    <group ref={root} position={position} scale={scale} userData={{ actorScale: scale }}>
       <Blob r={0.48} />
       <group ref={body}>
         <Part g="sphere" m="boot" p={[-0.13, 0.07, 0.05]} s={[0.13, 0.08, 0.19]} />
@@ -150,7 +150,7 @@ export function Dog({ position, scale, happyAt }: Pick<CharacterProps, "position
   })
 
   return (
-    <group ref={root} position={position} scale={scale}>
+    <group ref={root} position={position} scale={scale} userData={{ actorScale: scale }}>
       <Blob r={0.42} sx={1.2} />
       <group ref={body}>
         <Part g="limb" m="fur" p={[0.2, 0.26, 0.11]} s={[0.09, 0.11, 0.09]} />

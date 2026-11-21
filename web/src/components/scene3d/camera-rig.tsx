@@ -4,6 +4,8 @@ import { useFrame, useThree } from "@react-three/fiber"
 import { useEffect, useMemo, useRef } from "react"
 import * as THREE from "three"
 import type { SceneMode } from "@/lib/types"
+import { setUniform } from "./materials"
+import { getActorFocus } from "./actors"
 import { focusOf, islandRadiusM, type World } from "./world"
 
 export type CameraState = { zoom: number; rotation: number; topView: boolean }
@@ -11,6 +13,8 @@ export type CameraState = { zoom: number; rotation: number; topView: boolean }
 export const FLY_IN_S = 1.8
 export const BASE_AZ = -0.38
 export const DEFAULT_CAMERA: CameraState = { zoom: 1, rotation: 0, topView: false }
+export const ZOOM_RANGE = [0.85, 1.5] as const
+export const clampZoom = (z: number) => Math.min(ZOOM_RANGE[1], Math.max(ZOOM_RANGE[0], z))
 const FILL_W = 0.62
 const FILL_H = 0.56
 export const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
@@ -132,6 +136,7 @@ export function CameraRig({
   tilt,
   animate,
   intro = true,
+  actorScale,
 }: {
   world: World
   mode: SceneMode
@@ -139,19 +144,51 @@ export function CameraRig({
   tilt: number
   animate: boolean
   intro?: boolean
+  actorScale?: { value: number }
 }) {
   const { camera: cam, size, invalidate } = useThree()
   const pose = useRef<Pose | null>(null)
   const start = useRef<{ pose: Pose; t: number } | null>(null)
-  const framing = useFraming(world, mode)
+  const framing = useFraming(world, "hero")
+  const nudge = useRef(new THREE.Vector3())
+  const focus = useMemo(() => {
+    if (mode !== "zastawka" && mode !== "nawadnianie" && mode !== "miedzyplon") return null
+    const [x, y] = getActorFocus(world, mode)
+    const [wx, wy, wz] = world.toWorld(x, y, 0.15)
+    return new THREE.Vector3(wx, wy, wz)
+  }, [world, mode])
+  const basis = useMemo(() => ({ dir: new THREE.Vector3(), r: new THREE.Vector3(), u: new THREE.Vector3(), f: new THREE.Vector3(), v: new THREE.Vector3() }), [])
 
   useEffect(() => {
     invalidate()
-  }, [framing, camera.zoom, camera.rotation, camera.topView, tilt, invalidate])
+  }, [focus, camera.zoom, camera.rotation, camera.topView, tilt, invalidate])
 
   useFrame(({ clock, scene }, delta) => {
     const fov = (cam as THREE.PerspectiveCamera).fov
     const desired = computePose(framing, camera, tilt, fov, size.width, size.height)
+    desired.target = desired.target.clone().add(nudge.current)
+    if (focus) {
+      const { vHalf, hHalf } = fitDistances(fov, size.width, size.height)
+      const { dir, r, u, f, v } = basis
+      dir.set(Math.cos(desired.el) * Math.sin(desired.az), Math.sin(desired.el), Math.cos(desired.el) * Math.cos(desired.az))
+      f.copy(dir).negate()
+      r.set(Math.cos(desired.az), 0, -Math.sin(desired.az))
+      u.crossVectors(r, f)
+      v.copy(focus).sub(desired.target).addScaledVector(dir, -desired.dist)
+      const z = v.dot(f)
+      if (z > 0.01) {
+        const nx = v.dot(r) / (z * Math.tan(hHalf))
+        const ny = v.dot(u) / (z * Math.tan(vHalf))
+        const ex = Math.abs(nx) > 0.62 ? (nx - Math.sign(nx) * 0.62) * z * Math.tan(hHalf) : 0
+        const ey = Math.abs(ny) > 0.5 ? (ny - Math.sign(ny) * 0.5) * z * Math.tan(vHalf) : 0
+        if (ex || ey) {
+          const shift = new THREE.Vector3().addScaledVector(r, ex).addScaledVector(u, ey / Math.max(Math.sin(desired.el), 0.3))
+          shift.y = 0
+          nudge.current.add(shift)
+          desired.target.add(shift)
+        }
+      }
+    }
 
     if (!pose.current) {
       if (animate && intro) {
@@ -177,6 +214,11 @@ export function CameraRig({
       lerpPose(p, desired, desired, 1)
     }
     applyPose(cam, scene, p)
+    if (actorScale) {
+      const base = camera.zoom === 1 ? desired.dist : computePose(framing, { ...camera, zoom: 1 }, tilt, fov, size.width, size.height).dist
+      const k = Math.min(1, Math.max(0, (base / Math.max(p.dist, 0.001) - 1) / 0.5))
+      setUniform(actorScale, 1 - 0.4 * k * k * (3 - 2 * k))
+    }
   })
 
   return null

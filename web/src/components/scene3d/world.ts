@@ -130,6 +130,12 @@ export function closestOnLine(points: Ring, x: number, y: number): [number, numb
   return best
 }
 
+export function exaggerationOf(scene: ParcelScene) {
+  const valid = scene.grid.heights.filter((h) => Number.isFinite(h))
+  const relief = valid.length ? Math.max(...valid) - Math.min(...valid) : 0
+  return clamp((0.065 * 2 * scene.halfExtentM) / Math.max(relief, 0.5), 1.5, 12)
+}
+
 export function createWorld(scene: ParcelScene): World {
   const H = scene.halfExtentM
   const { size, heights } = scene.grid
@@ -139,7 +145,7 @@ export function createWorld(scene: ParcelScene): World {
   const minH = valid.length ? Math.min(...valid) : 0
   const maxH = valid.length ? Math.max(...valid) : 0
   const reliefM = maxH - minH
-  const exaggeration = clamp((0.065 * 2 * H) / Math.max(reliefM, 0.5), 1.5, 12)
+  const exaggeration = exaggerationOf(scene)
 
   const coarse = (c: number, r: number) => {
     const h = heights[clamp(r, 0, size - 1) * size + clamp(c, 0, size - 1)]

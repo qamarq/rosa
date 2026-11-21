@@ -1,6 +1,11 @@
 import type { ParcelScene } from "@/lib/scene3d"
 
 const cache = new Map<string, Promise<ParcelScene | null>>()
+const resolved = new Map<string, ParcelScene>()
+
+export function getLoadedScene(analysisId: string): ParcelScene | null {
+  return resolved.get(analysisId) ?? null
+}
 const TIMEOUT_MS = 8000
 
 export function loadParcelScene(analysisId: string, timeoutMs = TIMEOUT_MS): Promise<ParcelScene | null> {
@@ -12,6 +17,10 @@ export function loadParcelScene(analysisId: string, timeoutMs = TIMEOUT_MS): Pro
     .catch(() => null)
   promise.then((scene) => {
     if (!scene) cache.delete(analysisId)
+    else {
+      resolved.set(analysisId, scene)
+      emit()
+    }
   })
   cache.set(analysisId, promise)
   return promise
@@ -51,6 +60,7 @@ export function getHandoff(analysisId: string): Handoff | null {
 
 export function beginHandoff(analysisId: string, scene: ParcelScene) {
   cache.set(analysisId, Promise.resolve(scene))
+  resolved.set(analysisId, scene)
   handoffs.set(analysisId, { scene, released: false, ready: false })
   emit()
 }

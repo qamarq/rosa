@@ -89,13 +89,13 @@ export function Zastawka({ ctx, layout }: { ctx: WorldContext; layout: Layout })
   const kit = getKit()
   return (
     <group>
-      <group position={gateWorld} scale={km}>
+      <group position={gateWorld} scale={km} userData={{ actorScale: km }}>
         <Marker showAt={0} hideAt={ZASTAWKA.gate - 0.2} />
       </group>
-      <group ref={exc} scale={km}>
+      <group ref={exc} scale={km} userData={{ actorScale: km }}>
         <ExcavatorModel rig={rig} />
       </group>
-      <group position={gateWorld} rotation={[0, gateYaw, 0]} scale={km}>
+      <group position={gateWorld} rotation={[0, gateYaw, 0]} scale={km} userData={{ actorScale: km }}>
         <GateModel appearAt={ZASTAWKA.gate} />
       </group>
       {mounds.map((p, i) => (
@@ -221,7 +221,7 @@ export function Miedzyplon({ ctx, layout, quality }: { ctx: WorldContext; layout
 
   return (
     <group>
-      <group ref={tractor} scale={km}>
+      <group ref={tractor} scale={km} userData={{ actorScale: km }}>
         <TractorModel rig={rig} seeder />
       </group>
       {tufts.count > 0 && (
@@ -237,7 +237,7 @@ export function Nawadnianie({ ctx, layout, quality }: { ctx: WorldContext; layou
   const N = NAWADNIANIE
   return (
     <group>
-      <group position={at} scale={km}>
+      <group position={at} scale={km} userData={{ actorScale: km }}>
         <SprinklerModel appearAt={N.appear} spinFrom={N.spray} />
       </group>
       <WetDisc ctx={ctx} centre={sprinkler} radius={wetR} lift={k * 0.06} startAt={N.spray} duration={N.grow} />
@@ -249,7 +249,7 @@ export function Nawadnianie({ ctx, layout, quality }: { ctx: WorldContext; layou
 export function ParkedTractor({ position, yaw, scale }: { position: Vec3; yaw: number; scale: number }) {
   const rig = useRef(newRig())
   return (
-    <group position={position} rotation={[0, yaw, 0]} scale={scale}>
+    <group position={position} rotation={[0, yaw, 0]} scale={scale} userData={{ actorScale: scale }}>
       <TractorModel rig={rig} />
     </group>
   )

@@ -95,6 +95,7 @@ function MobileScene({
         labels={false}
         camera={cam.camera}
         onRotate={cam.setRotation}
+        onZoom={cam.setZoom}
         className="absolute -inset-x-2.5 top-6 bottom-2"
       />
       {selected ? (

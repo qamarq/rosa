@@ -1,5 +1,8 @@
 "use client"
 
+import { useSyncExternalStore } from "react"
+import { getLoadedScene, subscribeHandoff } from "@/components/scene3d/load-scene"
+import { exaggerationOf } from "@/components/scene3d/world"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { FAILURE_COPY } from "@/components/loading/story-config"
 import type { Analysis, SourceKey } from "@/lib/types"
@@ -73,6 +76,8 @@ export function DataStatusPill({ analysis, compact = false, className }: { analy
       ? `Dane: ${ok}/${total} · dociągam ${pending.map((p) => PENDING_NAME[p.key]).join(", ")}`
       : `Dane: ${ok}/${total} · brak: ${failed.map((f) => f.label).join(", ")}`
   const short = complete ? "Dane: komplet" : `Dane: ${ok}/${total}`
+  const scene = useSyncExternalStore(subscribeHandoff, () => getLoadedScene(analysis.id), () => null)
+  const relief = scene ? exaggerationOf(scene).toLocaleString("pl-PL", { maximumFractionDigits: 1, minimumFractionDigits: 1 }) : null
 
   return (
     <Popover>
@@ -113,6 +118,11 @@ export function DataStatusPill({ analysis, compact = false, className }: { analy
             </li>
           ))}
         </ul>
+        {relief && (
+          <p className="m-0 mt-1 border-t border-border px-1.5 pt-2 text-xs leading-[1.4] text-muted-foreground">
+            Teren: NMT GUGiK, rzeźba przewyższona ×{relief}
+          </p>
+        )}
       </PopoverContent>
     </Popover>
   )

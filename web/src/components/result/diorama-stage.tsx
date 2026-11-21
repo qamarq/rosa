@@ -4,6 +4,7 @@ import dynamic from "next/dynamic"
 import { useEffect, useRef, useState, useSyncExternalStore } from "react"
 import { Diorama, type SceneFacts } from "@/components/diorama/diorama"
 import { useLiteMode } from "@/components/lite-mode"
+import { clampZoom, ZOOM_RANGE } from "@/components/scene3d/camera-rig"
 import { SceneErrorBoundary } from "@/components/scene3d/error-boundary"
 import { getHandoff, loadParcelScene, reportHandoffReady, subscribeHandoff, supportsWebGL } from "@/components/scene3d/load-scene"
 import type { ParcelScene } from "@/lib/scene3d"
@@ -13,20 +14,23 @@ import styles from "./result.module.css"
 
 const ParcelScene3D = dynamic(() => import("@/components/scene3d/parcel-scene").then((m) => m.ParcelScene3D), { ssr: false })
 
-export const ZOOM_LEVELS = [0.85, 1, 1.15, 1.3, 1.5]
+export const ZOOM_LEVELS = [ZOOM_RANGE[0], 1, 1.15, 1.3, ZOOM_RANGE[1]]
 
 export type Camera = { zoom: number; rotation: number; topView: boolean }
 
+const [ZOOM_MIN, ZOOM_MAX] = ZOOM_RANGE
+
 export function useCamera() {
-  const [zoomIndex, setZoomIndex] = useState(1)
+  const [zoom, setZoomState] = useState(1)
   const [rotation, setRotation] = useState(0)
   const [topView, setTopView] = useState(false)
   return {
-    camera: { zoom: ZOOM_LEVELS[zoomIndex], rotation, topView } satisfies Camera,
-    canZoomIn: zoomIndex < ZOOM_LEVELS.length - 1,
-    canZoomOut: zoomIndex > 0,
-    zoomIn: () => setZoomIndex((i) => Math.min(ZOOM_LEVELS.length - 1, i + 1)),
-    zoomOut: () => setZoomIndex((i) => Math.max(0, i - 1)),
+    camera: { zoom, rotation, topView } satisfies Camera,
+    canZoomIn: zoom < ZOOM_MAX - 0.001,
+    canZoomOut: zoom > ZOOM_MIN + 0.001,
+    zoomIn: () => setZoomState((z) => ZOOM_LEVELS.find((l) => l > z + 0.01) ?? ZOOM_MAX),
+    zoomOut: () => setZoomState((z) => [...ZOOM_LEVELS].reverse().find((l) => l < z - 0.01) ?? ZOOM_MIN),
+    setZoom: (z: number) => setZoomState(clampZoom(z)),
     setRotation,
     toggleTopView: () => setTopView((v) => !v),
   }
@@ -110,6 +114,7 @@ export function DioramaStage({
   facts,
   camera,
   onRotate,
+  onZoom,
   className,
 }: {
   analysis: Analysis
@@ -118,6 +123,7 @@ export function DioramaStage({
   facts?: SceneFacts
   camera: Camera
   onRotate: (deg: number) => void
+  onZoom?: (zoom: number) => void
   className?: string
 }) {
   const { lite } = useLiteMode()
@@ -184,6 +190,7 @@ export function DioramaStage({
               mode={mode}
               camera={camera}
               onRotate={onRotate}
+              onZoom={onZoom}
               labels={labels}
               intro={!handoff}
               onReady={() => {
