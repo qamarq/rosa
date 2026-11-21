@@ -9,15 +9,17 @@ import { dateRange, isDateInRange, isValidParcelId, toIsoDate } from "@/lib/vali
 import { applySatellite, buildAnalysis } from "@/server/analysis/engine"
 import { computeBalance } from "@/server/analysis/water-balance"
 import { readCache, writeCache } from "@/server/cache"
+import { loadGroundwater } from "@/server/sources/groundwater"
 import { loadHydro } from "@/server/sources/hydro"
 import { loadDailyWeather } from "@/server/sources/meteo"
 import { findParcelById } from "@/server/sources/parcel"
+import { loadRivers } from "@/server/sources/rivers"
 import { loadParcelScene } from "@/server/sources/scene3d"
 import { loadSatellite, type SatelliteResult } from "@/server/sources/satellite"
 import { loadSoilCategory } from "@/server/sources/soil"
 import { loadTerrain } from "@/server/sources/terrain"
 
-const ENGINE_VERSION = "v10"
+const ENGINE_VERSION = "v11"
 const WINDOW_DAYS = 60
 const HISTORY_YEARS = 10
 const SATELLITE_BUDGET_MS = Number(process.env.ROSA_SATELLITE_BUDGET_MS ?? 15000)
@@ -86,11 +88,13 @@ async function computeLive(req: AnalysisRequest, id: string): Promise<AnalysisRe
   }
   void loadParcelScene(parcel.id).catch(() => null)
   const sat = satelliteJob(id, () => loadSatellite(parcel.id, parcel.lat, parcel.lon, parcel.utmBbox, parcel.utmRings, req.date, SATELLITE_BUDGET_MS))
-  const [weather, soil, terrain, hydro] = await Promise.all([
+  const [weather, soil, terrain, hydro, rivers, groundwater] = await Promise.all([
     settle("meteo", loadDailyWeather(parcel.lat, parcel.lon, req.date, HISTORY_YEARS, WINDOW_DAYS)),
     settle("soil", loadSoilCategory(parcel.x2180, parcel.y2180)),
     settle("terrain", loadTerrain(parcel.id, parcel.samplePoints2180)),
     settle("hydro", loadHydro(parcel.id)),
+    settle("rivers", loadRivers(parcel.lat, parcel.lon, req.date)),
+    settle("groundwater", loadGroundwater(parcel.lat, parcel.lon)),
   ])
   if (!weather.value) {
     return { ok: false, error: { code: "upstream_unavailable", message: "Dane pogodowe są chwilowo niedostępne." } }
@@ -105,7 +109,9 @@ async function computeLive(req: AnalysisRequest, id: string): Promise<AnalysisRe
     soil: soil.value,
     terrain: terrain.value,
     hydro: hydro.value,
-    failed: { soil: soil.failed, terrain: terrain.failed, hydro: hydro.failed },
+    rivers: rivers.value,
+    groundwater: groundwater.value,
+    failed: { soil: soil.failed, terrain: terrain.failed, hydro: hydro.failed, rivers: rivers.failed, groundwater: groundwater.failed },
     fetchedAt: toIsoDate(new Date()),
     historyYears: HISTORY_YEARS,
   })

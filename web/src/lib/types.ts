@@ -6,7 +6,7 @@ export type DroughtLevel = 1 | 2 | 3 | 4 | 5
 
 export type RecommendationGroup = "woda" | "gleba" | "irr"
 
-export type SourceKey = "pogoda" | "satelita" | "gleba" | "teren" | "hydrologia"
+export type SourceKey = "pogoda" | "satelita" | "gleba" | "teren" | "hydrologia" | "rzeki" | "gruntowe"
 
 export type ConfidenceLevel = "niska" | "srednia" | "wysoka"
 
@@ -51,7 +51,7 @@ export interface WaterHistory {
 
 export interface Cause {
   id: string
-  kind: "opady" | "gleba" | "spadek" | "upal" | "uprawa" | "rosliny"
+  kind: "opady" | "gleba" | "spadek" | "upal" | "uprawa" | "rosliny" | "rzeka" | "gruntowe"
   value: string
   title: string
   detail: string

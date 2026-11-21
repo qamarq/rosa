@@ -49,6 +49,14 @@ export const FAILURE_COPY: Record<SourceKey, { title: string; body: string }> = 
     title: "Dane o ciekach nie odpowiadają.",
     body: "Liczymy dalej bez sieci rowów i cieków. Pewność wyniku będzie niższa.",
   },
+  rzeki: {
+    title: "Dane o rzekach nie odpowiadają.",
+    body: "Liczymy dalej bez stanu rzek z wodowskazów IMGW.",
+  },
+  gruntowe: {
+    title: "Dane o wodach gruntowych nie odpowiadają.",
+    body: "Liczymy dalej bez pomiarów wód podziemnych PIG-PIB.",
+  },
 }
 
 export function delayFromSceneStart(targetMs: number, dataAt: number | null, sceneStart: number): number {

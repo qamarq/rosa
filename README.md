@@ -20,7 +20,7 @@ Zadanie: Krajowy Ośrodek Wsparcia Rolnictwa, „Zatrzymaj Wodę, Chroń Plony�
 cd web
 cp .env.example .env.local        # uzupełnij DATABASE_URL
 pnpm install
-pnpm db:migrate                   # tabele cache, stacji IMGW i hydrologii (Drizzle)
+pnpm db:migrate                   # tabele cache, stacji IMGW, wodowskazów i hydrologii (Drizzle)
 pnpm dev                          # http://localhost:3000
 ```
 
@@ -45,6 +45,8 @@ Wdrożenie produkcyjne: Coolify na własnym serwerze, aplikacja budowana z `web/
 ./scripts/import_parcels.sh /dane                    # działki EGiB z GUGiK (Parquet, ~4,6 GB)
 docker run --rm -e DATABASE_URL=... -v $PWD/scripts:/w python:3.12-slim \
   sh -c "pip install 'psycopg[binary]' && python /w/import_imgw.py"   # dane dobowe IMGW 2006–dziś
+docker run --rm -e DATABASE_URL=... -v $PWD/scripts:/w python:3.12-slim \
+  sh -c "pip install 'psycopg[binary]' && python /w/import_imgw_hydro.py"   # stany rzek IMGW, lata hydrologiczne 2006–ostatni
 docker run --rm -e PGHOST=... -e PGPASSWORD=... -v /dane/bdot:/work -v $PWD/scripts:/s \
   ghcr.io/osgeo/gdal:ubuntu-full-latest python3 /s/import_bdot.py    # rowy i wody z BDOT10k (lista powiatów w /work/codes.txt)
 ./scripts/server/rosa-update.sh places                # indeks nazw obrębów i gmin do wyszukiwarki (z tabeli działek, ~3 min)
@@ -60,12 +62,12 @@ docker run --rm -e PGHOST=... -e PGPASSWORD=... -v /dane/bdot:/work -v $PWD/scri
 2. **Przelot do działki (~5 s, jedno ujęcie 3D)**: kamera leci nad Polską do pinezki, obrys działki rysuje się na ortofotomapie, teren unosi się w 3D, źródła danych „przylatują”, a na końcu panel wyniku wjeżdża z prawej bez przeładowania strony. Animacja ładuje dane w trakcie: jeśli dany etap nie jest gotowy, ujęcie płynnie czeka (kamera krąży, scena żyje), bez widocznych wskaźników ładowania. Opcjonalne dźwięki (Web Audio, generowane w kodzie) z przyciskiem wyciszenia. Bez WebGL, w trybie lekkim lub przy ograniczonym ruchu: wersja SVG.
 3. **Model 3D działki**: budowany na żywo z danych tej działki: teren z NMT GUGiK (siatka 33×33 punkty, rzeźba przewyższona ×1,5–12 z informacją o krotności), granica działki i sąsiednie działki z EGiB, rowy, cieki i zbiorniki z BDOT10k, kierunek spływu, uprawa wybrana przez użytkownika w kolorze wynikającym z NDVI lub poziomu suszy, pogoda z wyniku analizy. Farma, drzewa, postacie i maszyny są poglądowe. Obrót przeciąganiem, przybliżanie gestem (pinch, kółko, touchpad) i przyciskami.
 4. **Kondycja roślin z satelity, z uwzględnieniem uprawy**: NDVI z Sentinel-2 porównujemy z typowym NDVI wybranej uprawy w danym miesiącu (profile dla 6 upraw). Gdy rośliny są wyraźnie słabsze niż typowo (poniżej 80% normy), a bilans wodny pokazuje suszę, pojawia się przyczyna „Rośliny już reagują na brak wody” i rośnie pewność wyniku. Gdy satelita i bilans wodny się nie zgadzają albo uprawa w tym okresie nie pokrywa pola (np. ściernisko po żniwach), informujemy o tym w „Czego nie wiemy” zamiast wyciągać wnioski. Poziom suszy liczymy metodą IUNG z bilansu wodnego, a NDVI jej nie zastępuje.
-5. **Wskaźnik kompletności danych** na scenie: „Dane: komplet ✓”, „4/5 · dociągam zdjęcie satelitarne” albo „4/5 · brak: …”, z listą źródeł i ich stanem po kliknięciu.
+5. **Wskaźnik kompletności danych** na scenie: „Dane: komplet ✓”, „6/7 · dociągam zdjęcie satelitarne” albo „6/7 · brak: …”, z listą źródeł i ich stanem po kliknięciu.
 6. **Stan wody teraz** (dla dat z przeszłości: „Stan wody <data>”): poziom suszy w skali 1–5 (Mokro, W normie, Susza umiarkowana / silna / ekstremalna). W sezonie (21.III–30.IX) liczony metodą IUNG z rozporządzenia MRiRW: klimatyczny bilans wodny z 60 dni porównany z progiem dla uprawy i kategorii gleby (im dalej poniżej progu, tym wyższy poziom). Poza sezonem albo gdy IUNG nie wyznacza progu: bilans wodny porównany z tym samym okresem w 10 poprzednich latach.
 7. **Na tle 10 lat**: wykres odchyleń bilansu wodnego rok po roku, liczba lat z deficytem i najbardziej narażone miesiące.
-8. **Dlaczego brakuje wody**: przyczyny wyliczone z danych: mniej deszczu niż zwykle, upał, lekka gleba, spływ wody po spadku terenu, okres krytyczny uprawy, słabsza niż typowo roślinność na zdjęciu satelitarnym.
+8. **Dlaczego brakuje wody**: przyczyny wyliczone z danych: mniej deszczu niż zwykle, upał, niski stan rzeki (najbliższy wodowskaz IMGW w 15% najniższych stanów dla tej pory roku z 10 lat), lekka gleba, głęboko położone wody gruntowe (PIG-PIB, ≥ 5 m przy suszy), spływ wody po spadku terenu, okres krytyczny uprawy, słabsza niż typowo roślinność na zdjęciu satelitarnym.
 9. **Co zrobić**: rekomendacje w kolejności wymaganej przez KOWR:
-   - zatrzymanie wody: zastawka na rowie przy działce (gdy BDOT10k pokazuje rów do 30 m od działki), zatrzymanie spływu w dolnej części pola (spadek ≥ 1,5%), utrzymanie wody gruntowej na glebach organicznych;
+   - zatrzymanie wody: zastawka na rowie przy działce (gdy BDOT10k pokazuje rów do 30 m od działki), zatrzymanie spływu w dolnej części pola (spadek ≥ 1,5%), utrzymanie wody gruntowej na glebach organicznych oraz przy płytkiej wodzie gruntowej (≤ 1,5 m w najbliższym punkcie PIG-PIB) i rowie do 150 m od działki;
    - agrotechnika: międzyplon, resztki pożniwne, ograniczenie orki, wysokość koszenia łąki;
    - nawadnianie (opcjonalnie): dawka z zapotrzebowania uprawy (ET0 × Kc wg FAO-56) minus opad z ostatnich 7 dni.
    Każda rekomendacja ma „Dlaczego to polecamy” z liczbami i źródłem. Kliknięcie pokazuje działanie na modelu 3D działki (np. koparka przy zastawce na najbliższym prawdziwym rowie), bez zmiany ujęcia kamery.
@@ -83,13 +85,13 @@ przeglądarka ──► Next.js 16 (App Router, React 19)
                  ├─ API: POST /api/analyses · GET /api/analyses/[id] · …/[id]/satellite · …/[id]/scene · …/[id]/pdf
                  │       GET /api/parcels/locate · /api/parcels/[id] · /api/places/search · /api/tiles/parcels/{z}/{x}/{y}
                  └─ web/src/server
-                     ├─ sources/   działka, pogoda, gleba, teren, hydrologia, satelita
+                     ├─ sources/   działka, pogoda, gleba, teren, hydrologia, rzeki, wody gruntowe, satelita
                      ├─ analysis/  bilans wodny, poziom suszy, przyczyny, rekomendacje (silnik regułowy)
                      └─ db/        Drizzle ORM ──► PostgreSQL + PostGIS
 ```
 
 - **Jedna aplikacja** (frontend i backend w Next.js), jedno wdrożenie (Docker, `output: "standalone"`).
-- **Przebieg analizy**: działka z bazy → równolegle pogoda (bazowa), gleba, teren, hydrologia → silnik → wynik. Zdjęcie Sentinel-2 liczy się w tle i dociąga się do wyniku, gdy jest gotowe; analiza na nie nie czeka.
+- **Przebieg analizy**: działka z bazy → równolegle pogoda (bazowa), gleba, teren, hydrologia, rzeki, wody gruntowe → silnik → wynik. Zdjęcie Sentinel-2 liczy się w tle i dociąga się do wyniku, gdy jest gotowe; analiza na nie nie czeka.
 - **Cache** (`rosa_cache`): gotowe analizy (3 h dla ostatnich dni, 30 dni dla dat historycznych), odpowiedzi źródeł zewnętrznych i NDVI. Klucz zawiera wersję silnika, więc zmiana algorytmu unieważnia stare wyniki.
 - **Odporność**: każde źródło ma własny limit czasu; awaria źródła obniża pewność wyniku i trafia do „Czego nie wiemy”, ale nie przerywa analizy. Jedynym źródłem krytycznym jest pogoda.
 - **Silnik jest deterministyczny i regułowy**: ten sam wejściowy zestaw danych zawsze daje ten sam wynik, a każda liczba w raporcie ma źródło.
@@ -114,6 +116,9 @@ Szczegóły: `docs/architektura.md`, `docs/concept.md`.
 | Adresy i ulice | GUGiK, Usługa Geokodowania (UUG, `services.gugik.gov.pl/uug`), dane PRG | cała Polska | wyszukiwanie adresu z numerem i ulicy |
 | Nazwy obrębów i gmin | wyliczone z tabeli działek EGiB (tabela `rosa_place`) | 54 144 obręby, 3 221 jednostek gminnych | wyszukiwarka nazw z podpowiedziami |
 | Rowy melioracyjne, cieki, kanały, wody powierzchniowe | GUGiK, BDOT10k (paczki GPKG na powiat, warstwy `OT_SWRM_L`, `OT_SWRS_L`, `OT_SWKN_L`, `OT_PTWP_A`) | cała Polska, 380 powiatów: 1,64 mln rowów, 506 tys. cieków, 8,9 tys. kanałów, 606 tys. wód powierzchniowych (1,1 GB) | zastawka na rowie, sąsiedztwo wody |
+| Stany wody na rzekach (dobowe) | IMGW-PIB, dane publiczne: archiwum hydrologiczne dobowe (`dane_hydrologiczne/dobowe`, pliki `codz_*`) | lata hydrologiczne 2006–2025 (01.11.2005 – 31.10.2025); 889 wodowskazów; 5,6 mln pomiarów (506 MB) | przyczyna „niski stan rzeki”: percentyl stanu wody na najbliższym wodowskazie (do 25 km) względem ±15 dni tej samej pory roku z 10 poprzednich lat |
+| Wykaz wodowskazów i bieżący stan wody | IMGW-PIB, API `danepubliczne.imgw.pl/api/data/hydro` | 913 stacji (współrzędne, stany ostrzegawcze i alarmowe); stan bieżący | współrzędne wodowskazów; stan rzeki dla analizy „na dziś” i „na wczoraj” |
+| Głębokość zwierciadła wód gruntowych | PIG-PIB (Państwowa Służba Hydrogeologiczna), monitoring wód podziemnych: ArcGIS REST `hydrogeologia/mwp` (cbdgmapa.pgi.gov.pl) | punkty monitoringu w promieniu 20 km, ostatni pomiar w punkcie | przyczyna „wody gruntowe głęboko”, uzasadnienie zatrzymania wody przy płytkiej wodzie gruntowej, „Czego nie wiemy” |
 | Kondycja roślin (NDVI) | Copernicus Sentinel-2 L2A: COG z rejestru AWS Open Data (katalog STAC Earth Search, Element 84) oraz archiwum Microsoft Planetary Computer (zdjęcia od 2016) | najnowsza scena z 30 dni przed dniem analizy (dla dat starszych niż 30 dni: z 60 dni), zachmurzenie < 60%, min. 50% bezchmurnych pikseli w granicy działki | kondycja roślin względem typowej dla uprawy i miesiąca; przyczyna „rośliny reagują na brak wody”, korekta pewności |
 | Współczynniki upraw Kc, okresy krytyczne | FAO-56 (Allen i in.), uproszczone dla Polski | 6 upraw | nawadnianie, przyczyna „okres krytyczny” |
 | Typowe NDVI upraw w miesiącach | profile własne na podstawie typowych krzywych NDVI dla upraw w Europie Środkowej (fenologia: siew, pełnia wegetacji, dojrzewanie, zbiór) | 6 upraw × 12 miesięcy | interpretacja NDVI zależna od uprawy (`web/src/server/analysis/crop-profiles.ts`) |
@@ -127,6 +132,7 @@ Szczegóły: `docs/architektura.md`, `docs/concept.md`.
 |---|---|---|---|
 | Działki EGiB (GUGiK) | 21.11.2026 | eksport z 21.11.2026, 03:03 | `scripts/import_parcels.sh` |
 | Dane dobowe IMGW-PIB + współrzędne stacji | 21.11.2026 | 2006-01-01 – 2026-10-31 | `scripts/import_imgw.py` |
+| Dane hydrologiczne dobowe IMGW-PIB (stany rzek) + wodowskazy z API | 21.11.2026 | 01.11.2005 – 31.10.2025 (lata hydrologiczne 2006–2025) | `scripts/import_imgw_hydro.py` (`rosa-update.sh hydro-rivers`) |
 | BDOT10k: rowy, cieki, kanały, wody | 21.11.2026 | wersje obiektów wg powiatów (np. 31.12.2023 dla pow. śremskiego) | `scripts/import_bdot.py` |
 | Indeks nazw obrębów i gmin (`rosa_place`) | 21.11.2026 | z tabeli działek EGiB | `scripts/server/rosa-update.sh places` (też automatycznie po każdej aktualizacji działek) |
 
@@ -136,6 +142,7 @@ Aktualizacja w tle: `scripts/server/rosa-update.sh` uruchamiany z crona na serwe
 |---|---|
 | Czyszczenie przeterminowanego cache | codziennie 03:30 |
 | IMGW (pełne przeładowanie 2006–dziś) | 6. dnia miesiąca 02:00 |
+| IMGW hydrologia: stany rzek (pełne przeładowanie 2006–ostatni rok hydrologiczny) | 7. dnia miesiąca 02:30 |
 | Działki EGiB | 15. dnia miesiąca 01:00 |
 | BDOT10k (wody) | 1 stycznia, kwietnia, lipca, października 04:00 |
 
@@ -147,6 +154,8 @@ Instalacja na serwerze: skopiuj `scripts/` do `~/rosa/scripts`, utwórz `~/rosa-
 | Kategoria gleby IUNG (WMS GetFeatureInfo) | pierwsza analiza w danym miejscu | bez wygasania |
 | Wysokości NMT (GUGiK) | pierwsza analiza działki | bez wygasania |
 | Ostatnie dni pogody (Open-Meteo) | gdy dzień analizy jest nowszy niż archiwum IMGW | 3 h |
+| Stan rzeki i jego percentyl (z bazy, a bieżący stan wodowskazu z API IMGW) | każda analiza; API tylko gdy dzień analizy to dziś lub wczoraj i jest nowszy niż archiwum | 3 h dla ostatnich dni, 30 dni dla dat historycznych |
+| Punkty monitoringu wód podziemnych PIG-PIB (ArcGIS REST) | pierwsza analiza w danym miejscu (siatka 0,02°) | 30 dni |
 | Sentinel-2 NDVI (Earth Search i Planetary Computer, COG) | w tle po każdej nowej analizie | 7 dni |
 | Model 3D: siatka NMT, sąsiednie działki, wody w otoczeniu | pierwsze otwarcie sceny działki | bez wygasania (wersjonowany klucz) |
 | Adresy i ulice (GUGiK UUG) | przy wpisywaniu w wyszukiwarkę | 24 h (cache HTTP) |
@@ -182,10 +191,10 @@ Każdy wynik pokazuje datę pobrania danych przy źródle (sekcje wyniku i rapor
 | Figtree, Bricolage Grotesque (`next/font`, pliki TTF w `web/public/fonts/pdf`) | – | SIL OFL 1.1 | kroje pisma (hostowane lokalnie, osadzane w PDF) |
 | PostgreSQL + PostGIS | 18.7 / 3.7 | PostgreSQL License / GPL-2.0 | baza danych przestrzennych (serwer, nie dystrybuowana z kodem) |
 | GDAL/OGR (`ogr2ogr`, obraz `osgeo/gdal`) | 3.x | MIT | import Parquet i GPKG |
-| Python 3.12 + psycopg | 3.12 / 3.x | PSF / LGPL-3.0 | skrypt importu IMGW (narzędzie, poza aplikacją) |
+| Python 3.12 + psycopg | 3.12 / 3.x | PSF / LGPL-3.0 | skrypty importu IMGW: meteo i hydrologia (narzędzie, poza aplikacją) |
 
 ### Usługi zewnętrzne
-GUGiK (opendata.geoportal.gov.pl, services.gugik.gov.pl), IMGW-PIB (danepubliczne.imgw.pl), IUNG-PIB (sgeo.iung.pl), Open-Meteo (api.open-meteo.com), Earth Search STAC (earth-search.aws.element84.com) i AWS Open Data (sentinel-cogs), Microsoft Planetary Computer (STAC i anonimowy token SAS), OpenStreetMap (kafelki mapy), GUGiK UUG (geokodowanie), GUGiK ORTO i KIEG (WMS). Żadna nie wymaga klucza ani płatności.
+GUGiK (opendata.geoportal.gov.pl, services.gugik.gov.pl), IMGW-PIB (danepubliczne.imgw.pl, archiwum i API hydrologiczne), PIG-PIB (cbdgmapa.pgi.gov.pl, ArcGIS REST), IUNG-PIB (sgeo.iung.pl), Open-Meteo (api.open-meteo.com), Earth Search STAC (earth-search.aws.element84.com) i AWS Open Data (sentinel-cogs), Microsoft Planetary Computer (STAC i anonimowy token SAS), OpenStreetMap (kafelki mapy), GUGiK UUG (geokodowanie), GUGiK ORTO i KIEG (WMS). Żadna nie wymaga klucza ani płatności.
 
 ### Narzędzia AI i jak ich użyto
 - **W działaniu aplikacji nie ma AI ani modeli językowych.** Ocena suszy i rekomendacje to deterministyczny silnik regułowy (`web/src/server/analysis`), oparty na bilansie wodnym, FAO-56 i danych IUNG, GUGiK, IMGW. Każdy wniosek ma przypięte liczby i źródło.
@@ -202,8 +211,9 @@ GUGiK (opendata.geoportal.gov.pl, services.gugik.gov.pl), IMGW-PIB (danepubliczn
 
 **Dane**:
 - **GUGiK (EGiB, NMT, BDOT10k)**: dane udostępniane bezpłatnie do dowolnego wykorzystania (art. 40a ustawy Prawo geodezyjne i kartograficzne, od 31.07.2020).
-- **IMGW-PIB** (Regulamin Udostępniania Danych, https://danepubliczne.imgw.pl): dane bezpłatne do celów prywatnych, a dane o wysokiej wartości (rozporządzenie wykonawcze KE 2023/138, m.in. pomiary ze stacji meteorologicznych) w każdym celu. Wykorzystanie w działalności gospodarczej lub do „osłony hydrologiczno-meteorologicznej rolnictwa” poza danymi o wysokiej wartości wymaga umowy z IMGW-PIB (§ 3, § 5). Warunek: przy każdym produkcie formułki „Źródłem pochodzenia danych jest Instytut Meteorologii i Gospodarki Wodnej – Państwowy Instytut Badawczy” oraz „Dane Instytutu Meteorologii i Gospodarki Wodnej – Państwowego Instytutu Badawczego zostały przetworzone”. Obie pokazujemy w wyniku i w raporcie. **Do potwierdzenia z IMGW**, czy dobowe archiwum stacji zalicza się do danych o wysokiej wartości (zapytanie: `docs/zapytania-licencyjne.md`).
+- **IMGW-PIB** (Regulamin Udostępniania Danych, https://danepubliczne.imgw.pl): dane bezpłatne do celów prywatnych, a dane o wysokiej wartości (rozporządzenie wykonawcze KE 2023/138, m.in. pomiary ze stacji meteorologicznych) w każdym celu. Wykorzystanie w działalności gospodarczej lub do „osłony hydrologiczno-meteorologicznej rolnictwa” poza danymi o wysokiej wartości wymaga umowy z IMGW-PIB (§ 3, § 5). Warunek: przy każdym produkcie formułki „Źródłem pochodzenia danych jest Instytut Meteorologii i Gospodarki Wodnej – Państwowy Instytut Badawczy” oraz „Dane Instytutu Meteorologii i Gospodarki Wodnej – Państwowego Instytutu Badawczego zostały przetworzone”. Obie pokazujemy w wyniku i w raporcie, także przy danych hydrologicznych (stany rzek z archiwum i API), które pokazujemy jako osobne źródło „IMGW-PIB (dane hydrologiczne)”. **Do potwierdzenia z IMGW**, czy dobowe archiwum stacji zalicza się do danych o wysokiej wartości (zapytanie: `docs/zapytania-licencyjne.md`).
 - **IUNG-PIB**: warstwa kategorii glebowych SMSR jest udostępniana publicznie w usłudze WMS bez opłat i ograniczeń dostępu (GetCapabilities: `Fees: NONE`, `AccessConstraints: NONE`); SMSR prowadzony jest przez IUNG-PIB na zlecenie MRiRW, a progi KBW pochodzą z Rozporządzenia MRiRW z 11.04.2019. Jako informacja sektora publicznego podlega ponownemu wykorzystaniu (ustawa z 11.08.2021 o otwartych danych); podajemy źródło przy każdym wyniku. Formalnej licencji IUNG nie publikuje; **zapytanie o warunki i ewentualne udostępnienie rastra**: `docs/zapytania-licencyjne.md`.
+- **PIG-PIB (monitoring wód podziemnych)**: dane publiczne PIG-PIB, który pełni funkcję Państwowej Służby Hydrogeologicznej, udostępniane w publicznej usłudze ArcGIS REST (cbdgmapa.pgi.gov.pl) bez logowania i opłat. Strona z zasadami udostępniania danych PIG-PIB nie była dostępna dla zapytań automatycznych, więc **warunki do potwierdzenia**; przy wyniku podajemy źródło („dane PIG-PIB (Państwowa Służba Hydrogeologiczna), udostępniane publicznie”).
 - **Copernicus Sentinel-2**: wolny, pełny i otwarty dostęp (polityka danych Copernicus); oznaczenie „zawiera zmodyfikowane dane Copernicus Sentinel” (przy wyniku podajemy też, czy scena pochodzi z Earth Search, czy z archiwum Planetary Computer). Planetary Computer udostępnia dane na warunkach ich licencji źródłowej (Copernicus) i własnych Warunkach korzystania Microsoft.
 - **OpenStreetMap**: dane © współtwórcy OpenStreetMap, licencja ODbL; oznaczenie widoczne na mapie. Publiczne kafelki tile.openstreetmap.org mają politykę dozwolonego użycia; przy wdrożeniu produkcyjnym u KOWR należy użyć własnego serwera kafelków lub komercyjnego dostawcy.
 - **GUGiK ortofotomapa, KIEG, usługa geokodowania (PRG)**: jak wyżej, dane GUGiK udostępniane bezpłatnie; oznaczenia źródła widoczne na mapie.
@@ -220,9 +230,11 @@ GUGiK (opendata.geoportal.gov.pl, services.gugik.gov.pl), IMGW-PIB (danepubliczn
 - **NDVI**: liczymy tylko z pikseli 10 m, których środek leży w granicach działki (maska z geometrii EGiB) i które maska SCL oznacza jako bezchmurne; przy bardzo wąskich działkach (< 20 m) pikseli jest mało. Zdjęcie jest z 30 dni przed datą analizy (dla starszych dat z 60 dni) i może go nie być przy dużym zachmurzeniu. Dla dat sprzed 2017 r. zdjęć Sentinel-2 L2A jest mało (archiwum Planetary Computer od 2016). Pobieranie zdjęć z amerykańskiego S3 bywa bardzo wolne z niektórych sieci; na serwerze produkcyjnym trwa kilka sekund, a wynik dociąga się w tle.
 - **Model 3D jest poglądowy w części elementów**: teren, granice, sąsiednie działki i wody są z danych, ale rzeźba jest przewyższona (krotność pokazujemy przy źródłach), a farma, drzewa, postacie, maszyny i kolory pól sąsiadów są ilustracją.
 - **Wyszukiwanie adresów** zależy od zapisu w rejestrze GUGiK (np. nazwa ulicy bez „ul.”); nie każdy wariant nazwy zostanie znaleziony.
-- **Brak danych o wodach gruntowych** i o rzeczywistym stanie urządzeń melioracyjnych (BDOT10k pokazuje przebieg rowów, nie ich drożność).
+- **Brak danych o rzeczywistym stanie urządzeń melioracyjnych** (BDOT10k pokazuje przebieg rowów, nie ich drożność).
+- **Stan rzeki z najbliższego wodowskazu IMGW** (do 25 km): wodowskaz może leżeć na innej rzece lub w innej zlewni niż działka, a duża rzeka niesie wodę z daleka. Percentyl liczymy z pomiarów tego samego wodowskazu (±15 dni wokół tej samej daty w 10 poprzednich latach); zmiana zera wodowskazu w tym czasie może go zniekształcić. Archiwum dobowe kończy się 31.10.2025 (rok hydrologiczny 2025, publikowany z opóźnieniem); dla dziś i wczoraj bierzemy bieżący stan z API IMGW, a dla dat pomiędzy stanu rzek nie oceniamy.
+- **Wody gruntowe z najbliższego punktu monitoringu PIG-PIB** (do 20 km) i z ostatniego pomiaru w tym punkcie, a nie spod działki ani z dnia analizy; poziom wody gruntowej mocno zależy od rzeźby terenu i budowy gleby. Punkty ze zwierciadłem napiętym (pod warstwą nieprzepuszczalną) pokazujemy, ale nie wyciągamy z nich wniosków.
 - **Rekomendacje są ogólne**: nie zastępują doradcy rolniczego ani pozwoleń wodnoprawnych (zastawki, pobór wody), o czym przypominamy przy rekomendacjach.
-- **Limity zewnętrznych API dotyczą głównie aktualizacji danych w tle, a nie pracy użytkownika**: analizy czytają działki, pogodę i hydrologię z naszej bazy, a źródła zewnętrzne odświeżamy okresowo (np. raz na dobę lub miesiąc). Przy pierwszej analizie nowej działki pytamy na żywo tylko kilka lekkich usług (IUNG, NMT, ostatnie dni z Open-Meteo, Sentinel-2) i zapisujemy wynik w cache. Ich limity: darmowe Open-Meteo do 10 000 wywołań dziennie na adres IP (10 lat danych dziennych to ok. 260 wywołań, dlatego historia jest z IMGW, a nie z Open-Meteo); Earth Search i AWS bez limitu, ale z opóźnieniem z Europy (~4 s), więc NDVI dociąga się w tle; usługi GUGiK i IUNG bez publikowanych limitów.
+- **Limity zewnętrznych API dotyczą głównie aktualizacji danych w tle, a nie pracy użytkownika**: analizy czytają działki, pogodę i hydrologię z naszej bazy, a źródła zewnętrzne odświeżamy okresowo (np. raz na dobę lub miesiąc). Przy pierwszej analizie nowej działki pytamy na żywo tylko kilka lekkich usług (IUNG, NMT, PIG-PIB, ostatnie dni z Open-Meteo, bieżący stan wodowskazu IMGW, Sentinel-2) i zapisujemy wynik w cache. Ich limity: darmowe Open-Meteo do 10 000 wywołań dziennie na adres IP (10 lat danych dziennych to ok. 260 wywołań, dlatego historia jest z IMGW, a nie z Open-Meteo); Earth Search i AWS bez limitu, ale z opóźnieniem z Europy (~4 s), więc NDVI dociąga się w tle; usługi GUGiK, IUNG, PIG-PIB i API IMGW bez publikowanych limitów.
 - **Prototyp**: działka nierolnicza (las, woda, zabudowa wg IUNG) dostaje ostrzeżenie zamiast rekomendacji upraw; ewidencyjne klasy użytków (`klasouzytki_egib`) są w eksporcie GUGiK najczęściej puste.
 
 ---
@@ -231,6 +243,7 @@ GUGiK (opendata.geoportal.gov.pl, services.gugik.gov.pl), IMGW-PIB (danepubliczn
 
 - **Testy na działkach z różnych regionów** (Wielkopolska, Małopolska, Dolny Śląsk, Podlasie, Lubuskie) i różnych dat, w tym znanych okresów suszy. Przykład: czerwiec 2019 w gm. Dolsk daje „Susza ekstremalna” z upałem +3,3 °C, co zgadza się z rekordowo gorącym i suchym czerwcem 2019; lipiec 2025 w okolicy Śremu daje „W normie”.
 - **Spójność danych wejściowych**: wysokości NMT porównane z ukształtowaniem terenu (kolejność osi sprawdzona na znanym punkcie: 103,6 m n.p.m. w Mórce), kategoria IUNG porównana z ewidencją (działka testowa w Mórce: IUNG „lasy” = EGiB „Ls”), NDVI w zakresie typowym dla upraw w maju–czerwcu.
+- **Rzeki i wody gruntowe** (działka 302602_5.0008.399, gm. Dolsk): 20.06.2019 wodowskaz Śrem na Warcie (16,6 km) pokazuje 161 cm, 2. percentyl dla tej pory roku z 10 lat, co zgadza się z niżówką 2019 r.; 10.08.2022 ten sam wodowskaz: 183 cm, 48. percentyl. Dla analizy „na dziś” (21.11.2026, działka 300902_2.0026.AR_1.4/2) stan bieżący z API IMGW: Noteć w Łysku 150 cm, 68. percentyl. Najbliższy punkt PIG-PIB ze zwierciadłem swobodnym dla Dolska: Studzianna (4,2 km), 0,91 m p.p.t. (pomiar 28.09.2026).
 - **Przejrzystość**: każda przyczyna i rekomendacja pokazuje liczby, z których wynika, i źródło; sekcja „Czego nie wiemy” wymienia ograniczenia konkretnej analizy. Pozwala to rolnikowi i ekspertowi sprawdzić rozumowanie krok po kroku.
 - **Animacja i scena 3D**: sprawdzone w przeglądarce z GPU (Playwright + Chrome) klatka po klatce, także przy sztucznie spowolnionych danych (animacja czeka na etapach), przy awarii źródła sceny (przejście na wersję SVG) i na telefonie (390×844).
 - **Wyszukiwarka**: sprawdzona na nazwach z polskimi znakami i bez, adresach z numerem, „obręb + numer działki” i pełnych identyfikatorach; czas odpowiedzi 0,1–0,5 s.
@@ -243,14 +256,14 @@ GUGiK (opendata.geoportal.gov.pl, services.gugik.gov.pl), IMGW-PIB (danepubliczn
 
 ## 10. Skalowalność i koszty
 
-- **Architektura pod wielu użytkowników**: aplikacja jest bezstanowa (Next.js w kontenerze Docker), więc można uruchomić wiele instancji za load balancerem. Stan i wyniki są w PostgreSQL (tabela `rosa_cache`). Ciężkie dane (38,9 mln działek, 2,8 mln obiektów wodnych, 2,3 mln pomiarów IMGW) są w bazie z indeksami przestrzennymi, a nie pobierane z zewnętrznych usług przy każdym zapytaniu.
+- **Architektura pod wielu użytkowników**: aplikacja jest bezstanowa (Next.js w kontenerze Docker), więc można uruchomić wiele instancji za load balancerem. Stan i wyniki są w PostgreSQL (tabela `rosa_cache`). Ciężkie dane (38,9 mln działek, 2,8 mln obiektów wodnych, 2,3 mln pomiarów meteorologicznych i 5,6 mln dobowych stanów rzek IMGW) są w bazie z indeksami przestrzennymi, a nie pobierane z zewnętrznych usług przy każdym zapytaniu.
 - **Zmierzone czasy** (serwer produkcyjny, baza na tym samym serwerze):
   - nowa analiza: 0,7–2,5 s; ponownie ta sama: ok. 0,15 s (cache);
   - zdjęcie satelitarne w tle: kilka sekund;
   - kafelek granic działek: 60–200 ms;
   - wyszukiwarka: 0,1–0,5 s;
   - raport PDF: 0,5–1,7 s.
-- **Co rośnie z ruchem**: pierwsze otwarcie nowej działki pyta GUGiK (NMT, około 10 zapytań), IUNG i Sentinel-2. Wyniki trafiają do cache, więc kolejne analizy tej samej działki i okolicy są tanie. Pogoda, działki i wody są w bazie i odświeżane w tle (sekcja 5), więc liczba użytkowników nie zwiększa liczby zapytań do IMGW ani GUGiK.
+- **Co rośnie z ruchem**: pierwsze otwarcie nowej działki pyta GUGiK (NMT, około 10 zapytań), IUNG i Sentinel-2. Wyniki trafiają do cache, więc kolejne analizy tej samej działki i okolicy są tanie. Pogoda, stany rzek, działki i wody są w bazie i odświeżane w tle (sekcja 5), więc liczba użytkowników nie zwiększa liczby zapytań do IMGW ani GUGiK.
 - **Infrastruktura i koszt (szacunek)**:
   - obecnie: 1 serwer VPS (4 vCPU, 8 GB RAM, 75 GB SSD; baza ok. 20 GB z indeksami; zwykle kilkadziesiąt zł miesięcznie); wystarcza na tysiące analiz dziennie;
   - dla dziesiątek tysięcy rolników: 2–3 instancje aplikacji, baza 8 vCPU / 32 GB RAM z repliką do odczytu, CDN przed kafelkami i plikami statycznymi; rząd kilkuset zł miesięcznie;

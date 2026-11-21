@@ -200,6 +200,28 @@ export function CauseIcon({ kind }: { kind: Cause["kind"] }) {
           <path d="M37.5 38h5M40 35.5v5" stroke="#FFFFFF" strokeWidth="1.8" strokeLinecap="round" transform="rotate(45 40 38)" />
         </svg>
       )
+    case "rzeka":
+      return (
+        <svg width="52" height="52" viewBox="0 0 52 52" aria-hidden="true" className="flex-none">
+          <rect width="52" height="52" rx="16" fill="#CFE6EA" />
+          <path d="M8 22c4 0 4-4 9-4s5 4 9 4 5-4 9-4 5 4 9 4" stroke="#7CC6D6" strokeWidth="3" fill="none" strokeLinecap="round" />
+          <path d="M8 31c4 0 4-4 9-4s5 4 9 4 5-4 9-4 5 4 9 4" stroke="#3FA3B0" strokeWidth="3" fill="none" strokeLinecap="round" />
+          <path d="M8 40h36" stroke="#B9834F" strokeWidth="3" strokeLinecap="round" />
+          <path d="M40 9v8M37 14l3 3 3-3" stroke="#A8432A" strokeWidth="2.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )
+    case "gruntowe":
+      return (
+        <svg width="52" height="52" viewBox="0 0 52 52" aria-hidden="true" className="flex-none">
+          <rect width="52" height="52" rx="16" fill="#E6E8DA" />
+          <rect x="9" y="10" width="34" height="6" rx="3" fill="#8DB54A" />
+          <rect x="9" y="16" width="34" height="10" rx="2" fill="#B07A4E" />
+          <rect x="9" y="26" width="34" height="8" rx="2" fill="#E4C38F" />
+          <rect x="9" y="34" width="34" height="8" rx="4" fill="#7CC6D6" />
+          <path d="M20 16v12M17 25l3 3 3-3" stroke="#5F6B2E" strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M32 38v-4" stroke="#0E6E73" strokeWidth="2" strokeDasharray="2 2" />
+        </svg>
+      )
     case "uprawa":
       return (
         <svg width="52" height="52" viewBox="0 0 52 52" aria-hidden="true" className="flex-none">

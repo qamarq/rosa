@@ -15,6 +15,8 @@ const PENDING_NAME: Record<SourceKey, string> = {
   gleba: "mapę gleb",
   teren: "model terenu",
   hydrologia: "dane o wodach",
+  rzeki: "stan rzek",
+  gruntowe: "wody gruntowe",
 }
 
 type State = "ok" | "pending" | "fail"
@@ -104,12 +106,14 @@ export function DataStatusPill({ analysis, compact = false, className }: { analy
                 <span className="flex flex-wrap items-baseline gap-x-2 text-sm font-bold">
                   {r.label}
                   <span className={cn("text-xs font-bold", r.state === "ok" ? "text-water-deep" : r.state === "pending" ? "text-[#8A6A1A]" : "text-[#7A2E18]")}>
-                    {r.state === "ok" ? "pobrane" : r.state === "pending" ? "w tle" : "brak"}
+                    {r.state === "ok" ? (r.source ? "pobrane" : "sprawdzone") : r.state === "pending" ? "w tle" : "brak"}
                   </span>
                 </span>
                 <span className="text-[13px] leading-[1.4] text-muted-foreground">
                   {r.state === "ok"
-                    ? `${r.source?.name ?? ""}${r.source?.fetchedAt ? ` · pobrano ${formatDatePl(r.source.fetchedAt)}` : ""}${r.key === "satelita" && analysis.vegetation ? ` · zdjęcie z ${formatDatePl(analysis.vegetation.imageDate)}` : ""}`
+                    ? r.source
+                      ? `${r.source.name}${r.source.fetchedAt ? ` · pobrano ${formatDatePl(r.source.fetchedAt)}` : ""}${r.key === "satelita" && analysis.vegetation ? ` · zdjęcie z ${formatDatePl(analysis.vegetation.imageDate)}` : ""}`
+                      : (r.message ?? "")
                     : r.state === "pending"
                       ? "Wczytuje się w tle. Wynik uzupełni się sam, gdy dane dotrą."
                       : (r.message ?? FAILURE_COPY[r.key].body)}

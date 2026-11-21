@@ -39,5 +39,20 @@ export function SourceIcon({ source }: { source: SourceKey }) {
           <path d="M3 6c4 0 4 4 8 4s4-4 8-4M3 12c4 0 4 4 8 4s4-4 8-4" />
         </svg>
       )
+    case "rzeki":
+      return (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3FA3B0" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
+          <path d="M3 9c3 0 3 3 6 3s3-3 6-3 3 3 6 3M3 16c3 0 3 3 6 3s3-3 6-3 3 3 6 3" />
+          <path d="M12 3v5" stroke="#5B4D3E" strokeWidth="2" />
+        </svg>
+      )
+    case "gruntowe":
+      return (
+        <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3" y="4" width="18" height="5" rx="2.5" fill="#9C6E45" />
+          <rect x="3" y="9" width="18" height="6" rx="1.5" fill="#D8B37E" />
+          <rect x="3" y="15" width="18" height="5" rx="2.5" fill="#3FA3B0" />
+        </svg>
+      )
   }
 }

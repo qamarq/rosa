@@ -48,6 +48,8 @@ export const CAUSE_STYLE: Record<string, { bg: string; value: string }> = {
   upal: { bg: "#FBEFE6", value: "#8A3A22" },
   uprawa: { bg: "#EEF3E2", value: "#4A5420" },
   rosliny: { bg: "#F4EFD9", value: "#5E5320" },
+  rzeka: { bg: "#E4F0F2", value: "#0B5A5E" },
+  gruntowe: { bg: "#EEF0E6", value: "#3F5A6B" },
 }
 
 export const GROUPS: { id: RecommendationGroup; title: string; tint: string; label: string; optional: boolean }[] = [

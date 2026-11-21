@@ -12,7 +12,9 @@ import type {
 import { formatDatePl } from "@/lib/validation"
 import type { ParcelRecord } from "@/server/sources/parcel"
 import type { WeatherStation } from "@/server/sources/meteo"
+import type { GroundwaterReading } from "@/server/sources/groundwater"
 import type { HydroSummary } from "@/server/sources/hydro"
+import type { RiverSummary } from "@/server/sources/rivers"
 import type { SatelliteResult } from "@/server/sources/satellite"
 import type { SoilCategory } from "@/server/sources/soil"
 import type { TerrainSummary } from "@/server/sources/terrain"
@@ -29,7 +31,9 @@ export type EngineInput = {
   soil: SoilCategory | null
   terrain: TerrainSummary | null
   hydro: HydroSummary | null
-  failed: { soil: boolean; terrain: boolean; hydro: boolean }
+  rivers: RiverSummary | null
+  groundwater: GroundwaterReading | null
+  failed: { soil: boolean; terrain: boolean; hydro: boolean; rivers: boolean; groundwater: boolean }
   fetchedAt: string
   historyYears: number
 }
@@ -41,6 +45,9 @@ const LEVEL_LABELS: Record<DroughtLevel, string> = {
   4: "Susza silna",
   5: "Susza ekstremalna",
 }
+
+const IMGW_LICENSE =
+  "Źródłem pochodzenia danych jest Instytut Meteorologii i Gospodarki Wodnej – Państwowy Instytut Badawczy. Dane Instytutu Meteorologii i Gospodarki Wodnej – Państwowego Instytutu Badawczego zostały przetworzone."
 
 const SOIL_SHIFT: Record<number, number> = { 1: -0.3, 2: -0.15, 3: 0, 4: 0.15, 5: 0.1 }
 
@@ -66,9 +73,23 @@ function round5(n: number): number {
   return Math.round(n / 5) * 5
 }
 
+function km(n: number): string {
+  return `${n.toLocaleString("pl-PL")} km`
+}
+
+function metres(n: number): string {
+  return `${n.toLocaleString("pl-PL", { maximumFractionDigits: 2 })} m`
+}
+
 export function buildAnalysis(input: EngineInput): Analysis {
-  const { request, parcel, balance, soil, terrain, historyYears, weather, hydro } = input
+  const { request, parcel, balance, soil, terrain, historyYears, weather, hydro, groundwater } = input
   const ditchClose = hydro?.ditchM != null && hydro.ditchM <= 30
+  const river = input.rivers?.reading ?? null
+  const riverName = river ? (river.river ? `rzeki ${river.river}` : "wody") : ""
+  const riverPct = river ? Math.min(99, Math.max(1, Math.round(river.percentile * 100))) : 0
+  const gwPoint = groundwater ? `${groundwater.place ? `${groundwater.place}, ` : ""}${km(groundwater.distanceKm)}` : ""
+  const gwWhen = groundwater?.measuredAt ? `pomiar ${formatDatePl(groundwater.measuredAt)}` : "data pomiaru nieznana"
+  const gwShallow = !!groundwater?.unconfined && groundwater.depthM <= 1.5
 
   const nearest = weather.stations[0]
   const stationNames = weather.stations.slice(0, 3).map((s) => `${s.name.charAt(0)}${s.name.slice(1).toLocaleLowerCase("pl-PL")} (${s.distanceKm.toLocaleString("pl-PL")} km)`).join(", ")
@@ -145,6 +166,16 @@ export function buildAnalysis(input: EngineInput): Analysis {
       source: meteoSource,
     })
   }
+  if (river && river.percentile <= 0.15) {
+    causes.push({
+      id: "rzeka",
+      kind: "rzeka",
+      value: `${Math.max(5, Math.ceil(river.percentile * 20) * 5)}% najniższych`,
+      title: "Niski stan rzeki",
+      detail: `Stan ${riverName} na wodowskazie ${river.gauge} (${km(river.distanceKm)}) to ${river.levelCm} cm (${formatDatePl(river.day)}). Tak nisko bywało w tej porze roku tylko w ok. ${riverPct}% dni z ${river.sampleYears} poprzednich lat.`,
+      source: "IMGW-PIB (dane hydrologiczne)",
+    })
+  }
   if (soil && soil.agricultural && soil.susceptibility) {
     const detail: Record<string, string> = {
       "bardzo wysoka": "Bardzo słabo trzyma wodę, susza pojawia się tu najwcześniej.",
@@ -160,6 +191,16 @@ export function buildAnalysis(input: EngineInput): Analysis {
       title: soil.texture,
       detail: `${detail[soil.susceptibility]} Podatność na suszę wg IUNG: ${soil.susceptibility === "organiczna" ? "gleba organiczna" : soil.susceptibility}.`,
       source: "IUNG-PIB",
+    })
+  }
+  if (groundwater?.unconfined && groundwater.depthM >= 5 && level >= 3) {
+    causes.push({
+      id: "gruntowe",
+      kind: "gruntowe",
+      value: metres(groundwater.depthM),
+      title: "Wody gruntowe głęboko",
+      detail: `W najbliższym punkcie monitoringu PIG-PIB (${gwPoint}) woda gruntowa jest ${metres(groundwater.depthM)} pod terenem (ostatni ${gwWhen}). Korzenie upraw tam nie sięgają, więc rośliny zależą od deszczu.`,
+      source: "PIG-PIB",
     })
   }
   if (terrain && terrain.slopePct >= 1) {
@@ -201,6 +242,7 @@ export function buildAnalysis(input: EngineInput): Analysis {
         `${ditchName?.kind === "kanał" ? "Kanał" : "Rów melioracyjny"} biegnie ${hydro.ditchM != null && hydro.ditchM <= 2 ? "tuż przy działce" : `ok. ${hydro.ditchM} m od działki`}${hydro.ditchSide ? `, po stronie ${hydro.ditchSide}` : ""} (BDOT10k).`,
         ...(terrain && terrain.slopePct >= 1 ? [`Pole opada o ok. ${terrain.slopePct.toLocaleString("pl-PL")}% na ${terrain.downslope} (GUGiK NMT).`] : []),
         ...(soilWhy ? [soilWhy] : []),
+        ...(gwShallow ? [`Woda gruntowa jest płytko: ${metres(groundwater!.depthM)} pod terenem w najbliższym punkcie monitoringu (${gwPoint}, ${gwWhen}, PIG-PIB), więc zatrzymana woda zostaje w zasięgu korzeni.`] : []),
       ],
       note: "Przed budową zapytaj spółkę wodną lub Wody Polskie, czy potrzebna jest zgoda.",
     })
@@ -221,6 +263,9 @@ export function buildAnalysis(input: EngineInput): Analysis {
       note: "Przed pracami przy rowach lub ciekach zapytaj spółkę wodną albo Wody Polskie, czy potrzebna jest zgoda.",
     })
   }
+  const gwWhy = gwShallow
+    ? `W najbliższym punkcie monitoringu PIG-PIB (${gwPoint}) woda gruntowa jest ${metres(groundwater!.depthM)} pod terenem (${gwWhen}); pod działką poziom może być inny.`
+    : null
   if (soil?.code === 5) {
     recs.push({
       id: "woda-gruntowa",
@@ -230,8 +275,20 @@ export function buildAnalysis(input: EngineInput): Analysis {
       when: "Wiosną, zanim woda odpłynie",
       sceneMode: "zastawka",
       sceneCaption: "Zastawka podnosi wodę w rowie, więc gleba organiczna nie przesycha.",
-      why: ["Przesuszona gleba organiczna murszeje i traci zdolność zatrzymywania wody (IUNG-PIB)."],
+      why: ["Przesuszona gleba organiczna murszeje i traci zdolność zatrzymywania wody (IUNG-PIB).", ...(gwWhy ? [gwWhy] : [])],
       note: "Budowa zastawki może wymagać zgody wodnoprawnej.",
+    })
+  } else if (gwWhy && agricultural && !ditchClose && hydro?.ditchM != null && hydro.ditchM <= 150) {
+    recs.push({
+      id: "woda-gruntowa",
+      group: "woda",
+      title: "Utrzymuj wysoki poziom wody gruntowej",
+      text: "Woda gruntowa jest tu płytko. Zastawka na pobliskim rowie odpływowym spowolni jej odpływ, żeby została w zasięgu korzeni.",
+      when: "Wiosną, zanim woda odpłynie",
+      sceneMode: "zastawka",
+      sceneCaption: "Zastawka podnosi wodę w rowie, więc poziom wody gruntowej opada wolniej.",
+      why: [gwWhy, `Najbliższy rów jest ok. ${hydro.ditchM} m od działki (BDOT10k).`],
+      note: "Budowa zastawki może wymagać zgody wodnoprawnej i zgody właściciela rowu.",
     })
   }
   if (agricultural && request.crop !== "laka") {
@@ -313,8 +370,18 @@ export function buildAnalysis(input: EngineInput): Analysis {
   const unknowns = [
     `Pogodę liczymy z ${weather.stations.length} najbliższych stacji IMGW (najbliższa ${nearest ? nearest.distanceKm.toLocaleString("pl-PL") + " km" : "–"}), a nie z pomiaru na Twoim polu.`,
     "Parowanie liczymy metodą Hargreavesa (FAO-56) z temperatury; to przybliżenie.",
-    "Nie znamy poziomu wód gruntowych pod działką.",
+    groundwater
+      ? `Wody gruntowe znamy z najbliższego punktu monitoringu PIG-PIB (${km(groundwater.distanceKm)}) i z ostatniego pomiaru (${groundwater.measuredAt ? formatDatePl(groundwater.measuredAt) : "data nieznana"}), a nie z dnia analizy; pod działką poziom może być inny.`
+      : input.failed.groundwater
+        ? "Serwis PIG-PIB nie odpowiedział; nie znamy poziomu wód gruntowych pod działką."
+        : "Brak punktu monitoringu wód podziemnych PIG-PIB w promieniu 20 km.",
   ]
+  if (river) unknowns.push(`Stan rzeki to pomiar z najbliższego wodowskazu IMGW (${km(river.distanceKm)}); rzeka może odprowadzać wodę z innego obszaru niż Twoje pole.`)
+  else if (input.failed.rivers) unknowns.push("Dane hydrologiczne IMGW nie odpowiedziały; stanu rzek nie oceniamy.")
+  else if (!input.rivers?.gaugesNearby) unknowns.push("Brak wodowskazu IMGW w promieniu 25 km; stanu rzek nie oceniamy.")
+  else unknowns.push(`Brak pomiaru z wodowskazów IMGW na ten dzień${input.rivers.archiveEnd ? ` (archiwum dobowe IMGW sięga do ${formatDatePl(input.rivers.archiveEnd)})` : ""}; stanu rzek nie oceniamy.`)
+  if (river && river.percentile >= 0.85 && level >= 3) unknowns.push(`Stan ${riverName} na wodowskazie ${river.gauge} jest wysoki jak na tę porę roku mimo suszy na polu; rzeka może nieść wodę z dalszej, wilgotniejszej części zlewni.`)
+  if (groundwater && !groundwater.unconfined) unknowns.push("Najbliższy punkt PIG-PIB mierzy wodę pod warstwą nieprzepuszczalną (zwierciadło napięte), więc nie mówi wiele o wodzie dostępnej dla korzeni.")
   if (!soil) unknowns.push(input.failed.soil ? "Mapa gleb IUNG nie odpowiedziała; ocena nie uwzględnia rodzaju gleby." : "Brak kategorii gleby IUNG dla tego miejsca.")
   if (!terrain) unknowns.push("Nie udało się pobrać wysokości terenu, więc nie oceniamy spływu wody.")
   if (!hydro) unknowns.push("Nie udało się sprawdzić rowów i cieków przy działce.")
@@ -334,13 +401,19 @@ export function buildAnalysis(input: EngineInput): Analysis {
   const confidence: ConfidenceLevel = missing === 0 && weather.stations[0] && weather.stations[0].distanceKm <= 15 ? "wysoka" : missing <= 1 ? "srednia" : "niska"
 
   const sources: DataSource[] = [
-    { key: "pogoda", name: "IMGW-PIB", what: `dobowe opady i temperatury ze stacji: ${stationNames}`, license: "Źródłem pochodzenia danych jest Instytut Meteorologii i Gospodarki Wodnej – Państwowy Instytut Badawczy. Dane Instytutu Meteorologii i Gospodarki Wodnej – Państwowego Instytutu Badawczego zostały przetworzone.", fetchedAt: input.fetchedAt },
+    { key: "pogoda", name: "IMGW-PIB", what: `dobowe opady i temperatury ze stacji: ${stationNames}`, license: IMGW_LICENSE, fetchedAt: input.fetchedAt },
     ...(weather.recentFrom
       ? [{ key: "pogoda" as const, name: "Open-Meteo", what: `ostatnie dni od ${formatDatePl(weather.recentFrom)}, których nie ma jeszcze w archiwum IMGW`, license: "CC BY 4.0", fetchedAt: input.fetchedAt }]
       : []),
     { key: "gleba", name: "IUNG-PIB", what: "kategoria podatności gleby na suszę", license: "dane publiczne IUNG-PIB (do potwierdzenia)", fetchedAt: input.fetchedAt },
     { key: "teren", name: "GUGiK (EGiB, NMT)", what: "granice działki i wysokości terenu", license: "dane otwarte GUGiK", fetchedAt: input.fetchedAt },
     { key: "hydrologia", name: "BDOT10k (GUGiK)", what: "rowy, cieki, kanały i zbiorniki w promieniu 500 m", license: "dane otwarte GUGiK", fetchedAt: input.fetchedAt },
+    ...(river
+      ? [{ key: "rzeki" as const, name: "IMGW-PIB (dane hydrologiczne)", what: `stan ${riverName} na wodowskazie ${river.gauge} (${km(river.distanceKm)}): ${river.levelCm} cm ${river.live ? "teraz" : `w dniu ${formatDatePl(river.day)}`}, ${riverPct}. percentyl dla tej pory roku (${river.sampleYears} lat pomiarów)`, license: IMGW_LICENSE, fetchedAt: input.fetchedAt }]
+      : []),
+    ...(groundwater
+      ? [{ key: "gruntowe" as const, name: "PIG-PIB, monitoring wód podziemnych", what: `zwierciadło wód gruntowych${groundwater.unconfined ? "" : " (napięte)"} ${groundwater.depthM.toLocaleString("pl-PL")} m p.p.t. w punkcie ${groundwater.place || "bez nazwy"} (${km(groundwater.distanceKm)}), ${gwWhen}`, license: "dane PIG-PIB (Państwowa Służba Hydrogeologiczna), udostępniane publicznie", fetchedAt: input.fetchedAt }]
+      : []),
   ]
   const sourceStatus: SourceStatus[] = [
     { key: "pogoda", label: "Pogoda · 10 lat", ok: true },
@@ -348,6 +421,18 @@ export function buildAnalysis(input: EngineInput): Analysis {
     { key: "gleba", label: "Gleba", ok: !!soil, message: soil ? undefined : "Mapa gleb IUNG nie odpowiedziała." },
     { key: "teren", label: "Teren (NMT)", ok: !!terrain, message: terrain ? undefined : "Brak danych wysokościowych." },
     { key: "hydrologia", label: "Hydrologia", ok: !!hydro, message: hydro ? undefined : "Nie udało się sprawdzić rowów i cieków." },
+    {
+      key: "rzeki",
+      label: "Rzeki (IMGW)",
+      ok: !input.failed.rivers,
+      message: river ? undefined : input.failed.rivers ? "Dane hydrologiczne IMGW nie odpowiedziały." : input.rivers?.gaugesNearby ? "Brak pomiaru z wodowskazów na ten dzień." : "Brak wodowskazu IMGW w promieniu 25 km.",
+    },
+    {
+      key: "gruntowe",
+      label: "Wody gruntowe",
+      ok: !input.failed.groundwater,
+      message: groundwater ? undefined : input.failed.groundwater ? "Serwis PIG-PIB nie odpowiedział." : "Brak punktu monitoringu PIG-PIB w promieniu 20 km.",
+    },
   ]
 
   return {
