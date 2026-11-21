@@ -11,6 +11,8 @@ export interface ParcelScene {
   minHeightM: number
   maxHeightM: number
   parcel: Ring[]
+  parts?: Ring[]
+  parcelIds?: string[]
   neighbors: Ring[]
   waterLines: { kind: "rów" | "ciek" | "kanał"; points: Ring }[]
   waterAreas: Ring[]

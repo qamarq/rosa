@@ -2,6 +2,7 @@ import "server-only"
 import { sql } from "drizzle-orm"
 import { cached } from "@/server/cache"
 import { db } from "@/server/db"
+import { fieldGeomSql } from "@/server/sources/parcel"
 
 export type HydroFeature = { kind: "rów" | "ciek" | "kanał" | "woda"; subkind: string | null; name: string | null; distanceM: number; direction: string }
 
@@ -25,7 +26,7 @@ function side(azimuthDeg: number | null): string {
 export async function loadHydro(parcelId: string): Promise<HydroSummary> {
   return cached("bdot-hydro", parcelId, 30 * 86400, async () => {
     const rows = await db().execute<Row>(sql`
-      WITH p AS (SELECT geom, ST_PointOnSurface(geom) AS c FROM dzialki WHERE id_dzialki = ${parcelId} LIMIT 1)
+      WITH p AS (SELECT geom, ST_PointOnSurface(geom) AS c FROM (${fieldGeomSql(parcelId)}) f)
       SELECT DISTINCT ON (h.kind) h.kind, h.subkind, h.name,
         ST_Distance(h.geom, p.geom) AS dist,
         degrees(ST_Azimuth(p.c, ST_ClosestPoint(h.geom, p.c))) AS az

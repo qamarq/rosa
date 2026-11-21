@@ -3,13 +3,14 @@
 import "maplibre-gl/dist/maplibre-gl.css"
 import { useEffect, useRef, useState } from "react"
 import { AttributionControl, Map as MapLibre, setWorkerUrl, type GeoJSONSource } from "maplibre-gl"
-import { CheckIcon, CrosshairIcon, LocateFixedIcon, MinusIcon, PlusIcon } from "lucide-react"
+import { CheckIcon, CrosshairIcon, LocateFixedIcon, MinusIcon, PlusIcon, XIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useLiteMode } from "@/components/lite-mode"
 import { Spinner } from "@/components/ui/spinner"
 import { mapStyle, PARCEL_TILES_ZOOM, PARCELS_ZOOM, PICK_ZOOM, POLAND_BOUNDS, POLAND_CENTER, POLAND_ZOOM } from "./map-style"
 import { PlaceSearch, type PlaceHit } from "./place-search"
-import { formatArea, parcelBounds, parcelPlace, type LocatedParcel } from "./types"
+import { MAX_PARCELS } from "@/lib/validation"
+import { formatArea, parcelPlace, parcelsBounds, parcelsConnected, parcelsNear, type LocatedParcel } from "./types"
 
 setWorkerUrl(new URL("maplibre-gl/dist/maplibre-gl-worker.mjs", import.meta.url).href)
 
@@ -23,7 +24,7 @@ type Status =
 
 const EMPTY = { type: "FeatureCollection" as const, features: [] }
 
-let remembered: LocatedParcel | null = null
+let remembered: LocatedParcel[] = []
 
 const CONTROL_BTN =
   "rosa-btn pointer-events-auto flex size-11 cursor-pointer items-center justify-center rounded-[14px] border-2 border-border bg-card text-foreground shadow-[0_10px_20px_-12px_rgba(110,70,30,0.55)] disabled:cursor-wait"
@@ -79,13 +80,25 @@ function fitPadding(map: MapLibre) {
   }
 }
 
-function showParcel(map: MapLibre, parcel: LocatedParcel, durationMs: number) {
+function showParcels(map: MapLibre, parcels: LocatedParcel[], durationMs: number | null) {
   source(map, "point")?.setData(EMPTY)
-  source(map, "parcel")?.setData({ type: "Feature", properties: {}, geometry: parcel.geometry })
-  map.fitBounds(parcelBounds(parcel.geometry), { padding: fitPadding(map), maxZoom: 17.5, duration: durationMs })
+  source(map, "parcel")?.setData({
+    type: "FeatureCollection",
+    features: parcels.map((p) => ({ type: "Feature" as const, properties: { id: p.id }, geometry: p.geometry })),
+  })
+  if (durationMs !== null && parcels.length) map.fitBounds(parcelsBounds(parcels), { padding: fitPadding(map), maxZoom: 17.5, duration: durationMs })
 }
 
-export default function ParcelMap({ onSelect }: { onSelect: (parcel: LocatedParcel) => void }) {
+function selectionProblem(selected: LocatedParcel[], parcel: LocatedParcel): string | null {
+  if (selected.length >= MAX_PARCELS) return `Pole może mieć najwyżej ${MAX_PARCELS} działek.`
+  if (selected.some((p) => p.id.slice(0, 2) !== parcel.id.slice(0, 2))) return "Ta działka leży w innym województwie."
+  if (selected.length && !selected.some((p) => parcelsNear(p, parcel))) return "Ta działka nie przylega do wybranych. Kliknij działkę obok zaznaczonych."
+  return null
+}
+
+const COUNT = (n: number) => (n === 1 ? "działka" : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? "działki" : "działek")
+
+export default function ParcelMap({ onSelect }: { onSelect: (parcels: LocatedParcel[]) => void }) {
   const { lite } = useLiteMode()
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<MapLibre | null>(null)
@@ -95,9 +108,10 @@ export default function ParcelMap({ onSelect }: { onSelect: (parcel: LocatedParc
   const pickRef = useRef<(lng: number, lat: number) => void>(() => {})
 
   const [status, setStatus] = useState<Status>(() =>
-    remembered ? { kind: "found", parcel: remembered } : { kind: "idle" }
+    remembered.length === 1 ? { kind: "found", parcel: remembered[0] } : { kind: "idle" }
   )
-  const [zoom, setZoom] = useState(() => (remembered ? PARCELS_ZOOM + 1 : POLAND_ZOOM))
+  const [multi, setMulti] = useState<LocatedParcel[] | null>(() => (remembered.length > 1 ? remembered : null))
+  const [zoom, setZoom] = useState(() => (remembered.length ? PARCELS_ZOOM + 1 : POLAND_ZOOM))
   const [notice, setNotice] = useState<string | null>(null)
   const [geoBusy, setGeoBusy] = useState(false)
   const [keyboardFocus, setKeyboardFocus] = useState(false)
@@ -118,7 +132,7 @@ export default function ParcelMap({ onSelect }: { onSelect: (parcel: LocatedParc
     const controller = new AbortController()
     abortRef.current = controller
     setNotice(null)
-    source(map, "parcel")?.setData(EMPTY)
+    if (!multi) source(map, "parcel")?.setData(EMPTY)
     source(map, "point")?.setData({ type: "Feature", properties: {}, geometry: { type: "Point", coordinates: [lng, lat] } })
     setStatus({ kind: "loading" })
     try {
@@ -130,11 +144,54 @@ export default function ParcelMap({ onSelect }: { onSelect: (parcel: LocatedParc
       if (!res.ok) return setStatus({ kind: "error" })
       const parcel = (await res.json()) as LocatedParcel
       if (controller.signal.aborted) return
-      showParcel(map, parcel, duration(900))
+      if (multi) {
+        toggleParcel(map, multi, parcel)
+        return setStatus({ kind: "idle" })
+      }
+      showParcels(map, [parcel], duration(900))
       setStatus({ kind: "found", parcel })
     } catch {
       if (!controller.signal.aborted) setStatus({ kind: "error" })
     }
+  }
+
+  function toggleParcel(map: MapLibre, selected: LocatedParcel[], parcel: LocatedParcel) {
+    let next = selected.filter((p) => p.id !== parcel.id)
+    if (next.length === selected.length) {
+      const problem = selectionProblem(selected, parcel)
+      if (problem) {
+        setNotice(problem)
+        showParcels(map, selected, null)
+        return
+      }
+      next = [...selected, parcel]
+    }
+    setMulti(next)
+    showParcels(map, next, null)
+  }
+
+  function removeParcel(id: string) {
+    const map = mapRef.current
+    if (!map || !multi) return
+    const next = multi.filter((p) => p.id !== id)
+    setNotice(null)
+    setMulti(next)
+    showParcels(map, next, null)
+  }
+
+  function startMulti(parcel: LocatedParcel) {
+    setNotice(null)
+    setMulti([parcel])
+    setStatus({ kind: "idle" })
+  }
+
+  function cancelMulti() {
+    const map = mapRef.current
+    const first = multi?.[0]
+    setMulti(null)
+    setNotice(null)
+    if (map) showParcels(map, first ? [first] : [], null)
+    setStatus(first ? { kind: "found", parcel: first } : { kind: "idle" })
   }
 
   function pick(lng: number, lat: number) {
@@ -163,7 +220,7 @@ export default function ParcelMap({ onSelect }: { onSelect: (parcel: LocatedParc
       style: mapStyle,
       center: POLAND_CENTER,
       zoom: POLAND_ZOOM,
-      bounds: start ? parcelBounds(start.geometry) : undefined,
+      bounds: start.length ? parcelsBounds(start) : undefined,
       fitBoundsOptions: { padding: 80, maxZoom: 17 },
       maxBounds: POLAND_BOUNDS,
       minZoom: 4,
@@ -197,7 +254,7 @@ export default function ParcelMap({ onSelect }: { onSelect: (parcel: LocatedParc
     canvas.addEventListener("blur", onBlur)
 
     map.on("load", () => {
-      if (start) showParcel(map, start, 0)
+      if (start.length) showParcels(map, start, 0)
       setZoom(map.getZoom())
     })
     map.on("zoomend", () => setZoom(map.getZoom()))
@@ -270,8 +327,10 @@ export default function ParcelMap({ onSelect }: { onSelect: (parcel: LocatedParc
       void locate(hit.lon, hit.lat)
       return
     }
-    clearParcel(map)
-    setStatus({ kind: "idle" })
+    if (!multi) {
+      clearParcel(map)
+      setStatus({ kind: "idle" })
+    }
     if (hit.bbox) {
       const [w, s, e, n] = hit.bbox
       map.fitBounds([[w, s], [e, n]], { padding: fitPadding(map), maxZoom: hit.kind === "gmina" ? 12.5 : 15, duration: duration(1400) })
@@ -287,9 +346,9 @@ export default function ParcelMap({ onSelect }: { onSelect: (parcel: LocatedParc
     mapRef.current?.getCanvas().focus()
   }
 
-  function choose(parcel: LocatedParcel) {
-    remembered = parcel
-    onSelect(parcel)
+  function choose(parcels: LocatedParcel[]) {
+    remembered = parcels
+    onSelect(parcels)
   }
 
   let message: string | null = null
@@ -308,13 +367,16 @@ export default function ParcelMap({ onSelect }: { onSelect: (parcel: LocatedParc
     message = notice
     warn = true
   } else if (status.kind === "idle") {
-    if (zoom < PICK_ZOOM) message = "Przybliż mapę do swojego pola"
+    if (multi && zoom >= PARCELS_ZOOM) message = "Kliknij sąsiednią działkę, żeby ją dodać. Kliknięcie zaznaczonej ją usuwa."
+    else if (zoom < PICK_ZOOM) message = "Przybliż mapę do swojego pola"
     else if (zoom < PARCELS_ZOOM) message = "Przybliż jeszcze, żeby zobaczyć granice działek"
     else message = "Kliknij w swoje pole"
   }
 
   const place = found ? parcelPlace(found) : ""
   const area = found ? formatArea(found.areaHa) : ""
+  const multiArea = multi ? formatArea(Math.round(multi.reduce((sum, p) => sum + p.areaHa, 0) * 100) / 100) : ""
+  const multiConnected = multi ? parcelsConnected(multi) : true
 
   return (
     <div className="relative size-full overflow-hidden rounded-[20px] border-2 border-border bg-sand">
@@ -401,7 +463,7 @@ export default function ParcelMap({ onSelect }: { onSelect: (parcel: LocatedParc
               <button
                 ref={chooseRef}
                 type="button"
-                onClick={() => choose(found)}
+                onClick={() => choose([found])}
                 className="rosa-btn rosa-claybtn flex h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-[16px] bg-primary px-4 text-base font-extrabold text-white sm:flex-1 focus-visible:ring-4 focus-visible:ring-primary/30 focus-visible:outline-none"
               >
                 <CheckIcon aria-hidden="true" className="size-5" strokeWidth={2.8} />
@@ -413,6 +475,72 @@ export default function ParcelMap({ onSelect }: { onSelect: (parcel: LocatedParc
                 className="rosa-btn flex h-12 cursor-pointer items-center justify-center rounded-[16px] border-2 border-border bg-card px-5 text-base font-bold text-foreground focus-visible:border-primary focus-visible:outline-none"
               >
                 To nie ta
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => startMulti(found)}
+              className="mt-2.5 flex cursor-pointer items-center gap-1.5 rounded-lg text-[15px] font-bold text-primary underline-offset-4 hover:underline focus-visible:ring-4 focus-visible:ring-primary/30 focus-visible:outline-none"
+            >
+              <PlusIcon aria-hidden="true" className="size-4" strokeWidth={2.6} />
+              Dodaj sąsiednią działkę
+            </button>
+          </section>
+        </div>
+      )}
+
+      {multi && (
+        <div className="absolute inset-x-3 bottom-11 sm:right-auto sm:bottom-4 sm:left-4 sm:w-[440px]">
+          <section
+            aria-label={`Pole z ${multi.length} działek`}
+            className="rosa-clay animate-in rounded-3xl bg-card p-4 duration-300 fade-in-0 slide-in-from-bottom-3 sm:p-5"
+          >
+            <p className="m-0 text-[13px] font-extrabold tracking-wide text-primary uppercase">Twoje pole</p>
+            <h3 className="mt-1 text-[19px] leading-tight font-extrabold text-foreground tabular-nums sm:text-[21px]">
+              {multi.length} {COUNT(multi.length)} · {multiArea}
+            </h3>
+            <ul aria-label="Wybrane działki" className="m-0 mt-2.5 flex max-h-[72px] list-none flex-wrap gap-1.5 overflow-y-auto p-0 sm:max-h-[104px]">
+              {multi.map((p) => (
+                <li key={p.id} className="flex h-8 items-center gap-0.5 rounded-xl border-2 border-border bg-paper pr-0.5 pl-2 text-[13px] font-bold tabular-nums">
+                  {p.id}
+                  <button
+                    type="button"
+                    onClick={() => removeParcel(p.id)}
+                    aria-label={`Usuń działkę ${p.id}`}
+                    className="flex size-7 cursor-pointer items-center justify-center rounded-lg text-ink-soft hover:bg-sand hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                  >
+                    <XIcon aria-hidden="true" className="size-4" strokeWidth={2.6} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+            {!multiConnected && (
+              <p className="m-0 mt-2 text-[14px] leading-snug font-bold text-[#7A2E18]">
+                Działki muszą do siebie przylegać (do 30 m przerwy). Dodaj działkę, która je łączy, albo usuń odległą.
+              </p>
+            )}
+            <div className="mt-3.5 flex gap-2">
+              <button
+                type="button"
+                disabled={!multi.length || !multiConnected}
+                onClick={() => choose(multi)}
+                className="rosa-btn rosa-claybtn flex h-12 min-w-0 flex-1 cursor-pointer items-center justify-center gap-2 rounded-[16px] bg-primary px-3 text-base font-extrabold text-white disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 focus-visible:ring-4 focus-visible:ring-primary/30 focus-visible:outline-none"
+              >
+                <CheckIcon aria-hidden="true" className="size-5" strokeWidth={2.8} />
+                {multi.length > 1 ? (
+                  <span>
+                    Wybierz <span className="max-sm:hidden">te działki </span>({multi.length})
+                  </span>
+                ) : (
+                  "Wybierz tę działkę"
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={cancelMulti}
+                className="rosa-btn flex h-12 shrink-0 cursor-pointer items-center justify-center rounded-[16px] border-2 border-border bg-card px-4 text-base font-bold text-foreground focus-visible:border-primary focus-visible:outline-none sm:px-5"
+              >
+                Tylko jedna
               </button>
             </div>
           </section>

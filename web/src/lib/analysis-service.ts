@@ -5,21 +5,21 @@ import { morkaAnalysis } from "@/lib/mock/morka"
 
 const LIVE_URL = "https://rosa.kamilmarczak.pl"
 import type { Analysis, AnalysisError, AnalysisRequest } from "@/lib/types"
-import { dateRange, isDateInRange, isValidParcelId, toIsoDate } from "@/lib/validation"
+import { dateRange, isDateInRange, isValidParcelId, parcelKey, parcelSelectionProblem, splitParcelIds, toIsoDate } from "@/lib/validation"
 import { applySatellite, buildAnalysis } from "@/server/analysis/engine"
 import { computeBalance } from "@/server/analysis/water-balance"
 import { readCache, writeCache } from "@/server/cache"
 import { loadGroundwater } from "@/server/sources/groundwater"
 import { loadHydro } from "@/server/sources/hydro"
 import { loadDailyWeather } from "@/server/sources/meteo"
-import { findParcelById } from "@/server/sources/parcel"
+import { findField } from "@/server/sources/parcel"
 import { loadRivers } from "@/server/sources/rivers"
 import { loadParcelScene } from "@/server/sources/scene3d"
 import { loadSatellite, type SatelliteResult } from "@/server/sources/satellite"
 import { loadSoilCategory } from "@/server/sources/soil"
 import { loadTerrain } from "@/server/sources/terrain"
 
-const ENGINE_VERSION = "v12"
+const ENGINE_VERSION = "v14"
 const WINDOW_DAYS = 60
 const HISTORY_YEARS = 10
 const SATELLITE_BUDGET_MS = Number(process.env.ROSA_SATELLITE_BUDGET_MS ?? 15000)
@@ -81,11 +81,15 @@ async function settle<T>(label: string, promise: Promise<T>): Promise<{ value: T
 
 async function computeLive(req: AnalysisRequest, id: string): Promise<AnalysisResult> {
   const parcelStarted = performance.now()
-  const parcel = await findParcelById(req.parcelId)
+  const field = await findField(req.parcelId)
   console.info(`[rosa] source parcel ${Math.round(performance.now() - parcelStarted)} ms`)
-  if (!parcel) {
-    return { ok: false, error: { code: "parcel_not_found", message: "Nie znaleziono działki.", parcelId: req.parcelId } }
+  if (!field.ok) {
+    return {
+      ok: false,
+      error: field.code === "parcel_not_found" ? { code: field.code, message: field.message, parcelId: field.parcelId } : { code: field.code, message: field.message },
+    }
   }
+  const parcel = field.parcel
   void loadParcelScene(parcel.id).catch(() => null)
   const sat = satelliteJob(id, () => loadSatellite(parcel.id, parcel.lat, parcel.lon, parcel.utmBbox, parcel.utmRings, req.date, SATELLITE_BUDGET_MS))
   const [weather, soil, terrain, hydro, rivers, groundwater] = await Promise.all([
@@ -134,7 +138,8 @@ function cacheKeyFor(id: string): string {
   return `${ENGINE_VERSION}:${id}`
 }
 
-export async function completeSatellite(req: AnalysisRequest): Promise<AnalysisResult> {
+export async function completeSatellite(input: AnalysisRequest): Promise<AnalysisResult> {
+  const req = { ...input, parcelId: parcelKey(splitParcelIds(input.parcelId)) }
   const base = await runAnalysis(req)
   if (!base.ok) return base
   const status = base.analysis.sourceStatus.find((s) => s.key === "satelita")
@@ -143,7 +148,8 @@ export async function completeSatellite(req: AnalysisRequest): Promise<AnalysisR
   const job =
     satelliteJobs.get(id) ??
     satelliteJob(id, async () => {
-      const parcel = await findParcelById(req.parcelId)
+      const field = await findField(req.parcelId)
+      const parcel = field.ok ? field.parcel : null
       return parcel ? loadSatellite(parcel.id, parcel.lat, parcel.lon, parcel.utmBbox, parcel.utmRings, req.date, SATELLITE_BUDGET_MS) : null
     })
   const outcome = await job
@@ -153,10 +159,14 @@ export async function completeSatellite(req: AnalysisRequest): Promise<AnalysisR
   return { ok: true, analysis }
 }
 
-export async function runAnalysis(req: AnalysisRequest): Promise<AnalysisResult> {
-  if (!isValidParcelId(req.parcelId)) {
+export async function runAnalysis(input: AnalysisRequest): Promise<AnalysisResult> {
+  const ids = splitParcelIds(input.parcelId)
+  if (ids.length === 0 || !ids.every(isValidParcelId)) {
     return { ok: false, error: { code: "invalid_parcel_id", message: "Nieprawidłowy numer działki." } }
   }
+  const problem = parcelSelectionProblem(ids)
+  if (problem) return { ok: false, error: { code: "invalid_selection", message: problem } }
+  const req = { ...input, parcelId: parcelKey(ids) }
   if (!isDateInRange(req.date)) {
     const { min, max } = dateRange()
     return { ok: false, error: { code: "date_out_of_range", message: "Data spoza zakresu.", min, max } }

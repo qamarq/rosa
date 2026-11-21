@@ -6,7 +6,7 @@ import { useRef, useState } from "react"
 import { useLiteMode } from "@/components/lite-mode"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import type { Analysis, Recommendation } from "@/lib/types"
-import { formatDatePl, statusTitle } from "@/lib/validation"
+import { fieldShortId, formatDatePl, statusTitle } from "@/lib/validation"
 import { cn } from "@/lib/utils"
 import { CountUp } from "./count-up"
 import { DataStatusPill } from "./data-status"
@@ -31,7 +31,9 @@ function MobileHeader({ analysis }: { analysis: Analysis }) {
         <FarmerLogo size={36} level={analysis.status.level} />
       </Link>
       <div className="flex min-w-0 flex-1 flex-col">
-        <span className="truncate text-[15px] font-extrabold tabular-nums">{analysis.parcel.id}</span>
+        <span className="truncate text-[15px] font-extrabold tabular-nums">
+          {analysis.parcel.parcelIds ? `Pole: ${fieldShortId(analysis.parcel.parcelIds)}` : analysis.parcel.id}
+        </span>
         <span className="truncate text-[13px] text-ink-soft">
           {analysis.parcel.obreb} · {analysis.cropLabel.toLowerCase()} · {formatDatePl(analysis.request.date)}
         </span>

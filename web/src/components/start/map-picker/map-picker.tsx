@@ -40,7 +40,7 @@ function useDesktop(): boolean {
 type MapPickerProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSelect: (parcel: LocatedParcel) => void
+  onSelect: (parcels: LocatedParcel[]) => void
   finalFocus?: DialogPrimitive.Popup.Props["finalFocus"]
 }
 

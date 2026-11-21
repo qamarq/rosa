@@ -1,11 +1,11 @@
 import { requestFromId } from "@/lib/analysis-service"
-import { isValidParcelId } from "@/lib/validation"
+import { isValidParcelKey } from "@/lib/validation"
 import { loadParcelScene } from "@/server/sources/scene3d"
 
 export async function GET(_request: Request, ctx: RouteContext<"/api/analyses/[id]/scene">) {
   const { id } = await ctx.params
   const req = requestFromId(id)
-  if (!req || !isValidParcelId(req.parcelId)) return Response.json({ code: "invalid_request" }, { status: 400 })
+  if (!req || !isValidParcelKey(req.parcelId)) return Response.json({ code: "invalid_request" }, { status: 400 })
   try {
     const scene = await loadParcelScene(req.parcelId)
     if (!scene) return Response.json({ code: "parcel_not_found" }, { status: 404 })

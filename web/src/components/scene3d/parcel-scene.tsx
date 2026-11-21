@@ -130,7 +130,7 @@ function sceneLabels(world: World, analysis: Analysis, mode: SceneMode): Label[]
     {
       key: "parcel",
       at: world.toWorld(px, py, 0.45),
-      text: areaHa ? `Twoja działka · ${fmt(areaHa)} ha` : "Twoja działka",
+      text: `${analysis.parcel.parcelIds ? `Twoje pole z ${analysis.parcel.parcelIds.length} działek` : "Twoja działka"}${areaHa ? ` · ${fmt(areaHa)} ha` : ""}`,
       detail: slopePct != null && slopePct >= 0.5 ? `spadek ${fmt(slopePct)}%` : null,
     },
   ]

@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { dateRange, formatDatePl } from "@/lib/validation"
+import { dateRange, formatDatePl, splitParcelIds } from "@/lib/validation"
 import type { ClientResult } from "@/lib/api-client"
 import { TIMING } from "./story-config"
 
@@ -13,6 +13,7 @@ export type LoadInput = { parcel: string; crop: string; date: string }
 export type LoadError =
   | { kind: "not_found"; parcelId: string }
   | { kind: "invalid_parcel" }
+  | { kind: "invalid_selection"; message: string }
   | { kind: "date_out_of_range"; min?: string }
   | { kind: "unavailable"; reason: "network" | "upstream" | "timeout" }
 
@@ -23,6 +24,8 @@ export function toLoadError(result: Extract<ClientResult, { ok: false }>, parcel
       return { kind: "not_found", parcelId: error.parcelId ?? parcelId }
     case "invalid_parcel_id":
       return { kind: "invalid_parcel" }
+    case "invalid_selection":
+      return { kind: "invalid_selection", message: error.message }
     case "date_out_of_range":
       return { kind: "date_out_of_range", min: error.min }
     case "network":
@@ -62,6 +65,8 @@ export function LoadErrorState({
       return <NotFoundState parcelId={error.parcelId || input.parcel} input={input} />
     case "invalid_parcel":
       return <InvalidParcelState input={input} />
+    case "invalid_selection":
+      return <InvalidSelectionState input={input} message={error.message} />
     case "date_out_of_range":
       return <DateOutOfRangeState input={input} min={error.min} />
     case "unavailable":
@@ -140,6 +145,34 @@ function InvalidParcelState({ input }: { input: LoadInput }) {
       <div className="mt-auto flex flex-col gap-2">
         <Button nativeButton={false} className={primary} render={<Link href={startHref(input)} />}>
           Popraw numer
+        </Button>
+        <Button
+          nativeButton={false}
+          variant="outline"
+          className={outline}
+          render={<Link href={startHref(input, { mapa: "1" })} />}
+        >
+          Wskaż pole na mapie
+        </Button>
+      </div>
+    </article>
+  )
+}
+
+function InvalidSelectionState({ input, message }: { input: LoadInput; message: string }) {
+  return (
+    <article className={card} aria-labelledby="state-title">
+      <span className={cn(badge, "bg-[#F6E0D6] text-[#7A2E18]")}>Tych działek nie połączymy</span>
+      <h1 id="state-title" className="m-0 text-[19px] font-extrabold">
+        Pole z kilku działek
+      </h1>
+      <p className="m-0 rounded-2xl border-2 border-destructive bg-white px-3.5 py-3 text-base font-semibold break-all tabular-nums">
+        {splitParcelIds(input.parcel).join(", ")}
+      </p>
+      <p className="m-0 text-[15px] leading-[1.45] text-[#7A2E18]">{message}</p>
+      <div className="mt-auto flex flex-col gap-2">
+        <Button nativeButton={false} className={primary} render={<Link href={startHref(input)} />}>
+          Popraw działki
         </Button>
         <Button
           nativeButton={false}

@@ -13,6 +13,7 @@ import { baseSceneMode } from "@/lib/scene"
 import type { ParcelScene } from "@/lib/scene3d"
 import type { Analysis, CropId, SourceKey } from "@/lib/types"
 import { cn } from "@/lib/utils"
+import { fieldSearchText } from "@/lib/validation"
 import { LiteToggle, LoadingFrame } from "./loading-frame"
 import { LoadErrorState, startHref, toLoadError, type LoadError } from "./loading-states"
 import { SourceIcon } from "./source-icon"
@@ -27,7 +28,7 @@ const POLAND_CENTER = { lat: 52.1, lon: 19.4 }
 const POP = "animate-in fade-in slide-in-from-bottom-2 fill-mode-both animation-duration-[450ms] ease-[cubic-bezier(.34,1.56,.64,1)]"
 const CHIP = "flex h-10 items-center gap-2 rounded-[14px] bg-paper pr-3 pl-2 text-sm font-bold whitespace-nowrap shadow-[0_10px_24px_-14px_rgba(60,40,20,.5)]"
 
-type Location = { id: string; lat: number; lon: number; obreb: string; gmina: string; wojewodztwo: string; areaHa: number }
+type Location = { id: string; lat: number; lon: number; obreb: string; gmina: string; wojewodztwo: string; areaHa: number; parcelIds?: string[] }
 type Stage = "journey" | "result" | "handoff" | "gone"
 type ChipState = "ok" | "idle"
 
@@ -129,7 +130,8 @@ export function Journey({
     const ctrl = new AbortController()
     fetch(`/api/parcels/${encodeURIComponent(parcel)}`, { signal: ctrl.signal })
       .then(async (res) => {
-        if (res.status === 404) setError({ kind: "not_found", parcelId: parcel })
+        if (res.status === 404) setError({ kind: "not_found", parcelId: ((await res.json().catch(() => null)) as { parcelId?: string } | null)?.parcelId ?? parcel })
+        else if (res.status === 422) setError({ kind: "invalid_selection", message: ((await res.json()) as { message: string }).message })
         else if (res.ok) setLoc((await res.json()) as Location)
         else setLocMissing(true)
       })
@@ -257,8 +259,9 @@ export function Journey({
   const sourcing = phase === "sources" || phase === "wait"
   const place = loc ? `${loc.obreb}, gm. ${loc.gmina}` : null
   const area = loc?.areaHa ? ` · ${loc.areaHa.toLocaleString("pl-PL", { maximumFractionDigits: 1 })} ha` : ""
-  const searchText = `Szukamy działki ${parcel}…`
-  const liveStatus = flying ? (place ?? searchText) : tracing ? `Działka znaleziona${area}` : proceed ? "Gotowe, otwieramy wynik." : "Zbieramy dane: pogoda, satelita, gleba, teren i woda."
+  const multi = parcel.includes("+")
+  const searchText = fieldSearchText(parcel)
+  const liveStatus = flying ? (place ?? searchText) : tracing ? `${multi ? "Pole znalezione" : "Działka znaleziona"}${area}` : proceed ? "Gotowe, otwieramy wynik." : "Zbieramy dane: pogoda, satelita, gleba, teren i woda."
   const searching = phase === "search" || phase === "fly"
   const label = (key: SourceKey, fallback: string) => analysis?.sourceStatus.find((x) => x.key === key)?.label ?? fallback
   const left = STORY_SOURCES.filter((s) => s.side === "left")
@@ -349,7 +352,7 @@ export function Journey({
                       <path d="M2.5 6.2 5 8.6 9.5 3.6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </span>
-                  Działka znaleziona{area}
+                  {multi ? "Pole znalezione" : "Działka znaleziona"}{area}
                 </div>
                 {orthoReady && (
                   <span aria-hidden="true" className={cn(POP, "absolute right-4 bottom-5 rounded-xl bg-paper/90 px-3 py-1.5 text-[13px] text-[#3A2F24] md:right-10 md:bottom-8")}>

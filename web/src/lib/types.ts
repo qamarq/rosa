@@ -1,4 +1,24 @@
-export type CropId = "pszenica" | "kukurydza" | "rzepak" | "ziemniaki" | "buraki" | "laka"
+export type CropId =
+  | "pszenica"
+  | "kukurydza"
+  | "rzepak"
+  | "ziemniaki"
+  | "buraki"
+  | "laka"
+  | "pszenica-jara"
+  | "jeczmien-ozimy"
+  | "jeczmien-jary"
+  | "zyto"
+  | "pszenzyto"
+  | "owies"
+  | "kukurydza-kiszonka"
+  | "straczkowe"
+  | "warzywa"
+  | "truskawki"
+  | "krzewy"
+  | "sad"
+  | "chmiel"
+  | "tyton"
 
 export type SceneMode = "hero" | "susza" | "zastawka" | "miedzyplon" | "nawadnianie"
 
@@ -22,6 +42,7 @@ export interface Parcel {
   gmina: string
   wojewodztwo: string
   areaHa: number
+  parcelIds?: string[]
 }
 
 export interface WaterStatus {
@@ -125,3 +146,4 @@ export type AnalysisError =
   | { code: "parcel_not_found"; message: string; parcelId: string }
   | { code: "date_out_of_range"; message: string; min: string; max: string }
   | { code: "upstream_unavailable"; message: string }
+  | { code: "invalid_selection"; message: string }

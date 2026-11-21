@@ -22,6 +22,14 @@ export function ParcelOutline({ world, animate, revealAt }: { world: World; anim
     return out
   }, [world])
 
+  const inner = useMemo(() => {
+    const stepM = (world.halfM * 2) / 260
+    return (world.scene.parts ?? [])
+      .filter((ring) => ring.length >= 3)
+      .map((ring) => ribbon(world, densify([...ring, ring[0]], stepM), 0.035, 0.055)?.geometry)
+      .filter((g) => !!g)
+  }, [world])
+
   const uniforms = useMemo(() => ({ progress: { value: animate ? 0 : 1 }, glow: { value: animate ? 0 : 0.6 } }), [animate])
   const materials = useMemo(
     () => ({
@@ -30,6 +38,15 @@ export function ParcelOutline({ world, animate, revealAt }: { world: World; anim
     }),
     [uniforms],
   )
+
+  const innerMaterial = useMemo(() => {
+    const m = createOutlineMaterial(uniforms.progress, uniforms.glow, "#FFFDF8", false)
+    m.opacity = 0.35
+    return m
+  }, [uniforms])
+
+  useEffect(() => () => inner.forEach((g) => g.dispose()), [inner])
+  useEffect(() => () => innerMaterial.dispose(), [innerMaterial])
 
   useEffect(
     () => () => {
@@ -59,6 +76,9 @@ export function ParcelOutline({ world, animate, revealAt }: { world: World; anim
 
   return (
     <group>
+      {inner.map((g, i) => (
+        <mesh key={"inner" + i} geometry={g} material={innerMaterial} renderOrder={2} />
+      ))}
       {geometries.map((g, i) => (
         <group key={i}>
           <mesh geometry={g.glow} material={materials.glow} renderOrder={3} />

@@ -4,6 +4,8 @@ import type { ParcelScene, Ring } from "@/lib/scene3d"
 import { cached } from "@/server/cache"
 import { db } from "@/server/db"
 import { fetchText } from "@/server/http"
+import { fieldGeomSql } from "@/server/sources/parcel"
+import { splitParcelIds } from "@/lib/validation"
 
 const GRID = 33
 const CHUNK = 110
@@ -82,45 +84,51 @@ function downslope(hs: number[], step: number): ParcelScene["downslope"] {
 }
 
 export async function loadParcelScene(parcelId: string): Promise<ParcelScene | null> {
-  return cached("scene3d-v3", parcelId, null, async () => {
+  const ids = splitParcelIds(parcelId)
+  const idList = sql.join(ids.map((id) => sql`${id}`), sql`, `)
+  return cached("scene3d-v3", ids.join("+"), null, async () => {
     const base = await db().execute<Base>(sql`
-      WITH p AS (SELECT geom FROM dzialki WHERE id_dzialki = ${parcelId} LIMIT 1),
+      WITH p AS (${fieldGeomSql(parcelId)}),
       c AS (SELECT geom, ST_PointOnSurface(geom) AS pt FROM p)
       SELECT ST_X(pt) AS cx, ST_Y(pt) AS cy,
         ST_XMax(geom) - ST_XMin(geom) AS w, ST_YMax(geom) - ST_YMin(geom) AS h,
         ST_AsGeoJSON(ST_Translate(geom, -ST_X(pt), -ST_Y(pt)), 1) AS parcel
       FROM c`)
     const b = base[0]
-    if (!b) return null
+    if (!b?.parcel) return null
     const cx = Number(b.cx), cy = Number(b.cy)
     const half = Math.max(160, Math.round(Math.max(Number(b.w), Number(b.h)) * 0.85))
     const [geo, hs] = await Promise.all([
       db().execute<GeoRow>(sql`
         WITH box AS (SELECT ST_MakeEnvelope(${cx - half}, ${cy - half}, ${cx + half}, ${cy + half}, 2180) AS g)
         (SELECT 'neighbor' AS kind, ST_AsGeoJSON(ST_Translate(ST_SimplifyPreserveTopology(ST_Intersection(d.geom, box.g), 1.5), ${-cx}, ${-cy}), 1) AS g
-           FROM dzialki d, box WHERE d.geom && box.g AND d.id_dzialki <> ${parcelId} LIMIT 600)
+           FROM dzialki d, box WHERE d.geom && box.g AND d.id_dzialki NOT IN (${idList}) LIMIT 600)
+        ${ids.length > 1 ? sql`UNION ALL (SELECT 'part', ST_AsGeoJSON(ST_Translate(d.geom, ${-cx}, ${-cy}), 1) FROM dzialki d WHERE d.id_dzialki IN (${idList}))` : sql``}
         UNION ALL
         (SELECT h.kind, ST_AsGeoJSON(ST_Translate(ST_SimplifyPreserveTopology(ST_Intersection(h.geom, box.g), 1), ${-cx}, ${-cy}), 1)
            FROM hydro_feature h, box WHERE h.geom && box.g LIMIT 400)`),
       heights(cx, cy, half),
     ])
     const neighbors: Ring[] = []
+    const parts: Ring[] = []
     const waterLines: ParcelScene["waterLines"] = []
     const waterAreas: Ring[] = []
     for (const row of geo) {
       const rs = rings(row.g)
-      if (row.kind === "neighbor") neighbors.push(...rs.filter((r) => r.length >= 4).map((r) => r))
+      if (row.kind === "part") parts.push(...rs.filter((r) => r.length >= 4))
+      else if (row.kind === "neighbor") neighbors.push(...rs.filter((r) => r.length >= 4).map((r) => r))
       else if (row.kind === "woda") waterAreas.push(...rs.filter((r) => r.length >= 4))
       else waterLines.push(...rs.filter((r) => r.length >= 2).map((points) => ({ kind: row.kind as "rów" | "ciek" | "kanał", points })))
     }
     const step = (2 * half) / (GRID - 1)
     return {
-      parcelId,
+      parcelId: ids.join("+"),
       halfExtentM: half,
       grid: { size: GRID, stepM: Math.round(step * 100) / 100, heights: hs },
       minHeightM: Math.min(...hs),
       maxHeightM: Math.max(...hs),
       parcel: rings(b.parcel),
+      ...(ids.length > 1 ? { parts, parcelIds: ids } : {}),
       neighbors,
       waterLines,
       waterAreas,

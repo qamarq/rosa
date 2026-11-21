@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { requestAnalysis } from "@/lib/api-client"
 import { cropLabel, isCropId } from "@/lib/crops"
 import type { Analysis, CropId } from "@/lib/types"
-import { formatDatePl, isDateInRange, isValidParcelId } from "@/lib/validation"
+import { formatDatePl, isDateInRange, isValidParcelId, parcelSelectionProblem, splitParcelIds } from "@/lib/validation"
 import { supportsWebGL } from "@/components/scene3d/load-scene"
 import { Journey } from "./journey"
 import { LoadingFrame } from "./loading-frame"
@@ -53,8 +53,11 @@ export function AnalysisLoader() {
   return <AnalysisFlow key={current.key} {...current.input} />
 }
 
-function AnalysisFlow({ parcel, crop, date }: LoadInput) {
+function AnalysisFlow({ parcel: raw, crop, date }: LoadInput) {
   const router = useRouter()
+  const ids = splitParcelIds(raw)
+  const parcel = ids.join("+")
+  const selectionProblem = parcelSelectionProblem(ids)
   const [attempt, setAttempt] = useState(0)
   const retry = useCallback(() => setAttempt((a) => a + 1), [])
   const incomplete = !parcel || !date || !isCropId(crop)
@@ -66,9 +69,11 @@ function AnalysisFlow({ parcel, crop, date }: LoadInput) {
   if (incomplete) return <LoadingFallback />
 
   const input = { parcel, crop, date }
-  const invalid: LoadError | null = !isValidParcelId(parcel)
+  const invalid: LoadError | null = !ids.every(isValidParcelId)
     ? { kind: "invalid_parcel" }
-    : !isDateInRange(date)
+    : selectionProblem
+      ? { kind: "invalid_selection", message: selectionProblem }
+      : !isDateInRange(date)
       ? { kind: "date_out_of_range" }
       : null
 

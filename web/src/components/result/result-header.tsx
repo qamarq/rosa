@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useLiteMode } from "@/components/lite-mode"
-import { formatDatePl } from "@/lib/validation"
+import { fieldTitle, formatDatePl } from "@/lib/validation"
 import type { Analysis } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { placeLine } from "./format"
@@ -53,7 +53,9 @@ export function ResultHeader({ analysis }: { analysis: Analysis }) {
       </Link>
       <span aria-hidden="true" className="h-9 w-px flex-none bg-border" />
       <div className="flex min-w-0 flex-col gap-0.5">
-        <span className="truncate text-base font-extrabold tabular-nums">Działka {analysis.parcel.id}</span>
+        <span className="truncate text-base font-extrabold tabular-nums" title={analysis.parcel.parcelIds?.join(", ")}>
+          {fieldTitle(analysis.parcel.parcelIds ?? [analysis.parcel.id])}
+        </span>
         <span className="truncate text-sm text-ink-soft">
           {placeLine(analysis.parcel)}
           <span className="xl:hidden">

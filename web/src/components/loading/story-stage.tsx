@@ -4,6 +4,7 @@ import type { CSSProperties } from "react"
 import { cn } from "@/lib/utils"
 import { Diorama } from "@/components/diorama/diorama"
 import type { Analysis, SourceKey } from "@/lib/types"
+import { fieldSearchText } from "@/lib/validation"
 import { SourceIcon } from "./source-icon"
 import { FAILURE_COPY, STORY_SOURCES, TIMING, delayFromSceneStart, type StoryStep } from "./story-config"
 import styles from "./loading.module.css"
@@ -123,7 +124,7 @@ function MapScene({ parcelId, analysis }: { parcelId: string; analysis: Analysis
       </svg>
       <div className="absolute right-4 bottom-4 left-4 flex items-center gap-2.5 rounded-2xl bg-paper px-3.5 py-2.5 text-[15px] font-bold md:right-auto md:bottom-[18px] md:left-5">
         <Dots />
-        <span className="min-w-0 break-all tabular-nums">Szukamy działki {parcelId}…</span>
+        <span className="min-w-0 break-all tabular-nums">{fieldSearchText(parcelId)}</span>
       </div>
       {analysis && (
         <span

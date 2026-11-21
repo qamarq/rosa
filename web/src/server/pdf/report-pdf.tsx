@@ -74,7 +74,15 @@ function ParcelPlan({ scene, width, height }: { scene: ParcelScene; width: numbe
       {scene.neighbors.filter(inView).map((r, i) => <Path key={"n" + i} d={ringPath(r, tx)} fill="#F3E9D6" stroke="#CDBB9C" strokeWidth={0.5} />)}
       {scene.waterAreas.filter(inView).map((r, i) => <Path key={"a" + i} d={ringPath(r, tx)} fill="#BFE3E8" stroke="#3FA3B0" strokeWidth={0.6} />)}
       {scene.waterLines.filter((w) => inView(w.points)).map((w, i) => <Path key={"w" + i} d={ringPath(w.points, tx, false)} fill="none" stroke="#2F8FA0" strokeWidth={w.kind === "rów" ? 1.1 : 1.6} />)}
-      {scene.parcel.map((r, i) => <Path key={"p" + i} d={ringPath(r, tx)} fill="#D9C38E" fillOpacity={0.75} stroke={INK} strokeWidth={1.6} />)}
+      {scene.parts?.length ? (
+        <>
+          {scene.parcel.map((r, i) => <Path key={"p" + i} d={ringPath(r, tx)} fill="#D9C38E" fillOpacity={0.75} />)}
+          {scene.parts.map((r, i) => <Path key={"q" + i} d={ringPath(r, tx)} fill="none" stroke={MUTED} strokeWidth={0.7} strokeDasharray="3 2" />)}
+          {scene.parcel.map((r, i) => <Path key={"o" + i} d={ringPath(r, tx)} fill="none" stroke={INK} strokeWidth={1.6} />)}
+        </>
+      ) : (
+        scene.parcel.map((r, i) => <Path key={"p" + i} d={ringPath(r, tx)} fill="#D9C38E" fillOpacity={0.75} stroke={INK} strokeWidth={1.6} />)
+      )}
       <Path d={`M${width - 14} 20 L${width - 10} 8 L${width - 6} 20 Z`} fill={INK} />
     </Svg>
   )
@@ -138,8 +146,10 @@ export function ReportPdf({ analysis, scene, generatedAt }: { analysis: Analysis
   const { parcel, status, history, causes, recommendations, confidence, sources, vegetation } = analysis
   const ordered = GROUPS.map((g) => ({ ...g, items: recommendations.filter((r) => r.group === g.id) })).filter((g) => g.items.length)
   const numbering = new Map(ordered.flatMap((g) => g.items).map((r, i) => [r.id, i + 1]))
+  const ids = parcel.parcelIds ?? [parcel.id]
+  const multi = ids.length > 1
   return (
-    <Document title={`ROSA — działka ${parcel.id}`} author="ROSA" subject="Raport stanu wody na działce" language="pl">
+    <Document title={multi ? `ROSA — pole z ${ids.length} działek (${ids.join(", ")})` : `ROSA — działka ${parcel.id}`} author="ROSA" subject="Raport stanu wody na działce" language="pl">
       <Page size="A4" style={s.page}>
         <View style={s.header} fixed>
           <View>
@@ -157,13 +167,13 @@ export function ReportPdf({ analysis, scene, generatedAt }: { analysis: Analysis
         </View>
 
         <Text style={s.parcelLine}>
-          <Text style={s.bold}>Działka {parcel.id}</Text> · {parcel.obreb}, gm. {parcel.gmina}, woj. {parcel.wojewodztwo} · {parcel.areaHa.toLocaleString("pl-PL")} ha · uprawa: {analysis.cropLabel.toLowerCase()}
+          <Text style={s.bold}>{multi ? `Pole z ${ids.length} działek: ${ids.join(", ")}` : `Działka ${parcel.id}`}</Text> · {parcel.obreb}, gm. {parcel.gmina}, woj. {parcel.wojewodztwo} · {parcel.areaHa.toLocaleString("pl-PL")} ha · uprawa: {analysis.cropLabel.toLowerCase()}
         </Text>
 
         <View style={[s.row, s.section]}>
           <View style={{ width: 230 }}>
             {scene ? <ParcelPlan scene={scene} width={230} height={180} /> : <View style={{ width: 230, height: 180, backgroundColor: "#FBF6EC" }} />}
-            <Text style={[s.small, { marginTop: 3 }]}>Ryc. 1. Plan działki (EGiB), sąsiednie działki, rowy i wody (BDOT10k). Północ u góry.</Text>
+            <Text style={[s.small, { marginTop: 3 }]}>{multi ? "Ryc. 1. Plan pola z działek EGiB (granice wewnętrzne przerywane)" : "Ryc. 1. Plan działki (EGiB)"}, sąsiednie działki, rowy i wody (BDOT10k). Północ u góry.</Text>
           </View>
           <View style={[s.box, { flexGrow: 1, flexBasis: 0 }]}>
             <Text style={s.h2}>1. {statusTitle(analysis.request.date, analysis.generatedAt)}</Text>

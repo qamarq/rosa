@@ -18,7 +18,7 @@ import type { RiverSummary } from "@/server/sources/rivers"
 import type { SatelliteResult } from "@/server/sources/satellite"
 import type { SoilCategory } from "@/server/sources/soil"
 import type { TerrainSummary } from "@/server/sources/terrain"
-import { CROP_PROFILES, MONTHS_PL, expectedNdvi, NDVI_SEASON_MIN } from "./crop-profiles"
+import { CROP_PROFILES, MONTHS_PL, expectedNdvi, NDVI_SEASON_MIN, type CropProfile } from "./crop-profiles"
 import { iungAssessment } from "./iung-thresholds"
 import type { BalanceResult } from "./water-balance"
 
@@ -52,6 +52,8 @@ const IMGW_LICENSE =
 const SOIL_SHIFT: Record<number, number> = { 1: -0.3, 2: -0.15, 3: 0, 4: 0.15, 5: 0.1 }
 
 const NON_AGRICULTURAL_LAND_USE = /^(Ls|Lz|W|Wp|Ws|Wsr|B|Ba|Bi|Bp|Bz|dr|Tk|Ti|Tp|N)\b/
+
+const USED_VERB: Record<CropProfile["gender"], string> = { m: "zużył", f: "zużyła", n: "zużyło", pl: "zużyły" }
 
 function minus(n: number): string {
   return n < 0 ? `−${Math.abs(n)}` : `${n}`
@@ -225,7 +227,7 @@ export function buildAnalysis(input: EngineInput): Analysis {
       kind: "uprawa",
       value: capitalize(MONTHS_PL[month - 1]),
       title: `${cropName}: okres krytyczny`,
-      detail: `To okres ${crop.criticalLabel}, kiedy ${cropName.toLocaleLowerCase("pl-PL")} najbardziej potrzebuje wody.`,
+      detail: `To okres ${crop.criticalLabel}, kiedy ${crop.noun} najbardziej ${crop.gender === "pl" ? "potrzebują" : "potrzebuje"} wody.`,
       source: "FAO-56, wiedza agronomiczna",
     })
   }
@@ -297,7 +299,7 @@ export function buildAnalysis(input: EngineInput): Analysis {
       note: "Budowa zastawki może wymagać zgody wodnoprawnej i zgody właściciela rowu.",
     })
   }
-  if (agricultural && request.crop !== "laka") {
+  if (agricultural && !crop.perennial) {
     const light = soil ? soil.code <= 2 : false
     if (light || level >= 3) {
       recs.push({
@@ -340,6 +342,22 @@ export function buildAnalysis(input: EngineInput): Analysis {
       })
     }
   }
+  if (agricultural && crop.perennial && request.crop !== "laka") {
+    recs.push({
+      id: "sciolka",
+      group: "gleba",
+      title: "Ściółka w rzędach, murawa w międzyrzędziach",
+      text: "Wyściel rzędy ściółką (słoma, kora, zrębki), a międzyrzędzia utrzymuj jako niską, koszoną murawę.",
+      when: "Wiosną, zanim gleba przeschnie",
+      sceneMode: "miedzyplon",
+      sceneCaption: "Okryta gleba w rzędach mniej paruje.",
+      why: [
+        "Ściółka osłania glebę przed słońcem i wiatrem, więc mniej wody paruje.",
+        ...(terrain && terrain.slopePct >= 1 ? [`Na spadku ${terrain.slopePct.toLocaleString("pl-PL")}% murawa w międzyrzędziach spowalnia spływ wody po deszczu (GUGiK NMT).`] : []),
+        ...(soilWhy ? [soilWhy] : []),
+      ],
+    })
+  }
   if (request.crop === "laka" && agricultural) {
     recs.push({
       id: "koszenie",
@@ -365,7 +383,7 @@ export function buildAnalysis(input: EngineInput): Analysis {
       sceneMode: "nawadnianie",
       sceneCaption: `Zraszacz podaje ok. ${dose} mm wody na pole.`,
       why: [
-        `W ostatnich 7 dniach ${cropName.toLocaleLowerCase("pl-PL")} zużyła ok. ${Math.round(etc)} mm wody, a spadło ${Math.round(balance.last7.precip)} mm (${meteoSource}, FAO-56).`,
+        `W ostatnich 7 dniach ${crop.noun} ${USED_VERB[crop.gender]} ok. ${Math.round(etc)} mm wody, a spadło ${Math.round(balance.last7.precip)} mm (${meteoSource}, FAO-56).`,
         ...(inCritical ? [`To okres ${crop.criticalLabel}, kiedy uprawa najbardziej potrzebuje wody.`] : []),
         ...(hydro?.waterBodyM != null && hydro.waterBodyM <= 300 ? [`Najbliższy zbiornik wodny jest ok. ${hydro.waterBodyM} m od działki (BDOT10k).`] : []),
       ],
@@ -449,7 +467,14 @@ export function buildAnalysis(input: EngineInput): Analysis {
     id: input.id,
     request,
     cropLabel: cropName,
-    parcel: { id: parcel.id, obreb: parcel.obreb, gmina: parcel.gmina, wojewodztwo: parcel.wojewodztwo, areaHa: parcel.areaHa },
+    parcel: {
+      id: parcel.id,
+      obreb: parcel.obreb,
+      gmina: parcel.gmina,
+      wojewodztwo: parcel.wojewodztwo,
+      areaHa: parcel.areaHa,
+      ...(parcel.parcelIds.length > 1 ? { parcelIds: parcel.parcelIds } : {}),
+    },
     status: {
       level,
       label: LEVEL_LABELS[level],
