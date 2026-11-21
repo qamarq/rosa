@@ -39,6 +39,8 @@ Wdrożenie produkcyjne: Coolify na własnym serwerze, aplikacja budowana z `web/
 | `DATABASE_URL` | Połączenie z PostgreSQL/PostGIS (`postgres://user:hasło@host:port/baza`). Brak = tryb demonstracyjny. |
 | `ROSA_DATA_MODE=mock` | Wymusza tryb demonstracyjny (tylko działka przykładowa, z banerem „Dane przykładowe”), np. do prezentacji bez sieci. |
 | `ROSA_SATELLITE_BUDGET_MS` | Limit czasu na pobranie zdjęcia Sentinel-2 w tle (domyślnie 15000 ms, na produkcji 20000 ms). |
+| `INNGEST_SIGNING_KEY`, `INNGEST_EVENT_KEY` | Klucze aplikacji z Inngest Cloud (harmonogram pobierania bieżących pomiarów IMGW). Klucz podpisu weryfikuje każde wywołanie `/api/inngest`. Na produkcji ustawiane w Coolify skryptem `scripts/server/coolify-inngest-env.sh` z `~/rosa-data/rosa.env`. |
+| `INNGEST_DEV=1` | Tylko lokalnie: łączy aplikację z Inngest Dev Server (`npx inngest-cli dev -u http://localhost:3000/api/inngest`) zamiast z chmurą. |
 
 ### Import danych do bazy (jednorazowo, potem okresowo w tle)
 ```bash
@@ -84,15 +86,19 @@ przeglądarka ──► Next.js 16 (App Router, React 19)
                  ├─ strony: / · /analiza · /dzialka/[id] (· /raport/[id] → PDF)
                  ├─ API: POST /api/analyses · GET /api/analyses/[id] · …/[id]/satellite · …/[id]/scene · …/[id]/pdf
                  │       GET /api/parcels/locate · /api/parcels/[id] · /api/places/search · /api/tiles/parcels/{z}/{x}/{y}
+                 │       GET/POST/PUT /api/inngest ◄── Inngest Cloud (harmonogram: pomiary IMGW co 5 min, agregacja dobowa)
                  └─ web/src/server
                      ├─ sources/   działka, pogoda, gleba, teren, hydrologia, rzeki, wody gruntowe, satelita
                      ├─ analysis/  bilans wodny, poziom suszy, przyczyny, rekomendacje (silnik regułowy)
+                     ├─ ingest/    bieżące pomiary IMGW (próbki 10-minutowe → wartości dobowe)
+                     ├─ inngest/   funkcje uruchamiane przez Inngest Cloud
                      └─ db/        Drizzle ORM ──► PostgreSQL + PostGIS
 ```
 
 - **Jedna aplikacja** (frontend i backend w Next.js), jedno wdrożenie (Docker, `output: "standalone"`).
 - **Przebieg analizy**: działka z bazy → równolegle pogoda (bazowa), gleba, teren, hydrologia, rzeki, wody gruntowe → silnik → wynik. Zdjęcie Sentinel-2 liczy się w tle i dociąga się do wyniku, gdy jest gotowe; analiza na nie nie czeka.
 - **Cache** (`rosa_cache`): gotowe analizy (3 h dla ostatnich dni, 30 dni dla dat historycznych), odpowiedzi źródeł zewnętrznych i NDVI. Klucz zawiera wersję silnika, więc zmiana algorytmu unieważnia stare wyniki.
+- **Harmonogram w Inngest Cloud**: bieżące pomiary IMGW pobiera funkcja `meteo-live-ingest` (cron `TZ=Europe/Warsaw */5 * * * *`; każdy 10-minutowy pomiar jest „najnowszy” w API przez ok. 10 min, więc odpytywanie co 5 min nie gubi pomiarów, a duplikaty odrzuca klucz stacja + czas pomiaru), a dobę z próbek liczy `meteo-live-aggregate` (`TZ=Europe/Warsaw 25 0 * * *`, poprzedni dzień; ręcznie zdarzeniem `rosa/meteo.aggregate` z `{ "day": "RRRR-MM-DD" }`). Obie mają współbieżność 1 i ponawianie (2 i 5 prób), a kroki (`step.run`) są idempotentne. Importy z archiwów (IMGW, EGiB, BDOT10k) zostają w cronie serwera, bo uruchamiają kontenery Dockera obok bazy.
 - **Odporność**: każde źródło ma własny limit czasu; awaria źródła obniża pewność wyniku i trafia do „Czego nie wiemy”, ale nie przerywa analizy. Jedynym źródłem krytycznym jest pogoda.
 - **Silnik jest deterministyczny i regułowy**: ten sam wejściowy zestaw danych zawsze daje ten sam wynik, a każda liczba w raporcie ma źródło.
 
@@ -107,7 +113,8 @@ Szczegóły: `docs/architektura.md`, `docs/concept.md`.
 | Granice i powierzchnia działek, obręb, gmina | GUGiK, EGiB: eksport `0_dzialki.parquet` (opendata.geoportal.gov.pl) | cała Polska, 38 909 091 działek, EPSG:2180 | identyfikacja działki, geometria do pozostałych analiz |
 | Dobowe opady, Tmax, Tmin | IMGW-PIB, dane publiczne: archiwum dobowe synop, klimat, opad | 2006-01-01 – 2026-10-31; 533 stacje ze współrzędnymi (207 z temperaturą); 2,3 mln pomiarów | bilans wodny, historia 10 lat, upał, dawka nawadniania |
 | Współrzędne stacji | IMGW-PIB, wykaz stacji telemetrycznych (`kody_stacji.csv`) | 800 stacji | interpolacja pogody dla działki |
-| Ostatnie dni pogody | Open-Meteo (API prognozowe, `past_days`) | dni po ostatnim dniu w archiwum IMGW | analiza „na dziś” |
+| Bieżące pomiary meteorologiczne | IMGW-PIB, API `danepubliczne.imgw.pl/api/data/meteo` (788 stacji telemetrycznych; opad 10-minutowy i temperatura powietrza) | od 21.11.2026; próbki 10-minutowe odpytywane co 5 min (trzymane 10 dni) i wartości dobowe w tabeli `meteo_daily_live` | dni po końcu archiwum IMGW: bilans wodny i upał dla analiz „na dziś” |
+| Ostatnie dni pogody (zapasowo) | Open-Meteo (API prognozowe, `past_days`) | tylko dni bez danych IMGW: dziś i luka 01.11–20.11.2026 przed startem pobierania bieżącego | analiza „na dziś”, gdy brakuje dni z IMGW |
 | Kategoria podatności gleby na suszę | IUNG-PIB, SMSR: warstwa `Susza:katgl_landuse2024` (WMS) | cała Polska | przyczyna „gleba”, korekta poziomu suszy, wykrycie terenów nierolniczych |
 | Wysokości terenu | GUGiK, NMT (usługa `GetHByPointList`) | 48 punktów w obrębie działki; siatka 33×33 punkty wokół działki dla modelu 3D | spadek, kierunek spływu, różnica wysokości, teren sceny 3D |
 | Ortofotomapa | GUGiK, WMS ORTO StandardResolution | cała Polska | podkład mapy wyboru działki, obrys działki w animacji przelotu |
@@ -132,14 +139,17 @@ Szczegóły: `docs/architektura.md`, `docs/concept.md`.
 |---|---|---|---|
 | Działki EGiB (GUGiK) | 21.11.2026 | eksport z 21.11.2026, 03:03 | `scripts/import_parcels.sh` |
 | Dane dobowe IMGW-PIB + współrzędne stacji | 21.11.2026 | 2006-01-01 – 2026-10-31 | `scripts/import_imgw.py` |
+| Bieżące pomiary IMGW-PIB (API telemetryczne) | na bieżąco od 21.11.2026, co 5 min | próbki z ostatnich 10 dni, wartości dobowe od 21.11.2026 | `web/src/server/ingest/meteo-live.ts` (funkcje Inngest) |
 | Dane hydrologiczne dobowe IMGW-PIB (stany rzek) + wodowskazy z API | 21.11.2026 | 01.11.2005 – 31.10.2025 (lata hydrologiczne 2006–2025) | `scripts/import_imgw_hydro.py` (`rosa-update.sh hydro-rivers`) |
 | BDOT10k: rowy, cieki, kanały, wody | 21.11.2026 | wersje obiektów wg powiatów (np. 31.12.2023 dla pow. śremskiego) | `scripts/import_bdot.py` |
 | Indeks nazw obrębów i gmin (`rosa_place`) | 21.11.2026 | z tabeli działek EGiB | `scripts/server/rosa-update.sh places` (też automatycznie po każdej aktualizacji działek) |
 
-Aktualizacja w tle: `scripts/server/rosa-update.sh` uruchamiany z crona na serwerze (`scripts/server/crontab.txt`). Każdy import ładuje dane do tabeli `*_next` i podmienia ją z bieżącą w jednej transakcji, więc aplikacja nie widzi pustych tabel w trakcie aktualizacji.
+Aktualizacja w tle: importy archiwów robi `scripts/server/rosa-update.sh` uruchamiany z crona na serwerze (`scripts/server/crontab.txt`), a bieżące pomiary IMGW pobiera aplikacja na wywołanie z Inngest Cloud (sekcja 3). Każdy import ładuje dane do tabeli `*_next` i podmienia ją z bieżącą w jednej transakcji, więc aplikacja nie widzi pustych tabel w trakcie aktualizacji.
 
 | Zadanie | Harmonogram |
 |---|---|
+| Bieżące pomiary IMGW: próbki z API telemetrycznego (Inngest Cloud) | co 5 minut |
+| Bieżące pomiary IMGW: wartości dobowe za poprzedni dzień i usunięcie próbek starszych niż 10 dni (Inngest Cloud) | codziennie 00:25 czasu polskiego |
 | Czyszczenie przeterminowanego cache | codziennie 03:30 |
 | IMGW (pełne przeładowanie 2006–dziś) | 6. dnia miesiąca 02:00 |
 | IMGW hydrologia: stany rzek (pełne przeładowanie 2006–ostatni rok hydrologiczny) | 7. dnia miesiąca 02:30 |
@@ -153,7 +163,7 @@ Instalacja na serwerze: skopiuj `scripts/` do `~/rosa/scripts`, utwórz `~/rosa-
 |---|---|---|
 | Kategoria gleby IUNG (WMS GetFeatureInfo) | pierwsza analiza w danym miejscu | bez wygasania |
 | Wysokości NMT (GUGiK) | pierwsza analiza działki | bez wygasania |
-| Ostatnie dni pogody (Open-Meteo) | gdy dzień analizy jest nowszy niż archiwum IMGW | 3 h |
+| Ostatnie dni pogody (Open-Meteo, zapasowo) | gdy między końcem archiwum IMGW a wczorajszym dniem są dni bez wartości dobowych z API IMGW | 3 h |
 | Stan rzeki i jego percentyl (z bazy, a bieżący stan wodowskazu z API IMGW) | każda analiza; API tylko gdy dzień analizy to dziś lub wczoraj i jest nowszy niż archiwum | 3 h dla ostatnich dni, 30 dni dla dat historycznych |
 | Punkty monitoringu wód podziemnych PIG-PIB (ArcGIS REST) | pierwsza analiza w danym miejscu (siatka 0,02°) | 30 dni |
 | Sentinel-2 NDVI (Earth Search i Planetary Computer, COG) | w tle po każdej nowej analizie | 7 dni |
@@ -192,9 +202,10 @@ Każdy wynik pokazuje datę pobrania danych przy źródle (sekcje wyniku i rapor
 | PostgreSQL + PostGIS | 18.7 / 3.7 | PostgreSQL License / GPL-2.0 | baza danych przestrzennych (serwer, nie dystrybuowana z kodem) |
 | GDAL/OGR (`ogr2ogr`, obraz `osgeo/gdal`) | 3.x | MIT | import Parquet i GPKG |
 | Python 3.12 + psycopg | 3.12 / 3.x | PSF / LGPL-3.0 | skrypty importu IMGW: meteo i hydrologia (narzędzie, poza aplikacją) |
+| inngest (SDK) | 4.26 | Apache-2.0 | funkcje harmonogramu uruchamiane przez Inngest Cloud (`/api/inngest`) |
 
 ### Usługi zewnętrzne
-GUGiK (opendata.geoportal.gov.pl, services.gugik.gov.pl), IMGW-PIB (danepubliczne.imgw.pl, archiwum i API hydrologiczne), PIG-PIB (cbdgmapa.pgi.gov.pl, ArcGIS REST), IUNG-PIB (sgeo.iung.pl), Open-Meteo (api.open-meteo.com), Earth Search STAC (earth-search.aws.element84.com) i AWS Open Data (sentinel-cogs), Microsoft Planetary Computer (STAC i anonimowy token SAS), OpenStreetMap (kafelki mapy), GUGiK UUG (geokodowanie), GUGiK ORTO i KIEG (WMS). Żadna nie wymaga klucza ani płatności.
+GUGiK (opendata.geoportal.gov.pl, services.gugik.gov.pl), IMGW-PIB (danepubliczne.imgw.pl: archiwa, API meteorologiczne i hydrologiczne), PIG-PIB (cbdgmapa.pgi.gov.pl, ArcGIS REST), IUNG-PIB (sgeo.iung.pl), Open-Meteo (api.open-meteo.com, tylko zapasowo), Inngest Cloud (inngest.com, harmonogram zadań: ok. 8,7 tys. uruchomień funkcji miesięcznie), Earth Search STAC (earth-search.aws.element84.com) i AWS Open Data (sentinel-cogs), Microsoft Planetary Computer (STAC i anonimowy token SAS), OpenStreetMap (kafelki mapy), GUGiK UUG (geokodowanie), GUGiK ORTO i KIEG (WMS). Żadna nie wymaga klucza ani płatności.
 
 ### Narzędzia AI i jak ich użyto
 - **W działaniu aplikacji nie ma AI ani modeli językowych.** Ocena suszy i rekomendacje to deterministyczny silnik regułowy (`web/src/server/analysis`), oparty na bilansie wodnym, FAO-56 i danych IUNG, GUGiK, IMGW. Każdy wniosek ma przypięte liczby i źródło.
@@ -217,7 +228,8 @@ GUGiK (opendata.geoportal.gov.pl, services.gugik.gov.pl), IMGW-PIB (danepubliczn
 - **Copernicus Sentinel-2**: wolny, pełny i otwarty dostęp (polityka danych Copernicus); oznaczenie „zawiera zmodyfikowane dane Copernicus Sentinel” (przy wyniku podajemy też, czy scena pochodzi z Earth Search, czy z archiwum Planetary Computer). Planetary Computer udostępnia dane na warunkach ich licencji źródłowej (Copernicus) i własnych Warunkach korzystania Microsoft.
 - **OpenStreetMap**: dane © współtwórcy OpenStreetMap, licencja ODbL; oznaczenie widoczne na mapie. Publiczne kafelki tile.openstreetmap.org mają politykę dozwolonego użycia; przy wdrożeniu produkcyjnym u KOWR należy użyć własnego serwera kafelków lub komercyjnego dostawcy.
 - **GUGiK ortofotomapa, KIEG, usługa geokodowania (PRG)**: jak wyżej, dane GUGiK udostępniane bezpłatnie; oznaczenia źródła widoczne na mapie.
-- **Open-Meteo**: dane na licencji CC BY 4.0; darmowe API wyłącznie do użytku niekomercyjnego. W ROSA służy tylko do kilku ostatnich dni pogody; do wdrożenia u KOWR: plan komercyjny Open-Meteo, własna instancja Open-Meteo albo dane IMGW z mniejszym opóźnieniem.
+- **Open-Meteo**: dane na licencji CC BY 4.0; darmowe API wyłącznie do użytku niekomercyjnego. Od 21.11.2026 ostatnie dni pogody liczymy z bieżących pomiarów IMGW, a Open-Meteo jest tylko zapasem dla dni bez danych IMGW (dziś oraz luka 01.11–20.11.2026). Przy wyniku pokazujemy je jako osobne źródło tylko wtedy, gdy zostało użyte.
+- **Inngest Cloud**: usługa harmonogramu (warunki inngest.com); nie przetwarza danych użytkowników, tylko wywołuje funkcje pobierające dane IMGW.
 - **FAO-56**: publikacja naukowa, cytowana jako źródło metody.
 
 ---
@@ -226,7 +238,7 @@ GUGiK (opendata.geoportal.gov.pl, services.gugik.gov.pl), IMGW-PIB (danepubliczn
 
 - **Pogoda ze stacji, nie z pola**: wartości to interpolacja (odwrotność kwadratu odległości) z 5 najbliższych stacji opadowych i 4 temperaturowych w promieniu 80 km. Współrzędne mamy dla ok. 40% stacji opadowych IMGW (lista telemetryczna), więc najbliższa stacja jest zwykle 6–30 km od działki.
 - **Parowanie metodą Hargreavesa** (FAO-56, tylko z temperatury), skalibrowane współczynnikiem 0,95 do wykazów suszy IUNG (metoda Penmana); przy wartościach bilansu bliskich progowi nasza ocena może różnić się od IUNG (F1 0,65).
-- **Archiwum IMGW ma opóźnienie** około 1–2 miesięcy; ostatnie dni uzupełniamy z Open-Meteo (inny model, inna metoda parowania).
+- **Archiwum IMGW ma opóźnienie** około 1–2 miesięcy; dni po jego końcu liczymy z bieżących pomiarów telemetrycznych IMGW (od 21.11.2026). Wartości dobowe z próbek 10-minutowych mogą się nieco różnić od oficjalnego archiwum (np. przerwy w transmisji; dobę liczymy od północy do północy czasu polskiego), które je zastępuje po publikacji. Do doby wymagamy ≥ 80% (116 ze 144) 10-minutowych pomiarów opadu oraz ≥ 12 pomiarów temperatury w co najmniej 6 z 8 trzygodzinnych przedziałów. Dni 01.11–20.11.2026 (przed startem pobierania) i bieżący dzień nadal pochodzą z Open-Meteo (inny model, inna metoda parowania).
 - **NDVI**: liczymy tylko z pikseli 10 m, których środek leży w granicach działki (maska z geometrii EGiB) i które maska SCL oznacza jako bezchmurne; przy bardzo wąskich działkach (< 20 m) pikseli jest mało. Zdjęcie jest z 30 dni przed datą analizy (dla starszych dat z 60 dni) i może go nie być przy dużym zachmurzeniu. Dla dat sprzed 2017 r. zdjęć Sentinel-2 L2A jest mało (archiwum Planetary Computer od 2016). Pobieranie zdjęć z amerykańskiego S3 bywa bardzo wolne z niektórych sieci; na serwerze produkcyjnym trwa kilka sekund, a wynik dociąga się w tle.
 - **Model 3D jest poglądowy w części elementów**: teren, granice, sąsiednie działki i wody są z danych, ale rzeźba jest przewyższona (krotność pokazujemy przy źródłach), a farma, drzewa, postacie, maszyny i kolory pól sąsiadów są ilustracją.
 - **Wyszukiwanie adresów** zależy od zapisu w rejestrze GUGiK (np. nazwa ulicy bez „ul.”); nie każdy wariant nazwy zostanie znaleziony.
@@ -234,7 +246,7 @@ GUGiK (opendata.geoportal.gov.pl, services.gugik.gov.pl), IMGW-PIB (danepubliczn
 - **Stan rzeki z najbliższego wodowskazu IMGW** (do 25 km): wodowskaz może leżeć na innej rzece lub w innej zlewni niż działka, a duża rzeka niesie wodę z daleka. Percentyl liczymy z pomiarów tego samego wodowskazu (±15 dni wokół tej samej daty w 10 poprzednich latach); zmiana zera wodowskazu w tym czasie może go zniekształcić. Archiwum dobowe kończy się 31.10.2025 (rok hydrologiczny 2025, publikowany z opóźnieniem); dla dziś i wczoraj bierzemy bieżący stan z API IMGW, a dla dat pomiędzy stanu rzek nie oceniamy.
 - **Wody gruntowe z najbliższego punktu monitoringu PIG-PIB** (do 20 km) i z ostatniego pomiaru w tym punkcie, a nie spod działki ani z dnia analizy; poziom wody gruntowej mocno zależy od rzeźby terenu i budowy gleby. Punkty ze zwierciadłem napiętym (pod warstwą nieprzepuszczalną) pokazujemy, ale nie wyciągamy z nich wniosków.
 - **Rekomendacje są ogólne**: nie zastępują doradcy rolniczego ani pozwoleń wodnoprawnych (zastawki, pobór wody), o czym przypominamy przy rekomendacjach.
-- **Limity zewnętrznych API dotyczą głównie aktualizacji danych w tle, a nie pracy użytkownika**: analizy czytają działki, pogodę i hydrologię z naszej bazy, a źródła zewnętrzne odświeżamy okresowo (np. raz na dobę lub miesiąc). Przy pierwszej analizie nowej działki pytamy na żywo tylko kilka lekkich usług (IUNG, NMT, PIG-PIB, ostatnie dni z Open-Meteo, bieżący stan wodowskazu IMGW, Sentinel-2) i zapisujemy wynik w cache. Ich limity: darmowe Open-Meteo do 10 000 wywołań dziennie na adres IP (10 lat danych dziennych to ok. 260 wywołań, dlatego historia jest z IMGW, a nie z Open-Meteo); Earth Search i AWS bez limitu, ale z opóźnieniem z Europy (~4 s), więc NDVI dociąga się w tle; usługi GUGiK, IUNG, PIG-PIB i API IMGW bez publikowanych limitów.
+- **Limity zewnętrznych API dotyczą głównie aktualizacji danych w tle, a nie pracy użytkownika**: analizy czytają działki, pogodę i hydrologię z naszej bazy, a źródła zewnętrzne odświeżamy okresowo (np. raz na dobę lub miesiąc). Przy pierwszej analizie nowej działki pytamy na żywo tylko kilka lekkich usług (IUNG, NMT, PIG-PIB, ostatnie dni z Open-Meteo tylko przy braku danych IMGW, bieżący stan wodowskazu IMGW, Sentinel-2) i zapisujemy wynik w cache. Ich limity: darmowe Open-Meteo do 10 000 wywołań dziennie na adres IP (10 lat danych dziennych to ok. 260 wywołań, dlatego historia jest z IMGW, a nie z Open-Meteo); Earth Search i AWS bez limitu, ale z opóźnieniem z Europy (~4 s), więc NDVI dociąga się w tle; usługi GUGiK, IUNG, PIG-PIB i API IMGW bez publikowanych limitów.
 - **Prototyp**: działka nierolnicza (las, woda, zabudowa wg IUNG) dostaje ostrzeżenie zamiast rekomendacji upraw; ewidencyjne klasy użytków (`klasouzytki_egib`) są w eksporcie GUGiK najczęściej puste.
 
 ---
@@ -267,7 +279,7 @@ GUGiK (opendata.geoportal.gov.pl, services.gugik.gov.pl), IMGW-PIB (danepubliczn
 - **Infrastruktura i koszt (szacunek)**:
   - obecnie: 1 serwer VPS (4 vCPU, 8 GB RAM, 75 GB SSD; baza ok. 20 GB z indeksami; zwykle kilkadziesiąt zł miesięcznie); wystarcza na tysiące analiz dziennie;
   - dla dziesiątek tysięcy rolników: 2–3 instancje aplikacji, baza 8 vCPU / 32 GB RAM z repliką do odczytu, CDN przed kafelkami i plikami statycznymi; rząd kilkuset zł miesięcznie;
-  - usługi płatne przy wdrożeniu komercyjnym: Open-Meteo (plan komercyjny, tylko ostatnie dni pogody) albo zastąpienie go danymi IMGW; własny serwer kafelków mapy zamiast publicznych kafelków OpenStreetMap. Dane GUGiK, IMGW, IUNG i Copernicus są bezpłatne.
+  - usługi płatne przy wdrożeniu komercyjnym: Open-Meteo jest już tylko zapasem (ostatnie dni pochodzą z bieżących pomiarów IMGW), więc można go wyłączyć lub wykupić plan komercyjny; Inngest Cloud wg planu dla ok. 8,7 tys. uruchomień miesięcznie (albo samodzielnie hostowany serwer Inngest); własny serwer kafelków mapy zamiast publicznych kafelków OpenStreetMap. Dane GUGiK, IMGW, IUNG i Copernicus są bezpłatne.
 - **Wąskie gardła i plan**: pobieranie zdjęć Sentinel-2 (transfer z AWS/Azure; alternatywa: Sentinel Hub w Copernicus Data Space, który zwraca gotowe NDVI dla poligonu); pierwsze wywołania NMT dla nowych działek (można wstępnie policzyć siatki dla działek rolnych); limit zapytań na użytkownika (do dodania w proxy).
 
 ---
@@ -284,6 +296,7 @@ GUGiK (opendata.geoportal.gov.pl, services.gugik.gov.pl), IMGW-PIB (danepubliczn
   - stałe adresy usług; użytkownik przekazuje tylko zakodowane parametry, nie adresy URL (brak SSRF);
   - każde wywołanie ma limit czasu, a awaria źródła nie przerywa analizy;
   - komunikaty błędów dla użytkownika nie ujawniają szczegółów technicznych.
+- **Harmonogram (Inngest)**: endpoint `/api/inngest` przyjmuje tylko wywołania podpisane kluczem `INNGEST_SIGNING_KEY` (SDK weryfikuje podpis każdego żądania); nie ma publicznego endpointu, który uruchamia pobieranie danych. Funkcje mają współbieżność 1, a zapisy w bazie są idempotentne (klucz stacja + czas pomiaru, przeliczenie doby nadpisuje ją w całości).
 - **Sekrety**: hasło do bazy i tokeny tylko w zmiennych środowiskowych (Coolify, `.env.local` poza repozytorium); w repozytorium jest wyłącznie `.env.example` z pustym szablonem.
 - **Transport**: HTTPS z certyfikatem Let's Encrypt (Traefik w Coolify).
 - **Do dodania przed wdrożeniem**: limit liczby zapytań na adres IP (rate limiting w proxy), nagłówki bezpieczeństwa (Content-Security-Policy) i regularny audyt zależności (`pnpm audit`).
