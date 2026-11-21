@@ -22,6 +22,6 @@ set_env() {
   return 1
 }
 
-set_env INNGEST_EVENT_KEY "${INNGEST_EVENT_KEY:-}"
 set_env INNGEST_SIGNING_KEY "${INNGEST_SIGNING_KEY:-}"
+if [[ -n "${INNGEST_EVENT_KEY:-}" ]]; then set_env INNGEST_EVENT_KEY "$INNGEST_EVENT_KEY"; else echo "INNGEST_EVENT_KEY: not set (optional, the app does not send events)"; fi
 echo "Redeploy the app in Coolify (or push to main) to apply."
