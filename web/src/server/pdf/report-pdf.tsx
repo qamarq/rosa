@@ -2,7 +2,7 @@ import path from "node:path"
 import { Document, Font, Page, Path, StyleSheet, Svg, Text, View } from "@react-pdf/renderer"
 import type { ParcelScene, Ring } from "@/lib/scene3d"
 import type { Analysis, Recommendation } from "@/lib/types"
-import { formatDatePl } from "@/lib/validation"
+import { formatDatePl, statusTitle } from "@/lib/validation"
 
 const FONT_DIR = path.join(process.cwd(), "public", "fonts", "pdf")
 
@@ -166,7 +166,7 @@ export function ReportPdf({ analysis, scene, generatedAt }: { analysis: Analysis
             <Text style={[s.small, { marginTop: 3 }]}>Ryc. 1. Plan działki (EGiB), sąsiednie działki, rowy i wody (BDOT10k). Północ u góry.</Text>
           </View>
           <View style={[s.box, { flexGrow: 1, flexBasis: 0 }]}>
-            <Text style={s.h2}>1. Stan wody teraz</Text>
+            <Text style={s.h2}>1. {statusTitle(analysis.request.date, analysis.generatedAt)}</Text>
             <View style={{ flexDirection: "row", alignItems: "baseline", gap: 6 }}>
               <Text style={[s.levelBig, { color: LEVEL_COLORS[status.level - 1] }]}>{status.level}/5</Text>
               <Text style={{ fontFamily: "Bricolage", fontWeight: 700, fontSize: 14, lineHeight: 1.2 }}>{status.label}</Text>

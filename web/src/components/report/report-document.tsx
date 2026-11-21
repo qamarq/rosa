@@ -2,7 +2,7 @@ import { baseSceneMode, sceneFacts } from "@/lib/scene"
 import type { ReactNode } from "react"
 import { cn } from "@/lib/utils"
 import type { Analysis, ConfidenceLevel, Recommendation, RecommendationGroup } from "@/lib/types"
-import { formatDatePl } from "@/lib/validation"
+import { formatDatePl, statusTitle } from "@/lib/validation"
 import { ReportScene } from "@/components/report/report-scene"
 import styles from "@/components/report/report.module.css"
 
@@ -97,7 +97,7 @@ export function ReportDocument({ analysis }: { analysis: Analysis }) {
 
         <div className="flex flex-1 flex-col gap-3">
           <section className="flex flex-col gap-2 rounded-[10px] border-2 border-[#111111] px-3.5 py-3 break-inside-avoid">
-            <SectionTitle>1. Stan wody teraz</SectionTitle>
+            <SectionTitle>1. {statusTitle(analysis.request.date, analysis.generatedAt)}</SectionTitle>
             <div className="flex flex-wrap items-baseline gap-x-2.5">
               <span className="font-heading text-[44px] leading-none font-extrabold tabular-nums">{status.level}/5</span>
               <span className="font-heading text-[22px] font-extrabold">{status.label}</span>

@@ -28,3 +28,13 @@ export function formatDatePl(iso: string): string {
   const [y, m, d] = iso.split("-")
   return `${d}.${m}.${y}`
 }
+
+export function isCurrentDate(date: string, generatedAt: string): boolean {
+  const ref = new Date(generatedAt)
+  ref.setUTCDate(ref.getUTCDate() - 1)
+  return date >= ref.toISOString().slice(0, 10)
+}
+
+export function statusTitle(date: string, generatedAt: string): string {
+  return isCurrentDate(date, generatedAt) ? "Stan wody teraz" : `Stan wody ${formatDatePl(date)}`
+}

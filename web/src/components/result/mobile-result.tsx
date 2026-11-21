@@ -6,7 +6,7 @@ import { useRef, useState } from "react"
 import { useLiteMode } from "@/components/lite-mode"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import type { Analysis, Recommendation } from "@/lib/types"
-import { formatDatePl } from "@/lib/validation"
+import { formatDatePl, statusTitle } from "@/lib/validation"
 import { cn } from "@/lib/utils"
 import { CountUp } from "./count-up"
 import { DataStatusPill } from "./data-status"
@@ -158,7 +158,7 @@ function MobileStatus({ analysis }: { analysis: Analysis }) {
   return (
     <section aria-labelledby="m1" className={cn(styles.card, "flex flex-col gap-3 rounded-3xl p-[18px]")} style={{ background: style.soft }}>
       <h2 id="m1" className={headingCls}>
-        1 · Stan wody teraz
+        1 · {statusTitle(analysis.request.date, analysis.generatedAt)}
       </h2>
       <div className="flex items-center gap-3.5">
         <span className="font-heading text-[64px] leading-none font-extrabold tabular-nums">

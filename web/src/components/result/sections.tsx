@@ -1,7 +1,7 @@
 "use client"
 
 import type { Analysis, Recommendation } from "@/lib/types"
-import { formatDatePl } from "@/lib/validation"
+import { formatDatePl, statusTitle } from "@/lib/validation"
 import { cn } from "@/lib/utils"
 import { CountUp } from "./count-up"
 import {
@@ -66,7 +66,7 @@ export function StatusSection({ analysis }: { analysis: Analysis }) {
   return (
     <section aria-labelledby="s1" className={cn(styles.card, "flex flex-col gap-3.5")}>
       <SectionTitle n={1} id="s1">
-        Stan wody teraz
+        {statusTitle(analysis.request.date, analysis.generatedAt)}
       </SectionTitle>
       <div className="flex items-center gap-[18px]">
         <div className="relative size-[132px] flex-none">
