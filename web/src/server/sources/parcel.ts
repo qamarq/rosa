@@ -47,7 +47,8 @@ function titleCase(value: string): string {
 
 function cleanGmina(value: string | null): string {
   if (!value) return ""
-  return value.replace(/^(gmina|miasto)\s+/i, "").trim()
+  const name = value.replace(/^(gmina miejska|gmina wiejska|gmina|miasto|gm\.|m\.)\s*/i, "").replace(/\s*-\s*(obszar wiejski|miasto|gmina|g|m|w)$/i, "").trim()
+  return name === name.toLocaleUpperCase("pl-PL") ? titleCase(name) : name
 }
 
 function parseBox(text: string): [number, number, number, number] {
