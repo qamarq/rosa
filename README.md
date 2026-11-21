@@ -97,7 +97,7 @@ Szczegóły: `docs/architektura.md`, `docs/concept.md`.
 | Ostatnie dni pogody | Open-Meteo (API prognozowe, `past_days`) | dni po ostatnim dniu w archiwum IMGW | analiza „na dziś” |
 | Kategoria podatności gleby na suszę | IUNG-PIB, SMSR: warstwa `Susza:katgl_landuse2024` (WMS) | cała Polska | przyczyna „gleba”, korekta poziomu suszy, wykrycie terenów nierolniczych |
 | Wysokości terenu | GUGiK, NMT (usługa `GetHByPointList`) | 48 punktów w obrębie działki | spadek, kierunek spływu, różnica wysokości |
-| Rowy melioracyjne, cieki, kanały, wody powierzchniowe | GUGiK, BDOT10k (paczki GPKG na powiat, warstwy `OT_SWRM_L`, `OT_SWRS_L`, `OT_SWKN_L`, `OT_PTWP_A`) | cała Polska, 380 powiatów | zastawka na rowie, sąsiedztwo wody |
+| Rowy melioracyjne, cieki, kanały, wody powierzchniowe | GUGiK, BDOT10k (paczki GPKG na powiat, warstwy `OT_SWRM_L`, `OT_SWRS_L`, `OT_SWKN_L`, `OT_PTWP_A`) | cała Polska, 380 powiatów: 1,64 mln rowów, 506 tys. cieków, 8,9 tys. kanałów, 606 tys. wód powierzchniowych (1,1 GB) | zastawka na rowie, sąsiedztwo wody |
 | Kondycja roślin (NDVI) | Copernicus Sentinel-2 L2A, COG z rejestru AWS Open Data, katalog STAC Earth Search (Element 84) | najnowsza scena z 30 dni przed dniem analizy, zachmurzenie < 60%, min. 50% bezchmurnych pikseli | kondycja roślin na scenie i w raporcie |
 | Współczynniki upraw Kc, okresy krytyczne | FAO-56 (Allen i in.), uproszczone dla Polski | 6 upraw | nawadnianie, przyczyna „okres krytyczny” |
 
