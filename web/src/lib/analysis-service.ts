@@ -9,6 +9,7 @@ import { readCache, writeCache } from "@/server/cache"
 import { loadHydro } from "@/server/sources/hydro"
 import { loadDailyWeather } from "@/server/sources/meteo"
 import { findParcelById } from "@/server/sources/parcel"
+import { loadParcelScene } from "@/server/sources/scene3d"
 import { loadSatellite, type SatelliteResult } from "@/server/sources/satellite"
 import { loadSoilCategory } from "@/server/sources/soil"
 import { loadTerrain } from "@/server/sources/terrain"
@@ -72,6 +73,7 @@ async function computeLive(req: AnalysisRequest, id: string): Promise<AnalysisRe
   if (!parcel) {
     return { ok: false, error: { code: "parcel_not_found", message: "Nie znaleziono działki.", parcelId: req.parcelId } }
   }
+  void loadParcelScene(parcel.id).catch(() => null)
   const sat = satelliteJob(id, () => loadSatellite(parcel.id, parcel.lat, parcel.lon, parcel.utmBbox, parcel.utmRings, req.date, SATELLITE_BUDGET_MS))
   const [weather, soil, terrain, hydro] = await Promise.all([
     settle("meteo", loadDailyWeather(parcel.lat, parcel.lon, req.date, HISTORY_YEARS, WINDOW_DAYS)),
