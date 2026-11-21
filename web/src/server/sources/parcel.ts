@@ -34,6 +34,7 @@ export type ParcelRecord = {
   y2180: number
   geojson: string
   samplePoints2180: [number, number][]
+  utmBbox: Record<"32633" | "32634", [number, number, number, number]>
 }
 
 type Row = {
@@ -48,6 +49,8 @@ type Row = {
   y: number
   geojson: string
   pts: string | null
+  b33: string
+  b34: string
 }
 
 function titleCase(value: string): string {
@@ -59,6 +62,11 @@ function titleCase(value: string): string {
 function cleanGmina(value: string | null): string {
   if (!value) return ""
   return value.replace(/^(gmina|miasto)\s+/i, "").trim()
+}
+
+function parseBox(text: string): [number, number, number, number] {
+  const n = text.split(",").map(Number)
+  return [n[0], n[1], n[2], n[3]]
 }
 
 function toRecord(row: Row): ParcelRecord {
@@ -79,6 +87,7 @@ function toRecord(row: Row): ParcelRecord {
     y2180: row.y,
     geojson: row.geojson,
     samplePoints2180: points,
+    utmBbox: { "32633": parseBox(row.b33), "32634": parseBox(row.b34) },
   }
 }
 
@@ -94,7 +103,9 @@ const SELECT = sql`
   ST_Y(ST_PointOnSurface(geom)) AS y,
   ST_AsGeoJSON(ST_Transform(geom, 4326), 6) AS geojson,
   (SELECT string_agg(round(ST_X(d.geom)::numeric, 1) || ' ' || round(ST_Y(d.geom)::numeric, 1), ',')
-     FROM ST_Dump(ST_GeneratePoints(geom, 48, 7)) d) AS pts
+     FROM ST_Dump(ST_GeneratePoints(geom, 48, 7)) d) AS pts,
+  (SELECT concat_ws(',', ST_XMin(b), ST_YMin(b), ST_XMax(b), ST_YMax(b)) FROM (SELECT ST_Transform(geom, 32633) AS b) x) AS b33,
+  (SELECT concat_ws(',', ST_XMin(b), ST_YMin(b), ST_XMax(b), ST_YMax(b)) FROM (SELECT ST_Transform(geom, 32634) AS b) x) AS b34
 `
 
 export async function findParcelById(id: string): Promise<ParcelRecord | null> {
