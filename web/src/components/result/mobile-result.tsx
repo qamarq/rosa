@@ -10,7 +10,7 @@ import { formatDatePl } from "@/lib/validation"
 import { cn } from "@/lib/utils"
 import { CountUp } from "./count-up"
 import { DioramaStage, useCamera } from "./diorama-stage"
-import { CAUSE_STYLE, CONFIDENCE, LEVEL_STYLE, SCALE, analysisYear, daysPl, groupedRecommendations, signed } from "./format"
+import { CAUSE_STYLE, CONFIDENCE, LEVEL_STYLE, SCALE, analysisYear, daysPl, groupedRecommendations, signed, noActionsText, noCausesText } from "./format"
 import { ClockIcon, DownloadIcon, FullscreenIcon, LayersIcon, MenuIcon, RosaLogo } from "./icons"
 import { LiteBanner } from "./lite-banner"
 import { LiteSwitchVisual } from "./result-header"
@@ -239,6 +239,7 @@ function MobileCauses({ analysis }: { analysis: Analysis }) {
       <h2 id="m3" className={cn(headingCls, "mx-1")}>
         3 · Dlaczego
       </h2>
+      {analysis.causes.length === 0 && <p className="mx-1 my-0 text-[15px] leading-[1.45] text-muted-foreground">{noCausesText(analysis)}</p>}
       {analysis.causes.map((c) => {
         const style = CAUSE_STYLE[c.kind] ?? CAUSE_STYLE.opady
         return (
@@ -278,6 +279,7 @@ function MobileActions({
       <h2 id="m4" className={cn(headingCls, "mx-1")}>
         4 · Co zrobić
       </h2>
+      {groups.length === 0 && <p className="m-0 rounded-[20px] bg-muted px-4 py-3.5 text-[15px] leading-[1.45]">{noActionsText(analysis)}</p>}
       {groups.map((g, gi) => (
         <div key={g.id} className="flex flex-col gap-2.5">
           <span className={cn("mx-1 text-[15px] font-extrabold", gi === 0 ? "mt-1" : "mt-2")} style={{ color: g.label }}>

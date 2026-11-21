@@ -6,7 +6,7 @@ import { ArrowRightIcon, CalendarDaysIcon, MapPinIcon } from "lucide-react"
 import { pl } from "react-day-picker/locale"
 import { cn } from "@/lib/utils"
 import { CROPS, isCropId } from "@/lib/crops"
-import { DEMO_PARCEL_ID } from "@/lib/mock/morka"
+import { DEMO_REQUEST } from "@/lib/demo"
 import type { CropId } from "@/lib/types"
 import { dateRange, formatDatePl, isValidParcelId, toIsoDate } from "@/lib/validation"
 import { Calendar } from "@/components/ui/calendar"
@@ -123,7 +123,7 @@ export function StartForm({ className, initial }: { className?: string; initial?
   const selectedDate = dateIso && !dateError ? isoToDate(dateIso) : undefined
 
   function fillDemo() {
-    setParcel(DEMO_PARCEL_ID)
+    setParcel(DEMO_REQUEST.parcelId)
     setParcelTouched(false)
   }
 
@@ -236,12 +236,12 @@ export function StartForm({ className, initial }: { className?: string; initial?
             <ErrorBadge />
             {parcelError === "empty" ? (
               <span>
-                Wpisz numer działki, np. <strong>{DEMO_PARCEL_ID}</strong>.
+                Wpisz numer działki, np. <strong>{DEMO_REQUEST.parcelId}</strong>.
               </span>
             ) : (
               <span>
                 To nie wygląda na numer działki. Powinien mieć podkreślnik i dwie kropki, np.{" "}
-                <strong>{DEMO_PARCEL_ID}</strong>.
+                <strong>{DEMO_REQUEST.parcelId}</strong>.
               </span>
             )}
           </FieldError>

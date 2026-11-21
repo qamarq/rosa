@@ -13,6 +13,8 @@ import {
   actionsSummary,
   analysisYear,
   groupedRecommendations,
+  noActionsText,
+  noCausesText,
   parseCountable,
 } from "./format"
 import { ArrowDownIcon, CauseIcon, ClockIcon, DropGauge, GroupIcon } from "./icons"
@@ -212,8 +214,9 @@ export function CausesSection({ analysis }: { analysis: Analysis }) {
   return (
     <section aria-labelledby="s3" className={cn(styles.card, "flex flex-col gap-3")} style={{ "--i": 2 } as React.CSSProperties}>
       <SectionTitle n={3} id="s3">
-        Dlaczego brakuje wody
+        {analysis.status.level >= 3 ? "Dlaczego brakuje wody" : "Co wpływa na wodę na polu"}
       </SectionTitle>
+      {analysis.causes.length === 0 && <p className="m-0 text-[15px] leading-[1.45] text-muted-foreground">{noCausesText(analysis)}</p>}
       {analysis.causes.map((c) => {
         const style = CAUSE_STYLE[c.kind] ?? CAUSE_STYLE.opady
         return (
@@ -357,6 +360,7 @@ export function ActionsSection({
         </h2>
         <span className="ml-auto text-sm text-ink-soft">od najważniejszego</span>
       </div>
+      {groups.length === 0 && <p className="m-0 rounded-[20px] bg-muted px-4 py-3.5 text-[15px] leading-[1.45]">{noActionsText(analysis)}</p>}
       {groups.map(({ group: g, start }) => (
         <section key={g.id} aria-label={g.title} className="flex flex-col gap-2.5">
           <div className={cn(styles.card, "flex items-center gap-2.5")} style={{ "--i": start } as React.CSSProperties}>

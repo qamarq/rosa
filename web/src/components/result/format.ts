@@ -80,6 +80,7 @@ const START_PHRASE: Record<string, string> = {
 export function actionsSummary(recs: Recommendation[]): string {
   const ordered = groupedRecommendations(recs).flatMap((g) => g.items)
   const n = ordered.length
+  if (n === 0) return "brak działań do polecenia dla tej działki"
   const head = `${n} ${pluralPl(n, "działanie", "działania", "działań")}`
   const first = ordered[0]
   if (!first) return head
@@ -105,4 +106,15 @@ export function parseCountable(text: string): Countable | null {
   const raw = m[2].replace(",", ".")
   const decimals = raw.includes(".") ? raw.split(".")[1].length : 0
   return { prefix: m[1] ? MINUS : "", value: Number(raw), suffix: m[3], decimals }
+}
+
+export function noCausesText(analysis: Analysis): string {
+  return analysis.status.level >= 3
+    ? "Nie udało się wskazać jednej wyraźnej przyczyny; to suma kilku słabszych czynników."
+    : "Opady i parowanie są blisko normy, a gleba i ukształtowanie terenu nie zwiększają tu ryzyka suszy."
+}
+
+export function noActionsText(analysis: Analysis): string {
+  const nonAgri = analysis.confidence.unknowns.find((u) => u.startsWith("W ewidencji to"))
+  return nonAgri ?? "Sytuacja wodna jest dobra i nie widzimy pilnych działań. Wróć do analizy, gdy zacznie brakować deszczu."
 }

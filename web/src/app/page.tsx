@@ -4,12 +4,13 @@ import { StartForm } from "@/components/start/start-form"
 import { StartFormFromQuery } from "@/components/start/start-form-query"
 import { SiteHeader } from "@/components/site-header"
 import { analysisIdFor } from "@/lib/analysis-service"
-import { DEMO_PARCEL_ID, morkaAnalysis } from "@/lib/mock/morka"
+import { cropLabel as cropName } from "@/lib/crops"
+import { DEMO_LABEL, DEMO_REQUEST } from "@/lib/demo"
 
-const DEMO_HREF = `/dzialka/${analysisIdFor({ parcelId: DEMO_PARCEL_ID, crop: "kukurydza", date: "2025-07-15" })}`
+const DEMO_HREF = `/dzialka/${analysisIdFor(DEMO_REQUEST)}`
 
-const { parcel, cropLabel } = morkaAnalysis
-const DEMO_AREA = parcel.areaHa.toLocaleString("pl-PL")
+const cropLabel = cropName(DEMO_REQUEST.crop)
+const DEMO_AREA = DEMO_LABEL.areaHa.toLocaleString("pl-PL")
 
 export default function StartPage() {
   return (
@@ -45,9 +46,7 @@ export default function StartPage() {
             demoLabel={
               <>
                 Przykład:{" "}
-                <strong className="text-foreground">
-                  {parcel.obreb}, gm. {parcel.gmina}
-                </strong>{" "}
+                <strong className="text-foreground">{DEMO_LABEL.place}</strong>{" "}
                 · {cropLabel.toLowerCase()} · {DEMO_AREA} ha
               </>
             }

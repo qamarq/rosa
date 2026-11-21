@@ -1,8 +1,8 @@
 import { NotFoundView } from "@/components/result/not-found-view"
 import { analysisIdFor } from "@/lib/analysis-service"
-import { DEMO_PARCEL_ID, morkaAnalysis } from "@/lib/mock/morka"
+import { DEMO_REQUEST } from "@/lib/demo"
 
 export default function ParcelNotFound() {
-  const demoId = analysisIdFor({ ...morkaAnalysis.request, parcelId: DEMO_PARCEL_ID })
+  const demoId = analysisIdFor(DEMO_REQUEST)
   return <NotFoundView demoHref={`/dzialka/${demoId}`} />
 }
