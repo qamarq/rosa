@@ -416,6 +416,7 @@ export function applySatellite(analysis: Analysis, satellite: SatelliteResult | 
   const causes = analysis.causes.filter((c) => c.kind !== "rosliny")
   const unknowns = analysis.confidence.unknowns.filter((u) => !u.includes("satelit") && !u.startsWith("NDVI"))
   const dry = analysis.status.level >= 3
+  const noteBare = vegetation?.note?.replace(/\.$/, "") ?? ""
   if (!satellite) unknowns.push(failed ? "Zdjęcia satelitarne nie odpowiedziały na czas; kondycji roślin nie oceniamy." : "Brak bezchmurnego zdjęcia satelitarnego z 30 dni (dla starszych dat: 60 dni) przed datą analizy.")
   else if (vegetation) {
     if (ageDays > 10) unknowns.push(`Ostatnie bezchmurne zdjęcie satelitarne jest sprzed ${ageDays} dni.`)
@@ -431,9 +432,9 @@ export function applySatellite(analysis: Analysis, satellite: SatelliteResult | 
       })
       level = CONFIDENCE_ORDER[Math.min(2, CONFIDENCE_ORDER.indexOf(baseLevel) + 1)]
     } else if (vegetation.assessment === "ponizej") {
-      unknowns.push(`Zdjęcie satelitarne pokazuje słabsze rośliny niż typowo (${vegetation.note}), choć bilans wodny tego nie tłumaczy: przyczyną może być np. inna uprawa niż wybrana, choroby lub nawożenie.`)
+      unknowns.push(`Zdjęcie satelitarne pokazuje słabsze rośliny niż typowo (${noteBare}), choć bilans wodny tego nie tłumaczy: przyczyną może być np. inna uprawa niż wybrana, choroby lub nawożenie.`)
     } else if (dry) {
-      unknowns.push(`Zdjęcie satelitarne pokazuje rośliny w normie mimo deficytu wody (${vegetation.note}): możliwe nawadnianie, głębokie korzenie albo początek suszy.`)
+      unknowns.push(`Zdjęcie satelitarne pokazuje rośliny w normie mimo deficytu wody (${noteBare}): możliwe nawadnianie, głębokie korzenie albo początek suszy.`)
     }
   }
   return {
