@@ -57,6 +57,32 @@ export const hydroFeature = pgTable(
   (t) => [index("hydro_feature_geom_idx").using("gist", t.geom), index("hydro_feature_kind_idx").on(t.kind)],
 )
 
+export const hydroGauge = pgTable(
+  "hydro_gauge",
+  {
+    code: text("code").primaryKey(),
+    name: text("name").notNull(),
+    river: text("river"),
+    lat: doublePrecision("lat").notNull(),
+    lon: doublePrecision("lon").notNull(),
+    warningCm: integer("warning_cm"),
+    alarmCm: integer("alarm_cm"),
+    geom: geometry("geom", { type: "point", mode: "xy", srid: 4326 }).notNull(),
+  },
+  (t) => [index("hydro_gauge_geom_idx").using("gist", t.geom)],
+)
+
+export const hydroGaugeDaily = pgTable(
+  "hydro_gauge_daily",
+  {
+    code: text("code").notNull(),
+    day: date("day").notNull(),
+    levelCm: real("level_cm"),
+    flowM3s: real("flow_m3s"),
+  },
+  (t) => [primaryKey({ columns: [t.code, t.day] }), index("hydro_gauge_daily_day_idx").on(t.day)],
+)
+
 export const rosaPlace = pgTable(
   "rosa_place",
   {

@@ -1,5 +1,6 @@
 # ROSA background data refresh (install: crontab ~/rosa/scripts/server/crontab.txt)
 30 3 * * * $HOME/rosa/scripts/server/rosa-update.sh cache
 0 2 6 * * $HOME/rosa/scripts/server/rosa-update.sh imgw
+30 2 7 * * $HOME/rosa/scripts/server/rosa-update.sh hydro-rivers
 0 1 15 * * $HOME/rosa/scripts/server/rosa-update.sh parcels
 0 4 1 1,4,7,10 * $HOME/rosa/scripts/server/rosa-update.sh bdot

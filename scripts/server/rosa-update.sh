@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Background data refresh for ROSA. Usage: rosa-update.sh imgw|bdot|parcels|places|cache
+# Background data refresh for ROSA. Usage: rosa-update.sh imgw|hydro-rivers|bdot|parcels|places|cache
 # Config: ~/rosa-data/rosa.env with DB_CONTAINER=<postgis container name>
 set -euo pipefail
 
@@ -36,6 +36,13 @@ case "$1" in
       -e DATABASE_URL="postgresql://postgres:$PW@$DB_CONTAINER:5432/postgres" \
       -v "$HERE/..:/w" python:3.12-slim sh -c "pip install -q 'psycopg[binary]' 2>/dev/null; python -u /w/import_imgw.py"
     swap_next meteo_station meteo_daily
+    ;;
+  hydro-rivers)
+    prepare_next hydro_gauge hydro_gauge_daily
+    sudo docker run --rm --network coolify -e TABLE_SUFFIX=_next \
+      -e DATABASE_URL="postgresql://postgres:$PW@$DB_CONTAINER:5432/postgres" \
+      -v "$HERE/..:/w" python:3.12-slim sh -c "pip install -q 'psycopg[binary]' 2>/dev/null; python -u /w/import_imgw_hydro.py"
+    swap_next hydro_gauge hydro_gauge_daily
     ;;
   bdot)
     prepare_next hydro_feature
