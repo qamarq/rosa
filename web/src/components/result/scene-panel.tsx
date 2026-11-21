@@ -73,6 +73,7 @@ export function DesktopScene({
     <section aria-label="Scena 3D działki" className="@container relative min-w-0 flex-1 overflow-hidden rounded-[28px] bg-[#F3D9AE]">
       <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-[300px] bg-[#E9C996]" />
       <DioramaStage
+        analysis={analysis}
         mode={selected?.sceneMode ?? baseSceneMode(analysis.status)}
         facts={sceneFacts(analysis)}
         labels

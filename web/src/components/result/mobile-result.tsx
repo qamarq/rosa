@@ -87,6 +87,7 @@ function MobileScene({
     <section ref={sceneRef} aria-label="Scena 3D działki" className="relative h-[300px] scroll-mt-0 overflow-hidden bg-[#F3D9AE]">
       <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-[90px] bg-[#E9C996]" />
       <DioramaStage
+        analysis={analysis}
         mode={selected?.sceneMode ?? baseSceneMode(analysis.status)}
         facts={sceneFacts(analysis)}
         labels={false}
