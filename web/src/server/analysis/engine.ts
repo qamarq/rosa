@@ -11,7 +11,7 @@ import type {
 } from "@/lib/types"
 import { formatDatePl } from "@/lib/validation"
 import type { ParcelRecord } from "@/server/sources/parcel"
-import type { WeatherStation } from "@/server/sources/meteo"
+import type { RecentCoverage, RecentWeather, WeatherStation } from "@/server/sources/meteo"
 import type { GroundwaterReading } from "@/server/sources/groundwater"
 import type { HydroSummary } from "@/server/sources/hydro"
 import type { RiverSummary } from "@/server/sources/rivers"
@@ -27,7 +27,7 @@ export type EngineInput = {
   request: AnalysisRequest
   parcel: ParcelRecord
   balance: BalanceResult
-  weather: { stations: WeatherStation[]; recentFrom: string | null }
+  weather: { stations: WeatherStation[]; recent: RecentWeather }
   soil: SoilCategory | null
   terrain: TerrainSummary | null
   hydro: HydroSummary | null
@@ -73,6 +73,12 @@ function round5(n: number): number {
   return Math.round(n / 5) * 5
 }
 
+function daysSpan(c: RecentCoverage): string {
+  if (c.from === c.to) return `dzień ${formatDatePl(c.from)}`
+  const span = Math.round((Date.parse(c.to) - Date.parse(c.from)) / 86400000) + 1
+  return c.days === span ? `dni od ${formatDatePl(c.from)} do ${formatDatePl(c.to)}` : `${c.days} dni z okresu ${formatDatePl(c.from)}–${formatDatePl(c.to)}`
+}
+
 function km(n: number): string {
   return `${n.toLocaleString("pl-PL")} km`
 }
@@ -93,7 +99,7 @@ export function buildAnalysis(input: EngineInput): Analysis {
 
   const nearest = weather.stations[0]
   const stationNames = weather.stations.slice(0, 3).map((s) => `${s.name.charAt(0)}${s.name.slice(1).toLocaleLowerCase("pl-PL")} (${s.distanceKm.toLocaleString("pl-PL")} km)`).join(", ")
-  const meteoSource = weather.recentFrom ? "IMGW-PIB, Open-Meteo" : "IMGW-PIB"
+  const meteoSource = weather.recent.openMeteo ? "IMGW-PIB, Open-Meteo" : "IMGW-PIB"
   const month = Number(request.date.slice(5, 7))
   const year = Number(request.date.slice(0, 4))
   const crop = CROP_PROFILES[request.crop]
@@ -370,6 +376,7 @@ export function buildAnalysis(input: EngineInput): Analysis {
   const unknowns = [
     `Pogodę liczymy z ${weather.stations.length} najbliższych stacji IMGW (najbliższa ${nearest ? nearest.distanceKm.toLocaleString("pl-PL") + " km" : "–"}), a nie z pomiaru na Twoim polu.`,
     "Parowanie liczymy metodą Hargreavesa (FAO-56) z temperatury; to przybliżenie.",
+    ...(weather.recent.live ? [`Pogodę po końcu archiwum IMGW (${daysSpan(weather.recent.live)}) liczymy z bieżących pomiarów telemetrycznych IMGW; oficjalne archiwum może się od nich nieco różnić i zastąpi je po publikacji.`] : []),
     groundwater
       ? `Wody gruntowe znamy z najbliższego punktu monitoringu PIG-PIB (${km(groundwater.distanceKm)}) i z ostatniego pomiaru (${groundwater.measuredAt ? formatDatePl(groundwater.measuredAt) : "data nieznana"}), a nie z dnia analizy; pod działką poziom może być inny.`
       : input.failed.groundwater
@@ -402,8 +409,11 @@ export function buildAnalysis(input: EngineInput): Analysis {
 
   const sources: DataSource[] = [
     { key: "pogoda", name: "IMGW-PIB", what: `dobowe opady i temperatury ze stacji: ${stationNames}`, license: IMGW_LICENSE, fetchedAt: input.fetchedAt },
-    ...(weather.recentFrom
-      ? [{ key: "pogoda" as const, name: "Open-Meteo", what: `ostatnie dni od ${formatDatePl(weather.recentFrom)}, których nie ma jeszcze w archiwum IMGW`, license: "CC BY 4.0", fetchedAt: input.fetchedAt }]
+    ...(weather.recent.live
+      ? [{ key: "pogoda" as const, name: "IMGW-PIB (pomiary bieżące z API)", what: `doby zsumowane z pomiarów 10-minutowych stacji telemetrycznych, jeszcze poza archiwum IMGW: ${daysSpan(weather.recent.live)}`, license: IMGW_LICENSE, fetchedAt: input.fetchedAt }]
+      : []),
+    ...(weather.recent.openMeteo
+      ? [{ key: "pogoda" as const, name: "Open-Meteo", what: `zapasowo, bez danych IMGW: ${daysSpan(weather.recent.openMeteo)}`, license: "CC BY 4.0", fetchedAt: input.fetchedAt }]
       : []),
     { key: "gleba", name: "IUNG-PIB", what: "kategoria podatności gleby na suszę", license: "dane publiczne IUNG-PIB (do potwierdzenia)", fetchedAt: input.fetchedAt },
     { key: "teren", name: "GUGiK (EGiB, NMT)", what: "granice działki i wysokości terenu", license: "dane otwarte GUGiK", fetchedAt: input.fetchedAt },

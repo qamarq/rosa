@@ -19,7 +19,7 @@ import { loadSatellite, type SatelliteResult } from "@/server/sources/satellite"
 import { loadSoilCategory } from "@/server/sources/soil"
 import { loadTerrain } from "@/server/sources/terrain"
 
-const ENGINE_VERSION = "v11"
+const ENGINE_VERSION = "v12"
 const WINDOW_DAYS = 60
 const HISTORY_YEARS = 10
 const SATELLITE_BUDGET_MS = Number(process.env.ROSA_SATELLITE_BUDGET_MS ?? 15000)
@@ -105,7 +105,7 @@ async function computeLive(req: AnalysisRequest, id: string): Promise<AnalysisRe
     request: req,
     parcel,
     balance,
-    weather: { stations: weather.value.stations, recentFrom: weather.value.recentFrom },
+    weather: { stations: weather.value.stations, recent: weather.value.recent },
     soil: soil.value,
     terrain: terrain.value,
     hydro: hydro.value,

@@ -13,8 +13,11 @@ export type DailySeries = {
   et0: number[]
   tmax: number[]
   stations: WeatherStation[]
-  recentFrom: string | null
+  recent: RecentWeather
 }
+
+export type RecentCoverage = { from: string; to: string; days: number }
+export type RecentWeather = { live: RecentCoverage | null; openMeteo: RecentCoverage | null }
 
 type StationRow = { code: string; name: string; dist_m: number; has_temperature: number; lat: number }
 type OpenMeteoForecast = { daily: { time: string[]; precipitation_sum: (number | null)[]; et0_fao_evapotranspiration: (number | null)[]; temperature_2m_max: (number | null)[] } }
@@ -77,70 +80,88 @@ async function recentDays(lat: number, lon: number): Promise<OpenMeteoForecast["
 }
 
 type AggRow = { day: string; precip: number | null; tmax: number | null; tmin: number | null }
+type DayValue = { day: string; precip: number; et0: number; tmax: number }
+type StationSet = { used: StationRow[]; precipCodes: Set<string>; tempCodes: Set<string> }
 
-async function stationSeries(lat: number, lon: number, start: string, end: string): Promise<DailySeries> {
+async function pickStations(lat: number, lon: number): Promise<StationSet> {
   const stations = (await nearestStations(lat, lon)).filter((s) => s.dist_m <= MAX_DISTANCE_M)
   if (stations.length === 0) throw new Error("no IMGW stations nearby")
   const precipSet = [...stations].sort((a, b) => a.dist_m - b.dist_m).slice(0, PRECIP_STATIONS)
   const tempSet = stations.filter((s) => s.has_temperature === 1).sort((a, b) => a.dist_m - b.dist_m).slice(0, TEMP_STATIONS)
   const precipCodes = new Set(precipSet.map((s) => s.code))
   const tempCodes = new Set(tempSet.map((s) => s.code))
-  const used = stations.filter((s) => precipCodes.has(s.code) || tempCodes.has(s.code))
+  return { used: stations.filter((s) => precipCodes.has(s.code) || tempCodes.has(s.code)), precipCodes, tempCodes }
+}
+
+async function weightedDays(table: "meteo_daily" | "meteo_daily_live", set: StationSet, lat: number, start: string, end: string): Promise<AggRow[]> {
   const values = sql.join(
-    used.map((s) => sql`(${s.code}::text, ${1 / Math.max(1000, s.dist_m) ** 2}::float8, ${precipCodes.has(s.code)}::boolean, ${tempCodes.has(s.code)}::boolean)`),
+    set.used.map((s) => sql`(${s.code}::text, ${1 / Math.max(1000, s.dist_m) ** 2}::float8, ${set.precipCodes.has(s.code)}::boolean, ${set.tempCodes.has(s.code)}::boolean)`),
     sql`, `,
   )
-  const rows = await db().execute<AggRow>(sql`
+  return db().execute<AggRow>(sql`
     WITH st(code, w, is_p, is_t) AS (VALUES ${values})
     SELECT to_char(d.day, 'YYYY-MM-DD') AS day,
       sum(d.precip_mm * st.w) FILTER (WHERE st.is_p AND d.precip_mm IS NOT NULL) / nullif(sum(st.w) FILTER (WHERE st.is_p AND d.precip_mm IS NOT NULL), 0) AS precip,
       sum(d.tmax_c * st.w) FILTER (WHERE st.is_t AND d.tmax_c IS NOT NULL) / nullif(sum(st.w) FILTER (WHERE st.is_t AND d.tmax_c IS NOT NULL), 0) AS tmax,
       sum(d.tmin_c * st.w) FILTER (WHERE st.is_t AND d.tmin_c IS NOT NULL) / nullif(sum(st.w) FILTER (WHERE st.is_t AND d.tmin_c IS NOT NULL), 0) AS tmin
-    FROM meteo_daily d JOIN st ON st.code = d.station_code
-    WHERE d.day BETWEEN ${start} AND ${end}
+    FROM ${sql.identifier(table)} d JOIN st ON st.code = d.station_code
+    WHERE d.day BETWEEN ${start}::date AND ${end}::date
     GROUP BY d.day
     ORDER BY d.day
   `)
-  const dates: string[] = []
-  const precip: number[] = []
-  const et0: number[] = []
-  const tmax: number[] = []
-  for (const r of rows) {
-    if (r.precip === null && r.tmax === null) continue
-    const tx = r.tmax === null ? null : Number(r.tmax)
-    const tn = r.tmin === null ? null : Number(r.tmin)
-    dates.push(r.day)
-    precip.push(r.precip === null ? 0 : Number(r.precip))
-    tmax.push(tx ?? Number.NaN)
-    et0.push(tx !== null && tn !== null ? hargreaves(tx, tn, lat, r.day) * ETP_FACTOR : 0)
-  }
+}
+
+function toDayValue(r: AggRow, lat: number): DayValue {
+  const tx = r.tmax === null ? null : Number(r.tmax)
+  const tn = r.tmin === null ? null : Number(r.tmin)
   return {
-    dates,
-    precip,
-    et0,
-    tmax,
-    stations: used
-      .sort((a, b) => a.dist_m - b.dist_m)
-      .map((s) => ({ code: s.code, name: s.name, distanceKm: Math.round(s.dist_m / 100) / 10, temperature: tempCodes.has(s.code) })),
-    recentFrom: null,
+    day: r.day,
+    precip: r.precip === null ? 0 : Number(r.precip),
+    tmax: tx ?? Number.NaN,
+    et0: tx !== null && tn !== null ? hargreaves(tx, tn, lat, r.day) * ETP_FACTOR : 0,
   }
+}
+
+function coverage(days: string[]): RecentCoverage | null {
+  return days.length ? { from: days[0], to: days[days.length - 1], days: days.length } : null
 }
 
 export async function loadDailyWeather(lat: number, lon: number, analysisDate: string, yearsBack: number, windowDays: number): Promise<DailySeries> {
   const start = addDays(`${Number(analysisDate.slice(0, 4)) - yearsBack}${analysisDate.slice(4)}`, -windowDays - 5)
-  const base = await stationSeries(lat, lon, start, analysisDate)
-  const lastStation = base.dates[base.dates.length - 1] ?? start
-  if (lastStation >= addDays(analysisDate, -1)) return base
+  const set = await pickStations(lat, lon)
+  const days = (await weightedDays("meteo_daily", set, lat, start, analysisDate)).filter((r) => r.precip !== null || r.tmax !== null).map((r) => toDayValue(r, lat))
+  const lastArchive = days[days.length - 1]?.day ?? start
+  const liveDays: string[] = []
+  const openMeteoDays: string[] = []
 
-  const recent = await cached("meteo-recent", `${lat.toFixed(2)},${lon.toFixed(2)}:${new Date().toISOString().slice(0, 10)}`, 3 * 3600, () => recentDays(lat, lon))
-  const out = { ...base, dates: [...base.dates], precip: [...base.precip], et0: [...base.et0], tmax: [...base.tmax], recentFrom: null as string | null }
-  recent.time.forEach((d, i) => {
-    if (d <= lastStation || d > analysisDate) return
-    out.dates.push(d)
-    out.precip.push(recent.precipitation_sum[i] ?? 0)
-    out.et0.push(recent.et0_fao_evapotranspiration[i] ?? 0)
-    out.tmax.push(recent.temperature_2m_max[i] ?? Number.NaN)
-    if (!out.recentFrom) out.recentFrom = d
-  })
-  return out
+  if (lastArchive < analysisDate) {
+    const live = (await weightedDays("meteo_daily_live", set, lat, addDays(lastArchive, 1), analysisDate)).filter((r) => r.precip !== null)
+    for (const r of live) {
+      days.push(toDayValue(r, lat))
+      liveDays.push(r.day)
+    }
+    const covered = new Set(liveDays)
+    let missingBeforeToday = false
+    for (let d = addDays(lastArchive, 1); d < analysisDate; d = addDays(d, 1)) if (!covered.has(d)) missingBeforeToday = true
+    if (missingBeforeToday) {
+      const recent = await cached("meteo-recent", `${lat.toFixed(2)},${lon.toFixed(2)}:${new Date().toISOString().slice(0, 10)}`, 3 * 3600, () => recentDays(lat, lon))
+      recent.time.forEach((d, i) => {
+        if (d <= lastArchive || d > analysisDate || covered.has(d)) return
+        days.push({ day: d, precip: recent.precipitation_sum[i] ?? 0, et0: recent.et0_fao_evapotranspiration[i] ?? 0, tmax: recent.temperature_2m_max[i] ?? Number.NaN })
+        openMeteoDays.push(d)
+      })
+    }
+    days.sort((a, b) => (a.day < b.day ? -1 : a.day > b.day ? 1 : 0))
+  }
+
+  return {
+    dates: days.map((d) => d.day),
+    precip: days.map((d) => d.precip),
+    et0: days.map((d) => d.et0),
+    tmax: days.map((d) => d.tmax),
+    stations: set.used
+      .sort((a, b) => a.dist_m - b.dist_m)
+      .map((s) => ({ code: s.code, name: s.name, distanceKm: Math.round(s.dist_m / 100) / 10, temperature: set.tempCodes.has(s.code) })),
+    recent: { live: coverage(liveDays), openMeteo: coverage(openMeteoDays) },
+  }
 }

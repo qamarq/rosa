@@ -83,12 +83,12 @@ const STEPS = [
 ]
 
 const SOURCES = [
-  { name: "IMGW-PIB", what: "opady i temperatury z 10 lat, stany rzek z wodowskazów" },
+  { name: "IMGW-PIB", what: "opady i temperatury z 10 lat i z ostatnich dni, stany rzek z wodowskazów" },
   { name: "Copernicus Sentinel-2", what: "kondycja roślin ze zdjęć satelitarnych" },
   { name: "IUNG-PIB", what: "gleba i podatność na suszę" },
   { name: "PIG-PIB", what: "głębokość wód gruntowych" },
   { name: "GUGiK (EGiB, NMT, BDOT10k)", what: "granice działek, teren, rowy i cieki" },
-  { name: "Open-Meteo", what: "pogoda z ostatnich dni" },
+  { name: "Open-Meteo", what: "zapasowo: dni, dla których nie ma jeszcze pomiarów IMGW" },
 ]
 
 function HowItWorks() {
