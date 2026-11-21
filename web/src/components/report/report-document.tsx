@@ -1,4 +1,4 @@
-import { baseSceneMode } from "@/lib/scene"
+import { baseSceneMode, sceneFacts } from "@/lib/scene"
 import type { ReactNode } from "react"
 import { cn } from "@/lib/utils"
 import type { Analysis, ConfidenceLevel, Recommendation, RecommendationGroup } from "@/lib/types"
@@ -89,6 +89,7 @@ export function ReportDocument({ analysis }: { analysis: Analysis }) {
           </figcaption>
           <ReportScene
             mode={baseSceneMode(status)}
+            facts={sceneFacts(analysis)}
             label={`Scena działki ${parcel.id}: ${status.label}. ${status.summary}`}
           />
           <span className="text-xs text-[#444444]">Statyczny render sceny.</span>

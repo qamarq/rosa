@@ -12,9 +12,20 @@ type DioramaSceneProps = {
   v: SceneData
   uid: string
   labels: boolean
+  facts?: SceneFacts
 }
 
-export function DioramaScene({ v, uid, labels }: DioramaSceneProps) {
+export type SceneFacts = { areaHa?: number; slopePct?: number | null; ditch?: boolean | null }
+
+function plNumber(n: number): string {
+  return n.toLocaleString("pl-PL", { maximumFractionDigits: 1 })
+}
+
+export function DioramaScene({ v, uid, labels, facts }: DioramaSceneProps) {
+  const areaLabel = facts ? (facts.areaHa ? `Twoja działka · ${plNumber(facts.areaHa)} ha` : "Twoja działka") : "Twoja działka · 17,6 ha"
+  const slopeLabel = facts ? (facts.slopePct != null && facts.slopePct >= 0.5 ? `Spadek ${plNumber(facts.slopePct)}%` : null) : "Spadek 3–4%"
+  const showDitch = facts ? facts.ditch === true : true
+  const gateText = facts ? "Woda zostaje na polu" : "Zastawka: woda zostaje"
   const i = (name: string) => uid + name
   const u = (name: string) => "url(#" + uid + name + ")"
   return (
@@ -565,13 +576,21 @@ export function DioramaScene({ v, uid, labels }: DioramaSceneProps) {
     {labels && (
       <g style={{ fontFamily: "var(--font-figtree), Figtree, sans-serif" }} fontSize="13" fontWeight="700">
         <rect x="470" y="198" width="168" height="28" rx="14" fill="#FFFDF8" fillOpacity=".95" stroke="#E6D6BC" />
-        <text x="554" y="217" textAnchor="middle" fill="#2A2118">Twoja działka · 17,6 ha</text>
-        <rect x="650" y="244" width="138" height="26" rx="13" fill="#FFFDF8" fillOpacity=".95" stroke="#E6D6BC" />
-        <text x="719" y="262" textAnchor="middle" fill="#2A2118">Rów melioracyjny</text>
-        <path d="M394 277 L488 324 M488 324 l -6.6 -10 M488 324 l -12 0.7" stroke="#FFFDF8" strokeWidth="6" strokeLinecap="round" fill="none" opacity=".85" />
-        <path d="M394 277 L488 324 M488 324 l -6.6 -10 M488 324 l -12 0.7" stroke="#2A2118" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-        <rect x="296" y="248" width="108" height="26" rx="13" fill="#2A2118" />
-        <text x="350" y="266" textAnchor="middle" fill="#FFFDF8">Spadek 3–4%</text>
+        <text x="554" y="217" textAnchor="middle" fill="#2A2118">{areaLabel}</text>
+        {showDitch && (
+          <g>
+            <rect x="650" y="244" width="138" height="26" rx="13" fill="#FFFDF8" fillOpacity=".95" stroke="#E6D6BC" />
+            <text x="719" y="262" textAnchor="middle" fill="#2A2118">Rów melioracyjny</text>
+          </g>
+        )}
+        {slopeLabel && (
+          <g>
+            <path d="M394 277 L488 324 M488 324 l -6.6 -10 M488 324 l -12 0.7" stroke="#FFFDF8" strokeWidth="6" strokeLinecap="round" fill="none" opacity=".85" />
+            <path d="M394 277 L488 324 M488 324 l -6.6 -10 M488 324 l -12 0.7" stroke="#2A2118" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+            <rect x="296" y="248" width="108" height="26" rx="13" fill="#2A2118" />
+            <text x="350" y="266" textAnchor="middle" fill="#FFFDF8">{slopeLabel}</text>
+          </g>
+        )}
         {v.d.markLabel && (
           <g>
             <rect x="606" y="318" width="178" height="28" rx="14" fill="#0E6E73" />
@@ -581,7 +600,7 @@ export function DioramaScene({ v, uid, labels }: DioramaSceneProps) {
         {v.d.gateLabel && (
           <g>
             <rect x="606" y="402" width="186" height="28" rx="14" fill="#0E6E73" />
-            <text x="699" y="421" textAnchor="middle" fill="#FFFFFF">Zastawka: woda zostaje</text>
+            <text x="699" y="421" textAnchor="middle" fill="#FFFFFF">{gateText}</text>
           </g>
         )}
       </g>

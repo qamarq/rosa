@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef, useState } from "react"
-import { Diorama } from "@/components/diorama/diorama"
+import { Diorama, type SceneFacts } from "@/components/diorama/diorama"
 import type { SceneMode } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import styles from "./result.module.css"
@@ -28,12 +28,14 @@ export function useCamera() {
 export function DioramaStage({
   mode,
   labels,
+  facts,
   camera,
   onRotate,
   className,
 }: {
   mode: SceneMode
   labels: boolean
+  facts?: SceneFacts
   camera: Camera
   onRotate: (deg: number) => void
   className?: string
@@ -74,7 +76,7 @@ export function DioramaStage({
           setDragging(false)
         }}
       >
-        <Diorama mode={mode} labels={labels} className="w-[min(100cqw,calc(100cqh*1.40625))] select-none" />
+        <Diorama mode={mode} labels={labels} facts={facts} className="w-[min(100cqw,calc(100cqh*1.40625))] select-none" />
       </div>
     </div>
   )

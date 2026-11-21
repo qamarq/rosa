@@ -320,6 +320,7 @@ export function buildAnalysis(input: EngineInput): Analysis {
     confidence: { level: confidence, unknowns },
     sources,
     sourceStatus,
+    scene: { slopePct: terrain ? terrain.slopePct : null, ditchNearby: null },
     generatedAt: new Date().toISOString(),
   }
 }

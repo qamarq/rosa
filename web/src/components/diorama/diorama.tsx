@@ -4,7 +4,7 @@ import { useEffect, useId, useMemo, useState } from "react"
 import { useLiteMode } from "@/components/lite-mode"
 import { cn } from "@/lib/utils"
 import type { SceneMode } from "@/lib/types"
-import { DioramaScene } from "./diorama-scene"
+import { DioramaScene, type SceneFacts } from "./diorama-scene"
 import styles from "./diorama.module.css"
 import { buildScene } from "./scene-data"
 
@@ -12,6 +12,7 @@ export type DioramaProps = {
   mode: SceneMode
   labels?: boolean
   animate?: boolean
+  facts?: SceneFacts
   className?: string
 }
 
@@ -19,7 +20,7 @@ type Layer = { mode: SceneMode; entering: boolean; leaving: boolean }
 
 const FADE_MS = 520
 
-function SceneLayer({ layer, labels, uid }: { layer: Layer; labels: boolean; uid: string }) {
+function SceneLayer({ layer, labels, uid, facts }: { layer: Layer; labels: boolean; uid: string; facts?: SceneFacts }) {
   const v = useMemo(() => buildScene(layer.mode), [layer.mode])
   return (
     <svg
@@ -30,12 +31,12 @@ function SceneLayer({ layer, labels, uid }: { layer: Layer; labels: boolean; uid
       aria-label={layer.leaving ? undefined : v.ariaLabel}
       aria-hidden={layer.leaving || undefined}
     >
-      <DioramaScene v={v} uid={uid + layer.mode + "-"} labels={labels} />
+      <DioramaScene v={v} uid={uid + layer.mode + "-"} labels={labels} facts={facts} />
     </svg>
   )
 }
 
-export function Diorama({ mode, labels = true, animate = true, className }: DioramaProps) {
+export function Diorama({ mode, labels = true, animate = true, facts, className }: DioramaProps) {
   const { lite } = useLiteMode()
   const still = lite || !animate
   const uid = "rosa" + useId().replace(/[^a-zA-Z0-9_-]/g, "")
@@ -69,8 +70,10 @@ export function Diorama({ mode, labels = true, animate = true, className }: Dior
       data-static={still || undefined}
     >
       {layers.map((layer) => (
-        <SceneLayer key={layer.mode} layer={layer} labels={labels} uid={uid} />
+        <SceneLayer key={layer.mode} layer={layer} labels={labels} uid={uid} facts={facts} />
       ))}
     </div>
   )
 }
+
+export type { SceneFacts }

@@ -110,6 +110,7 @@ export interface Analysis {
   confidence: Confidence
   sources: DataSource[]
   sourceStatus: SourceStatus[]
+  scene?: { slopePct: number | null; ditchNearby: boolean | null }
   generatedAt: string
 }
 

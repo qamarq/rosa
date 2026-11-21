@@ -11,7 +11,7 @@ import { findParcelById } from "@/server/sources/parcel"
 import { loadSoilCategory } from "@/server/sources/soil"
 import { loadTerrain } from "@/server/sources/terrain"
 
-const ENGINE_VERSION = "v2"
+const ENGINE_VERSION = "v3"
 const WINDOW_DAYS = 45
 const HISTORY_YEARS = 10
 

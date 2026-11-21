@@ -1,6 +1,6 @@
 "use client"
 
-import { baseSceneMode } from "@/lib/scene"
+import { baseSceneMode, sceneFacts } from "@/lib/scene"
 import type { Analysis, Recommendation } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { DioramaStage, useCamera } from "./diorama-stage"
@@ -74,6 +74,7 @@ export function DesktopScene({
       <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-[300px] bg-[#E9C996]" />
       <DioramaStage
         mode={selected?.sceneMode ?? baseSceneMode(analysis.status)}
+        facts={sceneFacts(analysis)}
         labels
         camera={cam.camera}
         onRotate={cam.setRotation}

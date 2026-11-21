@@ -1,6 +1,6 @@
 "use client"
 
-import { baseSceneMode } from "@/lib/scene"
+import { baseSceneMode, sceneFacts } from "@/lib/scene"
 import Link from "next/link"
 import { useRef, useState } from "react"
 import { useLiteMode } from "@/components/lite-mode"
@@ -88,6 +88,7 @@ function MobileScene({
       <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-[90px] bg-[#E9C996]" />
       <DioramaStage
         mode={selected?.sceneMode ?? baseSceneMode(analysis.status)}
+        facts={sceneFacts(analysis)}
         labels={false}
         camera={cam.camera}
         onRotate={cam.setRotation}
