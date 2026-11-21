@@ -101,7 +101,7 @@ export function DesktopScene({
           </div>
           <div className="flex h-11 items-center gap-2 rounded-2xl bg-paper/85 px-3.5 text-sm text-muted-foreground">
             <span aria-hidden="true" className={cn("size-2 rounded-full", allOk ? "bg-[#2E8B57]" : "bg-[#D9A52E]")} />
-            {vegetation ? `Teren: NMT GUGiK · zdjęcie satelitarne sprzed ${daysPl(vegetation.imageAgeDays)}` : "Teren: NMT GUGiK · bez nowego zdjęcia satelitarnego"}
+            {vegetation ? `Teren: NMT GUGiK · zdjęcie satelitarne sprzed ${daysPl(vegetation.imageAgeDays)}` : analysis.sourceStatus.some((s) => s.pending) ? "Teren: NMT GUGiK · wczytujemy zdjęcie satelitarne…" : "Teren: NMT GUGiK · bez nowego zdjęcia satelitarnego"}
           </div>
         </div>
       )}

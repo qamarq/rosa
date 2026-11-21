@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import type { Analysis } from "@/lib/types"
 import { LiteBanner } from "./lite-banner"
 import { MobileResult } from "./mobile-result"
@@ -19,7 +19,20 @@ import {
 
 const ACTIONS_ID = "co-zrobic"
 
-export function ResultView({ analysis }: { analysis: Analysis }) {
+export function ResultView({ analysis: initial }: { analysis: Analysis }) {
+  const [analysis, setAnalysis] = useState(initial)
+  const satellitePending = analysis.sourceStatus.some((s) => s.pending)
+  useEffect(() => {
+    if (!satellitePending) return
+    const controller = new AbortController()
+    fetch(`/api/analyses/${analysis.id}/satellite`, { signal: controller.signal })
+      .then((res) => (res.ok ? (res.json() as Promise<Analysis>) : null))
+      .then((next) => {
+        if (next) setAnalysis(next)
+      })
+      .catch(() => {})
+    return () => controller.abort()
+  }, [satellitePending, analysis.id])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const selected = analysis.recommendations.find((r) => r.id === selectedId) ?? null
   const toggle = (id: string) => setSelectedId((cur) => (cur === id ? null : id))
