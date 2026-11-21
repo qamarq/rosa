@@ -8,15 +8,56 @@ export type SatelliteResult = {
   clearFraction: number
   imageDate: string
   sceneId: string
+  provider?: Provider
 }
 
+type Provider = "earth-search" | "planetary-computer"
+
 type StacItem = {
+  provider: Provider
   id: string
   properties: { datetime: string; "eo:cloud_cover": number; "proj:epsg"?: number; "proj:code"?: string }
   assets: Record<string, { href: string }>
 }
 
-const STAC = "https://earth-search.aws.element84.com/v1/search"
+const STAC: Record<Provider, string> = {
+  "earth-search": "https://earth-search.aws.element84.com/v1/search",
+  "planetary-computer": "https://planetarycomputer.microsoft.com/api/stac/v1/search",
+}
+const PC_TOKEN_URL = "https://planetarycomputer.microsoft.com/api/sas/v1/token/sentinel-2-l2a"
+const RECENT_WINDOW_DAYS = 30
+const ARCHIVE_WINDOW_DAYS = 60
+
+let pcToken: { token: string; expires: number } | null = null
+
+async function planetaryToken(): Promise<string> {
+  if (pcToken && pcToken.expires - Date.now() > 5 * 60000) return pcToken.token
+  const res = await fetchJson<{ token: string; "msft:expiry": string }>(PC_TOKEN_URL, 4000)
+  pcToken = { token: res.token, expires: Date.parse(res["msft:expiry"]) || Date.now() + 30 * 60000 }
+  return pcToken.token
+}
+
+function bandHrefs(item: StacItem): { red?: string; nir?: string; scl?: string } {
+  return item.provider === "earth-search"
+    ? { red: item.assets.red?.href, nir: item.assets.nir?.href, scl: item.assets.scl?.href }
+    : { red: item.assets.B04?.href, nir: item.assets.B08?.href, scl: item.assets.SCL?.href }
+}
+
+async function searchItems(provider: Provider, lon: number, lat: number, from: string, to: string, timeoutMs: number): Promise<StacItem[]> {
+  const search = await fetchJson<{ features: Omit<StacItem, "provider">[] }>(STAC[provider], timeoutMs, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      collections: ["sentinel-2-l2a"],
+      intersects: { type: "Point", coordinates: [lon, lat] },
+      datetime: `${from}T00:00:00Z/${to}T23:59:59Z`,
+      query: { "eo:cloud_cover": { lt: 60 } },
+      sortby: [{ field: provider === "earth-search" ? "properties.datetime" : "datetime", direction: "desc" }],
+      limit: 8,
+    }),
+  })
+  return search.features.map((f) => ({ ...f, provider }))
+}
 const CLEAR_SCL = new Set([4, 5, 6, 7])
 
 function addDays(iso: string, days: number): string {
@@ -61,10 +102,12 @@ async function readWindow(href: string, bbox: [number, number, number, number], 
 }
 
 async function ndviForScene(item: StacItem, bbox: [number, number, number, number], rings: [number, number][][], signal: AbortSignal): Promise<{ ndvi: number; clear: number } | null> {
-  const red = item.assets.red?.href
-  const nir = item.assets.nir?.href
-  const scl = item.assets.scl?.href
+  let { red, nir, scl } = bandHrefs(item)
   if (!red || !nir || !scl) return null
+  if (item.provider === "planetary-computer") {
+    const token = await planetaryToken()
+    ;[red, nir, scl] = [red, nir, scl].map((href) => `${href}?${token}`)
+  }
   const [r, n, s] = await Promise.all([readWindow(red, bbox, signal), readWindow(nir, bbox, signal), readWindow(scl, bbox, signal)])
   let sum = 0
   let count = 0
@@ -98,29 +141,40 @@ export async function loadSatellite(
   analysisDate: string,
   budgetMs: number,
 ): Promise<SatelliteResult | null> {
-  return cached("sentinel2-ndvi-mask", `${parcelId}:${analysisDate}`, 7 * 86400, async () => {
+  return cached("sentinel2-ndvi-v2", `${parcelId}:${analysisDate}`, 7 * 86400, async () => {
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), budgetMs)
     try {
-      const search = await fetchJson<{ features: StacItem[] }>(STAC, Math.min(4000, budgetMs), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          collections: ["sentinel-2-l2a"],
-          intersects: { type: "Point", coordinates: [lon, lat] },
-          datetime: `${addDays(analysisDate, -30)}T00:00:00Z/${analysisDate}T23:59:59Z`,
-          query: { "eo:cloud_cover": { lt: 60 } },
-          sortby: [{ field: "properties.datetime", direction: "desc" }],
-          limit: 8,
-        }),
-      })
-      for (const item of search.features.slice(0, 3)) {
+      const recent = Date.now() - Date.parse(analysisDate) < RECENT_WINDOW_DAYS * 86400000
+      const from = addDays(analysisDate, -(recent ? RECENT_WINDOW_DAYS : ARCHIVE_WINDOW_DAYS))
+      const searchMs = Math.min(4000, budgetMs)
+      const found = await Promise.all(
+        (["earth-search", "planetary-computer"] as const).map((p) => searchItems(p, lon, lat, from, analysisDate, searchMs).catch(() => [] as StacItem[])),
+      )
+      const seen = new Set<string>()
+      const items = found
+        .flat()
+        .sort((a, b) => b.properties.datetime.localeCompare(a.properties.datetime) || (a.provider === "earth-search" ? -1 : 1))
+        .filter((item) => {
+          const key = item.properties.datetime.slice(0, 10) + (item.id.match(/T?(\d{2}[A-Z]{3})/)?.[1] ?? item.id)
+          if (seen.has(key)) return false
+          seen.add(key)
+          return true
+        })
+      for (const item of items.slice(0, 4)) {
+        if (controller.signal.aborted) break
         const epsg = epsgOf(item)
         if (!epsg) continue
         const zone = epsg as "32633" | "32634"
-        const res = await ndviForScene(item, utmBbox[zone], utmRings[zone], controller.signal)
+        const res = await ndviForScene(item, utmBbox[zone], utmRings[zone], controller.signal).catch(() => null)
         if (res && res.clear >= 0.5 && Number.isFinite(res.ndvi)) {
-          return { ndvi: Math.round(res.ndvi * 100) / 100, clearFraction: Math.round(res.clear * 100) / 100, imageDate: item.properties.datetime.slice(0, 10), sceneId: item.id }
+          return {
+            ndvi: Math.round(res.ndvi * 100) / 100,
+            clearFraction: Math.round(res.clear * 100) / 100,
+            imageDate: item.properties.datetime.slice(0, 10),
+            sceneId: item.id,
+            provider: item.provider,
+          }
         }
       }
       return null

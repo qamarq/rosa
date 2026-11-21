@@ -384,7 +384,7 @@ export function applySatellite(analysis: Analysis, satellite: SatelliteResult | 
     ? { ndvi: satellite.ndvi, label: satellite.ndvi < 0.25 ? "słaba" : satellite.ndvi < 0.5 ? "umiarkowana" : "dobra", imageDate: satellite.imageDate, imageAgeDays: ageDays }
     : null
   const unknowns = analysis.confidence.unknowns.filter((u) => !u.includes("satelit") && !u.startsWith("NDVI"))
-  if (!satellite) unknowns.push(failed ? "Zdjęcia satelitarne nie odpowiedziały na czas; kondycji roślin nie oceniamy." : "Brak bezchmurnego zdjęcia satelitarnego z 30 dni przed datą analizy.")
+  if (!satellite) unknowns.push(failed ? "Zdjęcia satelitarne nie odpowiedziały na czas; kondycji roślin nie oceniamy." : "Brak bezchmurnego zdjęcia satelitarnego z 30 dni (dla starszych dat: 60 dni) przed datą analizy.")
   else {
     if (ageDays > 10) unknowns.push(`Ostatnie bezchmurne zdjęcie satelitarne jest sprzed ${ageDays} dni.`)
   }
@@ -395,13 +395,13 @@ export function applySatellite(analysis: Analysis, satellite: SatelliteResult | 
     sources: [
       ...analysis.sources.filter((s) => s.key !== "satelita"),
       ...(satellite
-        ? [{ key: "satelita" as const, name: "Copernicus Sentinel-2", what: `kondycja roślin (NDVI), zdjęcie z ${formatDatePl(satellite.imageDate)}`, license: "zawiera zmodyfikowane dane Copernicus Sentinel, wolny dostęp", fetchedAt }]
+        ? [{ key: "satelita" as const, name: "Copernicus Sentinel-2", what: `kondycja roślin (NDVI), zdjęcie z ${formatDatePl(satellite.imageDate)}`, license: `zawiera zmodyfikowane dane Copernicus Sentinel, wolny dostęp${satellite.provider === "planetary-computer" ? " (archiwum: Microsoft Planetary Computer)" : " (Earth Search, Element 84)"}`, fetchedAt }]
         : []),
     ],
     sourceStatus: analysis.sourceStatus.map((s) =>
       s.key !== "satelita"
         ? s
-        : { key: "satelita", label: "Sentinel-2", ok: !!satellite, message: satellite ? undefined : failed ? "Zdjęcia satelitarne nie odpowiedziały na czas." : "Brak bezchmurnego zdjęcia z ostatnich 30 dni." },
+        : { key: "satelita", label: "Sentinel-2", ok: !!satellite, message: satellite ? undefined : failed ? "Zdjęcia satelitarne nie odpowiedziały na czas." : "Brak bezchmurnego zdjęcia z 30–60 dni przed datą." },
     ),
   }
 }
