@@ -51,7 +51,7 @@ docker run --rm -e PGHOST=... -e PGPASSWORD=... -v /dane/bdot:/work -v $PWD/scri
 
 1. **Wybór działki**: numer działki ewidencyjnej (walidacja formatu na bieżąco), uprawa (pszenica, kukurydza, rzepak, ziemniaki, buraki, łąka) i dzień analizy: dziś lub dowolny dzień z ostatnich 10 lat.
 2. **Ładowanie jako opowieść (~2–5 s)**: animacja pokazuje kolejne źródła danych; jeśli któreś nie odpowie, widać to od razu, a analiza idzie dalej.
-3. **Stan wody teraz**: poziom suszy w skali 1–5 (Mokro, W normie, Susza umiarkowana / silna / ekstremalna) z bilansu wodnego (opad minus parowanie) z 45 dni przed dniem analizy, porównanego z tym samym okresem w 10 poprzednich latach i skorygowanego o podatność gleby na suszę.
+3. **Stan wody teraz**: poziom suszy w skali 1–5 (Mokro, W normie, Susza umiarkowana / silna / ekstremalna). W sezonie (21.III–30.IX) liczony metodą IUNG z rozporządzenia MRiRW: klimatyczny bilans wodny z 60 dni porównany z progiem dla uprawy i kategorii gleby (im dalej poniżej progu, tym wyższy poziom). Poza sezonem albo gdy IUNG nie wyznacza progu: bilans wodny porównany z tym samym okresem w 10 poprzednich latach.
 4. **Na tle 10 lat**: wykres odchyleń bilansu wodnego rok po roku, liczba lat z deficytem i najbardziej narażone miesiące.
 5. **Dlaczego brakuje wody**: przyczyny wyliczone z danych: mniej deszczu niż zwykle, upał, lekka gleba, spływ wody po spadku terenu, okres krytyczny uprawy.
 6. **Co zrobić**: rekomendacje w kolejności wymaganej przez KOWR:
@@ -186,7 +186,7 @@ GUGiK (opendata.geoportal.gov.pl, services.gugik.gov.pl), IMGW-PIB (danepubliczn
 ## 8. Znane ograniczenia
 
 - **Pogoda ze stacji, nie z pola**: wartości to interpolacja (odwrotność kwadratu odległości) z 5 najbliższych stacji opadowych i 4 temperaturowych w promieniu 80 km. Współrzędne mamy dla ok. 40% stacji opadowych IMGW (lista telemetryczna), więc najbliższa stacja jest zwykle 6–30 km od działki.
-- **Parowanie metodą Hargreavesa** (FAO-56, tylko z temperatury) latem zwykle zawyża parowanie względem metody Penmana-Monteitha; progi poziomu suszy wymagają kalibracji z monitoringiem IUNG.
+- **Parowanie metodą Hargreavesa** (FAO-56, tylko z temperatury), skalibrowane współczynnikiem 0,95 do wykazów suszy IUNG (metoda Penmana); przy wartościach bilansu bliskich progowi nasza ocena może różnić się od IUNG (F1 0,65).
 - **Archiwum IMGW ma opóźnienie** około 1–2 miesięcy; ostatnie dni uzupełniamy z Open-Meteo (inny model, inna metoda parowania).
 - **NDVI**: liczymy tylko z pikseli 10 m, których środek leży w granicach działki (maska z geometrii EGiB) i które maska SCL oznacza jako bezchmurne; przy bardzo wąskich działkach (< 20 m) pikseli jest mało. Zdjęcie jest z ostatnich 30 dni i może go nie być przy dużym zachmurzeniu.
 - **Brak danych o wodach gruntowych** i o rzeczywistym stanie urządzeń melioracyjnych (BDOT10k pokazuje przebieg rowów, nie ich drożność).
@@ -202,4 +202,5 @@ GUGiK (opendata.geoportal.gov.pl, services.gugik.gov.pl), IMGW-PIB (danepubliczn
 - **Spójność danych wejściowych**: wysokości NMT porównane z ukształtowaniem terenu (kolejność osi sprawdzona na znanym punkcie: 103,6 m n.p.m. w Mórce), kategoria IUNG porównana z ewidencją (działka testowa w Mórce: IUNG „lasy” = EGiB „Ls”), NDVI w zakresie typowym dla upraw w maju–czerwcu.
 - **Przejrzystość**: każda przyczyna i rekomendacja pokazuje liczby, z których wynika, i źródło; sekcja „Czego nie wiemy” wymienia ograniczenia konkretnej analizy. Pozwala to rolnikowi i ekspertowi sprawdzić rozumowanie krok po kroku.
 - **Wydajność i niezawodność**: logi czasu każdego źródła (`[rosa] source …`); nowa analiza 0,7–2,5 s przy bazie zdalnej, z cache ~0,15 s; awaria źródła nie przerywa analizy (sprawdzone na przypadkach braku zdjęcia i limitu Open-Meteo).
-- **Do zrobienia przed wdrożeniem**: porównanie poziomu suszy z klimatycznym bilansem wodnym IUNG-PIB (SMSR) dla gmin i tych samych okresów; przegląd reguł rekomendacji z ekspertami KOWR (agrotechnika, retencja); kalibracja progów poziomu suszy na danych z lat 2016–2025.
+- **Zgodność z SMSR IUNG-PIB**: w sezonie (21.III–30.IX) poziom suszy liczymy metodą z Rozporządzenia MRiRW z 11.04.2019 (KBW z 60 dni vs. progi IUNG dla uprawy i kategorii gleby). Porównanie z oficjalnymi wykazami IUNG dla 39 losowych gmin z lat 2020–2025 (53 346 porównań): trafność 97,4%, precyzja 0,72, czułość 0,60, F1 0,65 przy współczynniku parowania k = 0,95. Szczegóły i skrypt: `docs/walidacja-iung.md`, `web/scripts/validate-iung.mjs`.
+- **Do zrobienia przed wdrożeniem**: przegląd reguł rekomendacji z ekspertami KOWR (agrotechnika, retencja); ET0 metodą Penmana-Monteitha ze stacji synoptycznych zamiast Hargreavesa.
