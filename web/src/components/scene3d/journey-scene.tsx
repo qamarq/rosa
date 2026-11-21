@@ -10,6 +10,7 @@ import { BASE_AZ, DEFAULT_CAMERA, applyPose, applyViewRect, clonePose, computePo
 import { createTimeUniforms, setOpacity } from "./materials"
 import { FirstFrame, FpsWatch, ParcelWorld, SceneLights, Ticker, initialQuality, type Quality } from "./parcel-scene"
 import { POLAND_OUTLINE } from "./poland-outline"
+import { JourneyLife } from "./journey-life"
 import { createWorld, type World } from "./world"
 
 export type JourneyPhase = "search" | "fly" | "hover" | "trace" | "sources" | "wait" | "panel" | "done"
@@ -189,7 +190,7 @@ function riverGeometry(points: [number, number][]) {
   return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 80, 0.055, 6, false)
 }
 
-function PolandMap({ stageRef, texture }: { stageRef: React.RefObject<Stage | null>; texture: THREE.Texture }) {
+function PolandMap({ stageRef, texture, children }: { stageRef: React.RefObject<Stage | null>; texture: THREE.Texture; children?: React.ReactNode }) {
   const group = useRef<THREE.Group>(null)
   const { geometry, materials, shadow } = useMemo(() => {
     const shape = new THREE.Shape(POLAND_OUTLINE.map(([lon, lat]) => {
@@ -274,6 +275,7 @@ function PolandMap({ stageRef, texture }: { stageRef: React.RefObject<Stage | nu
         <planeGeometry args={[70, 62]} />
       </mesh>
       <CloudLayer clouds={ambient} texture={texture} stageRef={stageRef} factor={(s) => s.ambient * (1 - smooth(0.4, 1, s.polandFade))} />
+      {children}
     </group>
   )
 }
@@ -683,7 +685,11 @@ export function JourneyCanvas({ panelRect = null, pin, scene, analysis, proceed,
             onPhase(phase)
           }}
         />
-        {cloudTex && <PolandMap stageRef={stageRef} texture={cloudTex} />}
+        {cloudTex && (
+          <PolandMap stageRef={stageRef} texture={cloudTex}>
+            <JourneyLife pin={pinXZ} life={() => stageRef.current} animate />
+          </PolandMap>
+        )}
         <Pin stageRef={stageRef} />
         {cloudTex && <CloudLayer clouds={lens} texture={cloudTex} stageRef={stageRef} factor={(s) => s.lens} />}
         {world && phaseAtLeast(times.phase, "trace") && (
