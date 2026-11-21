@@ -14,7 +14,7 @@ import styles from "./result.module.css"
 
 const ParcelScene3D = dynamic(() => import("@/components/scene3d/parcel-scene").then((m) => m.ParcelScene3D), { ssr: false })
 
-export const ZOOM_LEVELS = [ZOOM_RANGE[0], 1, 1.15, 1.3, ZOOM_RANGE[1]]
+export const ZOOM_LEVELS = [ZOOM_RANGE[0], 0.85, 1, 1.35, 1.8, 2.4, 3.1, ZOOM_RANGE[1]]
 
 export type Camera = { zoom: number; rotation: number; topView: boolean }
 

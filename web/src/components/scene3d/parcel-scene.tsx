@@ -8,7 +8,7 @@ import { useReducedMotion } from "@/components/result/motion"
 import type { ParcelScene } from "@/lib/scene3d"
 import type { Analysis, CropId, SceneMode } from "@/lib/types"
 import { cn } from "@/lib/utils"
-import { SceneActors } from "./actors"
+import { getActorFocus, SceneActors } from "./actors"
 import { CameraRig, clampZoom, FLY_IN_S, type CameraState } from "./camera-rig"
 import type { SceneWeather } from "./contract"
 import { CropField, rowGapFor } from "./crop-field"
@@ -18,7 +18,7 @@ import { createTimeUniforms, setUniform, type TimeUniforms } from "./materials"
 import { ParcelOutline } from "./parcel-outline"
 import { Terrain } from "./terrain"
 import { Water } from "./water"
-import { closestOnLine, createWorld, type World } from "./world"
+import { closestOnLine, createWorld, densify, type World } from "./world"
 
 export type Quality = "high" | "low"
 
@@ -82,21 +82,61 @@ export function FirstFrame({ onReady }: { onReady?: () => void }) {
 
 export type Label = { key: string; at: [number, number, number]; text: string; detail?: string | null; water?: boolean }
 
-function sceneLabels(world: World, analysis: Analysis): Label[] {
+function ditchLabelPoint(world: World, ditch: NonNullable<World["nearestDitch"]>, gate: [number, number]): [number, number] {
+  const pts = densify(ditch.points, 6).filter(([x, y]) => world.islandSdf(x, y) < -world.halfM * 0.05)
+  if (pts.length < 2) return closestOnLine(ditch.points, gate[0], gate[1])
+  const cum = [0]
+  for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]))
+  const total = cum[cum.length - 1]
+  let gi = 0
+  pts.forEach(([x, y], i) => {
+    if (Math.hypot(x - gate[0], y - gate[1]) < Math.hypot(pts[gi][0] - gate[0], pts[gi][1] - gate[1])) gi = i
+  })
+  const away = Math.max(total * 0.3, world.halfM * 0.12)
+  const forward = total - cum[gi] >= cum[gi]
+  const want = forward ? Math.min(total * 0.95, cum[gi] + away) : Math.max(total * 0.05, cum[gi] - away)
+  const idx = cum.findIndex((c) => c >= want)
+  return pts[idx < 0 ? pts.length - 1 : idx]
+}
+
+function parcelLabelPoint(world: World, focus: [number, number] | null): [number, number] {
+  const [cx, cy] = world.parcelCenter
+  if (!focus) return [cx, cy]
+  const far = Math.max(world.parcelRadiusM * 0.35, world.halfM * 0.12)
+  if (Math.hypot(cx - focus[0], cy - focus[1]) > far) return [cx, cy]
+  let best: [number, number] = [cx, cy]
+  let bestD = -1
+  for (const [vx, vy] of world.parcelOuterRing) {
+    const x = cx + (vx - cx) * 0.55
+    const y = cy + (vy - cy) * 0.55
+    if (!world.insideParcel(x, y)) continue
+    const d = Math.hypot(x - focus[0], y - focus[1])
+    if (d > bestD) {
+      bestD = d
+      best = [x, y]
+    }
+  }
+  return best
+}
+
+function sceneLabels(world: World, analysis: Analysis, mode: SceneMode): Label[] {
   const areaHa = analysis.parcel.areaHa
   const slopePct = analysis.scene?.slopePct ?? null
   const fmt = (n: number) => n.toLocaleString("pl-PL", { maximumFractionDigits: 1 })
+  const scenario = mode === "zastawka" || mode === "nawadnianie" || mode === "miedzyplon"
+  const focus = scenario ? getActorFocus(world, mode) : null
+  const [px, py] = parcelLabelPoint(world, focus)
   const out: Label[] = [
     {
       key: "parcel",
-      at: world.toWorld(world.parcelCenter[0], world.parcelCenter[1], 0.45),
+      at: world.toWorld(px, py, 0.45),
       text: areaHa ? `Twoja działka · ${fmt(areaHa)} ha` : "Twoja działka",
       detail: slopePct != null && slopePct >= 0.5 ? `spadek ${fmt(slopePct)}%` : null,
     },
   ]
   const ditch = world.nearestDitch && world.nearestDitch.distanceM < world.halfM * 0.3 ? world.nearestDitch : null
-  if (ditch) {
-    const [x, y] = closestOnLine(ditch.points, world.lowestParcelPoint[0], world.lowestParcelPoint[1])
+  if (ditch && mode !== "zastawka") {
+    const [x, y] = ditchLabelPoint(world, ditch, getActorFocus(world, "zastawka"))
     out.push({ key: "ditch", at: world.toWorld(x, y, 0.12), text: ditch.kind === "ciek" ? "Ciek" : ditch.kind === "kanał" ? "Kanał" : "Rów melioracyjny", water: true })
   }
   return out
@@ -293,7 +333,7 @@ export function ParcelScene3D({ scene, analysis, mode, camera, onRotate, onZoom,
   const zoomNow = useRef(camera.zoom)
   const zoomCb = useRef(onZoom)
   const labelNodes = useRef<(HTMLDivElement | null)[]>([])
-  const labelList = useMemo(() => (labels ? sceneLabels(world, analysis) : []), [labels, world, analysis])
+  const labelList = useMemo(() => (labels ? sceneLabels(world, analysis, mode) : []), [labels, world, analysis, mode])
   const [labelsShown, setLabelsShown] = useState(!animate || !intro)
 
   useEffect(() => {

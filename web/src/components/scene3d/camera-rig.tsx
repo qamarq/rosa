@@ -13,7 +13,7 @@ export type CameraState = { zoom: number; rotation: number; topView: boolean }
 export const FLY_IN_S = 1.8
 export const BASE_AZ = -0.38
 export const DEFAULT_CAMERA: CameraState = { zoom: 1, rotation: 0, topView: false }
-export const ZOOM_RANGE = [0.85, 1.5] as const
+export const ZOOM_RANGE = [0.6, 4] as const
 export const clampZoom = (z: number) => Math.min(ZOOM_RANGE[1], Math.max(ZOOM_RANGE[0], z))
 const FILL_W = 0.62
 const FILL_H = 0.56
@@ -88,12 +88,12 @@ export function computePose(framing: Framing, camera: CameraState, tilt: number,
   }
   if (camera.zoom < 1 && framing.parcel) {
     const k = THREE.MathUtils.clamp((1 - camera.zoom) / 0.15, 0, 1)
-    dist = THREE.MathUtils.lerp(dist, Math.max(dist, islandDist), k)
+    dist = THREE.MathUtils.lerp(dist, Math.max(dist, islandDist), k) * (camera.zoom < 0.85 ? 0.85 / camera.zoom : 1)
     target = target.clone().lerp(framing.island.target, k)
   } else {
     dist /= camera.zoom
   }
-  return { az, el, dist, target }
+  return { az, el, dist: Math.max(dist, 0.9), target }
 }
 
 export function lerpPose(out: Pose, a: Pose, b: Pose, k: number) {
@@ -117,6 +117,12 @@ export function applyPose(cam: THREE.Camera, scene: THREE.Scene, p: Pose) {
     scene.fog.near = p.dist * 1.05
     scene.fog.far = p.dist * 2.6 + 14
   }
+}
+
+export function keepAboveGround(cam: THREE.Camera, world: World) {
+  const s = world.metersToWorld
+  const floor = world.heightAt(cam.position.x / s, -cam.position.z / s) + 0.35
+  if (cam.position.y < floor) cam.position.y = floor
 }
 
 export type ViewRect = { x: number; y: number; w: number; h: number; r: number }
@@ -214,10 +220,11 @@ export function CameraRig({
       lerpPose(p, desired, desired, 1)
     }
     applyPose(cam, scene, p)
+    keepAboveGround(cam, world)
     if (actorScale) {
       const base = camera.zoom === 1 ? desired.dist : computePose(framing, { ...camera, zoom: 1 }, tilt, fov, size.width, size.height).dist
-      const k = Math.min(1, Math.max(0, (base / Math.max(p.dist, 0.001) - 1) / 0.5))
-      setUniform(actorScale, 1 - 0.4 * k * k * (3 - 2 * k))
+      const k = Math.min(1, Math.max(0, Math.log(Math.max(base / Math.max(p.dist, 0.001), 1)) / Math.log(ZOOM_RANGE[1])))
+      setUniform(actorScale, 1 - 0.45 * k * k * (3 - 2 * k))
     }
   })
 
