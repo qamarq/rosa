@@ -152,7 +152,8 @@ Każdy wynik pokazuje datę pobrania danych przy źródle (sekcje wyniku i rapor
 | Drizzle ORM, drizzle-kit | 0.45 / 0.31 | Apache-2.0 | dostęp do bazy, migracje |
 | postgres (postgres.js) | 4.1 | Unlicense | sterownik PostgreSQL |
 | geotiff (geotiff.js) | 3.0.5 | MIT | odczyt wycinków zdjęć Sentinel-2 (COG) |
-| Figtree, Bricolage Grotesque (`next/font`) | – | SIL OFL 1.1 | kroje pisma (hostowane lokalnie) |
+| @react-pdf/renderer | 4.9.0 | MIT | generowanie raportu PDF po stronie serwera (`/api/analyses/<id>/pdf`) |
+| Figtree, Bricolage Grotesque (`next/font`, pliki TTF w `web/public/fonts/pdf`) | – | SIL OFL 1.1 | kroje pisma (hostowane lokalnie, osadzane w PDF) |
 | PostgreSQL + PostGIS | 18.7 / 3.7 | PostgreSQL License / GPL-2.0 | baza danych przestrzennych (serwer, nie dystrybuowana z kodem) |
 | GDAL/OGR (`ogr2ogr`, obraz `osgeo/gdal`) | 3.x | MIT | import Parquet i GPKG |
 | Python 3.12 + psycopg | 3.12 / 3.x | PSF / LGPL-3.0 | skrypt importu IMGW (narzędzie, poza aplikacją) |

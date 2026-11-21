@@ -3,7 +3,7 @@
 import { useEffect } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { ArrowLeft, Printer } from "lucide-react"
+import { ArrowLeft, Download, Printer } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export function ReportToolbar({ backHref }: { backHref: string }) {
@@ -22,10 +22,16 @@ export function ReportToolbar({ backHref }: { backHref: string }) {
           <ArrowLeft data-icon="inline-start" />
           Wróć do wyniku
         </Button>
-        <Button size="lg" onClick={() => window.print()}>
-          <Printer data-icon="inline-start" />
-          Drukuj
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="lg" onClick={() => window.print()}>
+            <Printer data-icon="inline-start" />
+            Drukuj
+          </Button>
+          <Button size="lg" nativeButton={false} render={<a href={`${backHref.replace("/dzialka/", "/api/analyses/")}/pdf`} download />}>
+            <Download data-icon="inline-start" />
+            Pobierz PDF
+          </Button>
+        </div>
       </div>
     </div>
   )

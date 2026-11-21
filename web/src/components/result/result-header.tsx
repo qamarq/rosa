@@ -79,11 +79,18 @@ export function ResultHeader({ analysis }: { analysis: Analysis }) {
       <LiteToggle className="flex-none" />
       <Link
         href={`/raport/${analysis.id}`}
+        className="rosa-btn flex h-12 flex-none items-center rounded-2xl border-2 border-border bg-paper px-4 text-base font-bold text-foreground no-underline hover:text-foreground"
+      >
+        Drukuj
+      </Link>
+      <a
+        href={`/api/analyses/${analysis.id}/pdf`}
+        download
         className="rosa-btn rosa-claybtn flex h-12 flex-none items-center gap-2.5 rounded-2xl bg-primary px-5 text-base font-extrabold text-white no-underline hover:text-white"
       >
         <DownloadIcon />
-        Raport PDF
-      </Link>
+        Pobierz PDF
+      </a>
     </header>
   )
 }

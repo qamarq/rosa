@@ -56,13 +56,14 @@ function MobileHeader({ analysis }: { analysis: Analysis }) {
             Tryb lekki
             <LiteSwitchVisual on={lite} />
           </button>
-          <Link
-            href={`/raport/${analysis.id}`}
+          <a
+            href={`/api/analyses/${analysis.id}/pdf`}
+            download
             className="flex h-12 items-center gap-2 rounded-2xl bg-primary px-4 text-base font-extrabold text-white no-underline hover:text-white"
           >
             <DownloadIcon />
-            Raport PDF
-          </Link>
+            Pobierz PDF
+          </a>
         </PopoverContent>
       </Popover>
     </header>
@@ -385,12 +386,14 @@ export function MobileResult({
   selected,
   onSelect,
   onClear,
+  entrance = false,
   className,
 }: {
   analysis: Analysis
   selected: Recommendation | null
   onSelect: (id: string) => void
   onClear: () => void
+  entrance?: boolean
   className?: string
 }) {
   const sceneRef = useRef<HTMLElement>(null)
@@ -401,7 +404,7 @@ export function MobileResult({
     <div className={cn("flex min-h-dvh flex-col bg-paper", className)}>
       <MobileHeader analysis={analysis} />
       <MobileScene analysis={analysis} selected={selected} onClear={onClear} sceneRef={sceneRef} />
-      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-[18px] px-4 pt-5 pb-6">
+      <main className={cn("mx-auto flex w-full max-w-2xl flex-1 flex-col gap-[18px] px-4 pt-5 pb-6", entrance && "animate-in duration-900 ease-out fade-in slide-in-from-bottom-24")}>
         <LiteBanner />
         <MobileStatus analysis={analysis} />
         <MobileHistory analysis={analysis} />
@@ -423,13 +426,14 @@ export function MobileResult({
         </p>
       </main>
       <div className="no-print sticky bottom-0 z-10 flex gap-2.5 border-t border-input bg-[#FBF6EC] px-4 pt-3 pb-[max(20px,env(safe-area-inset-bottom))]">
-        <Link
-          href={`/raport/${analysis.id}`}
+        <a
+          href={`/api/analyses/${analysis.id}/pdf`}
+          download
           className="rosa-btn flex h-14 flex-1 items-center justify-center gap-2 rounded-[18px] bg-primary text-[17px] font-extrabold text-white no-underline hover:text-white"
         >
           <DownloadIcon />
           Pobierz PDF
-        </Link>
+        </a>
         <Link
           href={`/raport/${analysis.id}?druk=1`}
           className="rosa-btn flex h-14 w-[110px] flex-none items-center justify-center rounded-[18px] border-2 border-border bg-paper text-base font-bold text-foreground no-underline hover:text-foreground"
