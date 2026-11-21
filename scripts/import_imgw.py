@@ -14,6 +14,9 @@ BASE = "https://danepubliczne.imgw.pl/data/dane_pomiarowo_obserwacyjne/dane_mete
 STATIONS_URL = "https://danepubliczne.imgw.pl/datastore/getfiledown/Arch/Telemetria/Meteo/kody_stacji.csv"
 FIRST_YEAR = int(os.environ.get("IMGW_FIRST_YEAR", "2006"))
 LAST_YEAR = date.today().year
+SUFFIX = os.environ.get("TABLE_SUFFIX", "")
+DAILY = f"meteo_daily{SUFFIX}"
+STATION = f"meteo_station{SUFFIX}"
 KINDS = {
     "synop": {"prefix": "s", "precip": 13, "tmax": 5, "tmin": 7, "sun": 20, "priority": 3},
     "klimat": {"prefix": "k", "precip": 13, "tmax": 5, "tmin": 7, "sun": None, "priority": 2},
@@ -119,10 +122,10 @@ def main():
         with conn.cursor() as cur, cur.copy("COPY coords FROM STDIN") as cp:
             for code, (name, lat, lon, elev) in coords.items():
                 cp.write_row((code, name, lat, lon, elev))
-        conn.execute("TRUNCATE meteo_daily, meteo_station")
+        conn.execute(f"TRUNCATE {DAILY}, {STATION}")
         conn.execute(
-            """
-            INSERT INTO meteo_station (code, name, lat, lon, elevation_m, has_temperature, geom)
+            f"""
+            INSERT INTO {STATION} (code, name, lat, lon, elevation_m, has_temperature, geom)
             SELECT s.code, coalesce(c.name, s.name), c.lat, c.lon, c.elev, s.has_temp, ST_SetSRID(ST_MakePoint(c.lon, c.lat), 4326)
             FROM (
               SELECT code, max(name) AS name, (count(tmax) > 0)::int AS has_temp
@@ -131,8 +134,8 @@ def main():
             """
         )
         conn.execute(
-            """
-            INSERT INTO meteo_daily (station_code, day, precip_mm, tmax_c, tmin_c, sunshine_h, source)
+            f"""
+            INSERT INTO {DAILY} (station_code, day, precip_mm, tmax_c, tmin_c, sunshine_h, source)
             SELECT code, day,
                    (array_agg(precip ORDER BY priority DESC) FILTER (WHERE precip IS NOT NULL))[1],
                    (array_agg(tmax ORDER BY priority DESC) FILTER (WHERE tmax IS NOT NULL))[1],
@@ -140,19 +143,19 @@ def main():
                    (array_agg(sun ORDER BY priority DESC) FILTER (WHERE sun IS NOT NULL))[1],
                    CASE max(priority) WHEN 3 THEN 'synop' WHEN 2 THEN 'klimat' ELSE 'opad' END
             FROM meteo_daily_stage
-            WHERE code IN (SELECT code FROM meteo_station)
+            WHERE code IN (SELECT code FROM {STATION})
             GROUP BY code, day
             """
         )
         unmatched = conn.execute(
-            "SELECT count(DISTINCT code) FROM meteo_daily_stage WHERE code NOT IN (SELECT code FROM meteo_station)"
+            f"SELECT count(DISTINCT code) FROM meteo_daily_stage WHERE code NOT IN (SELECT code FROM {STATION})"
         ).fetchone()[0]
         conn.execute("DROP TABLE meteo_daily_stage")
-        conn.execute("ANALYZE meteo_station")
-        conn.execute("ANALYZE meteo_daily")
-        stations, temp_stations = conn.execute("SELECT count(*), sum(has_temperature) FROM meteo_station").fetchone()
+        conn.execute(f"ANALYZE {STATION}")
+        conn.execute(f"ANALYZE {DAILY}")
+        stations, temp_stations = conn.execute(f"SELECT count(*), sum(has_temperature) FROM {STATION}").fetchone()
         days, size = conn.execute(
-            "SELECT count(*), pg_size_pretty(pg_total_relation_size('meteo_daily')) FROM meteo_daily"
+            f"SELECT count(*), pg_size_pretty(pg_total_relation_size('{DAILY}')) FROM {DAILY}"
         ).fetchone()
         print(f"DONE stations={stations} with_temperature={temp_stations} unmatched_codes={unmatched} rows={days} size={size}", flush=True)
 

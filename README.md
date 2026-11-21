@@ -112,7 +112,16 @@ Szczegóły: `docs/architektura.md`, `docs/concept.md`.
 | Dane dobowe IMGW-PIB + współrzędne stacji | 21.11.2026 | 2006-01-01 – 2026-10-31 | `scripts/import_imgw.py` |
 | BDOT10k: rowy, cieki, kanały, wody | 21.11.2026 | wersje obiektów wg powiatów (np. 31.12.2023 dla pow. śremskiego) | `scripts/import_bdot.py` |
 
-Aktualizacja w tle (docelowo, np. cronem w Coolify): IMGW raz w miesiącu po publikacji kolejnego miesiąca, działki EGiB raz na dobę lub tydzień (GUGiK odświeża eksport codziennie), BDOT10k raz na kwartał.
+Aktualizacja w tle: `scripts/server/rosa-update.sh` uruchamiany z crona na serwerze (`scripts/server/crontab.txt`). Każdy import ładuje dane do tabeli `*_next` i podmienia ją z bieżącą w jednej transakcji, więc aplikacja nie widzi pustych tabel w trakcie aktualizacji.
+
+| Zadanie | Harmonogram |
+|---|---|
+| Czyszczenie przeterminowanego cache | codziennie 03:30 |
+| IMGW (pełne przeładowanie 2006–dziś) | 6. dnia miesiąca 02:00 |
+| Działki EGiB | 15. dnia miesiąca 01:00 |
+| BDOT10k (wody) | 1 stycznia, kwietnia, lipca, października 04:00 |
+
+Instalacja na serwerze: skopiuj `scripts/` do `~/rosa/scripts`, utwórz `~/rosa-data/rosa.env` z `DB_CONTAINER=<nazwa kontenera PostGIS>` i wykonaj `crontab ~/rosa/scripts/server/crontab.txt`. Logi trafiają do `~/rosa-data/logs`.
 
 ### Pobierane na żywo (przy pierwszej analizie danej działki, potem z cache)
 | Dane | Kiedy | Cache |

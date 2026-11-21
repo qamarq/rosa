@@ -11,6 +11,7 @@ BASE = "https://opendata.geoportal.gov.pl/bdot10k/schemat2021/GPKG"
 LAYERS = [("OT_SWRM_L", "rów", "NULL"), ("OT_SWRS_L", "ciek", "NULL"), ("OT_SWKN_L", "kanał", "NULL"), ("OT_PTWP_A", "woda", "RODZAJ")]
 WORK = os.environ.get("WORK", "/work")
 PG = f"PG:host={os.environ['PGHOST']} dbname=postgres user=postgres"
+TABLE = os.environ.get("TABLE", "hydro_feature")
 ONLY = set(filter(None, os.environ.get("ONLY", "").split(",")))
 
 
@@ -49,7 +50,7 @@ def process(url):
                 continue
             sql = f"SELECT geometria AS geom, '{kind}' AS kind, {sub} AS subkind, NAZWA AS name, TERYT AS teryt FROM {layer}"
             r = subprocess.run(
-                ["ogr2ogr", "-append", "-f", "PostgreSQL", PG, f"/vsizip/{path}/{member}", "-nln", "hydro_feature",
+                ["ogr2ogr", "-append", "-f", "PostgreSQL", PG, f"/vsizip/{path}/{member}", "-nln", TABLE,
                  "-dim", "XY", "-dialect", "SQLite", "-sql", sql, "--config", "PG_USE_COPY", "YES", "-gt", "50000"],
                 capture_output=True, text=True,
             )
