@@ -1,5 +1,6 @@
 "use client"
 
+import { baseSceneMode } from "@/lib/scene"
 import Link from "next/link"
 import { useRef, useState } from "react"
 import { useLiteMode } from "@/components/lite-mode"
@@ -86,7 +87,7 @@ function MobileScene({
     <section ref={sceneRef} aria-label="Scena 3D działki" className="relative h-[300px] scroll-mt-0 overflow-hidden bg-[#F3D9AE]">
       <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-[90px] bg-[#E9C996]" />
       <DioramaStage
-        mode={selected?.sceneMode ?? "susza"}
+        mode={selected?.sceneMode ?? baseSceneMode(analysis.status)}
         labels={false}
         camera={cam.camera}
         onRotate={cam.setRotation}

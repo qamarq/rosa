@@ -1,5 +1,6 @@
 "use client"
 
+import { baseSceneMode } from "@/lib/scene"
 import type { Analysis, Recommendation } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { DioramaStage, useCamera } from "./diorama-stage"
@@ -72,7 +73,7 @@ export function DesktopScene({
     <section aria-label="Scena 3D działki" className="@container relative min-w-0 flex-1 overflow-hidden rounded-[28px] bg-[#F3D9AE]">
       <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-[300px] bg-[#E9C996]" />
       <DioramaStage
-        mode={selected?.sceneMode ?? "susza"}
+        mode={selected?.sceneMode ?? baseSceneMode(analysis.status)}
         labels
         camera={cam.camera}
         onRotate={cam.setRotation}
@@ -99,7 +100,7 @@ export function DesktopScene({
           </div>
           <div className="flex h-11 items-center gap-2 rounded-2xl bg-paper/85 px-3.5 text-sm text-muted-foreground">
             <span aria-hidden="true" className={cn("size-2 rounded-full", allOk ? "bg-[#2E8B57]" : "bg-[#D9A52E]")} />
-            Teren: NMT GUGiK · zdjęcie satelitarne sprzed {daysPl(vegetation.imageAgeDays)}
+            {vegetation ? `Teren: NMT GUGiK · zdjęcie satelitarne sprzed ${daysPl(vegetation.imageAgeDays)}` : "Teren: NMT GUGiK · bez nowego zdjęcia satelitarnego"}
           </div>
         </div>
       )}
@@ -108,7 +109,7 @@ export function DesktopScene({
         <div className="absolute bottom-5 left-5 flex h-11 max-w-[calc(100%-260px)] items-center rounded-2xl bg-paper/85 px-3.5 text-sm text-muted-foreground @max-[700px]:hidden">
           Kliknij działanie po prawej, a pokażemy je na scenie
         </div>
-      ) : (
+      ) : vegetation ? (
         <div className="absolute bottom-5 left-5 flex w-[300px] flex-col gap-2.5 rounded-[20px] bg-paper px-[18px] py-4 @max-[560px]:w-[240px]">
           <span className="text-sm font-extrabold">Kondycja roślin (NDVI)</span>
           <div
@@ -126,7 +127,7 @@ export function DesktopScene({
             <span>soczyste</span>
           </div>
         </div>
-      )}
+      ) : null}
 
       <div role="toolbar" aria-label="Sterowanie kamerą" className="absolute right-5 bottom-5 flex items-center gap-2 rounded-[22px] bg-paper p-2">
         {!selected && <span className="hidden px-2.5 text-sm text-muted-foreground @min-[860px]:inline">Przeciągnij, aby obrócić</span>}

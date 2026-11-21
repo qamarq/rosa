@@ -105,7 +105,7 @@ export interface Analysis {
   status: WaterStatus
   history: WaterHistory
   causes: Cause[]
-  vegetation: Vegetation
+  vegetation: Vegetation | null
   recommendations: Recommendation[]
   confidence: Confidence
   sources: DataSource[]

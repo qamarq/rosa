@@ -1,3 +1,4 @@
+import { baseSceneMode } from "@/lib/scene"
 import type { ReactNode } from "react"
 import { cn } from "@/lib/utils"
 import type { Analysis, ConfidenceLevel, Recommendation, RecommendationGroup } from "@/lib/types"
@@ -87,7 +88,7 @@ export function ReportDocument({ analysis }: { analysis: Analysis }) {
             Ryc. 1. Działka teraz: {status.label.toLocaleLowerCase("pl")}, {status.headline.toLocaleLowerCase("pl")}
           </figcaption>
           <ReportScene
-            mode="susza"
+            mode={baseSceneMode(status)}
             label={`Scena działki ${parcel.id}: ${status.label}. ${status.summary}`}
           />
           <span className="text-xs text-[#444444]">Statyczny render sceny.</span>
@@ -115,10 +116,12 @@ export function ReportDocument({ analysis }: { analysis: Analysis }) {
               <span>5 ekstremalna</span>
             </div>
             <p className="m-0 text-[13px] leading-[1.45]">{status.summary}</p>
-            <p className="m-0 text-xs leading-[1.4] text-[#333333]">
-              Kondycja roślin (NDVI): {ndviFormat.format(vegetation.ndvi)}, {vegetation.label} · zdjęcie z{" "}
-              {formatDatePl(vegetation.imageDate)}
-            </p>
+            {vegetation && (
+              <p className="m-0 text-xs leading-[1.4] text-[#333333]">
+                Kondycja roślin (NDVI): {ndviFormat.format(vegetation.ndvi)}, {vegetation.label} · zdjęcie z{" "}
+                {formatDatePl(vegetation.imageDate)}
+              </p>
+            )}
           </section>
 
           <section className="flex flex-col gap-1.5 break-inside-avoid">
