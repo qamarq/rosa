@@ -13,7 +13,7 @@ import { loadSatellite, type SatelliteResult } from "@/server/sources/satellite"
 import { loadSoilCategory } from "@/server/sources/soil"
 import { loadTerrain } from "@/server/sources/terrain"
 
-const ENGINE_VERSION = "v5"
+const ENGINE_VERSION = "v6"
 const WINDOW_DAYS = 45
 const HISTORY_YEARS = 10
 const SATELLITE_BUDGET_MS = Number(process.env.ROSA_SATELLITE_BUDGET_MS ?? 15000)
@@ -72,7 +72,7 @@ async function computeLive(req: AnalysisRequest, id: string): Promise<AnalysisRe
   if (!parcel) {
     return { ok: false, error: { code: "parcel_not_found", message: "Nie znaleziono działki.", parcelId: req.parcelId } }
   }
-  const sat = satelliteJob(id, () => loadSatellite(parcel.id, parcel.lat, parcel.lon, parcel.utmBbox, req.date, SATELLITE_BUDGET_MS))
+  const sat = satelliteJob(id, () => loadSatellite(parcel.id, parcel.lat, parcel.lon, parcel.utmBbox, parcel.utmRings, req.date, SATELLITE_BUDGET_MS))
   const [weather, soil, terrain, hydro] = await Promise.all([
     settle("meteo", loadDailyWeather(parcel.lat, parcel.lon, req.date, HISTORY_YEARS, WINDOW_DAYS)),
     settle("soil", loadSoilCategory(parcel.x2180, parcel.y2180)),
@@ -125,7 +125,7 @@ export async function completeSatellite(req: AnalysisRequest): Promise<AnalysisR
     satelliteJobs.get(id) ??
     satelliteJob(id, async () => {
       const parcel = await findParcelById(req.parcelId)
-      return parcel ? loadSatellite(parcel.id, parcel.lat, parcel.lon, parcel.utmBbox, req.date, SATELLITE_BUDGET_MS) : null
+      return parcel ? loadSatellite(parcel.id, parcel.lat, parcel.lon, parcel.utmBbox, parcel.utmRings, req.date, SATELLITE_BUDGET_MS) : null
     })
   const outcome = await job
   const analysis = applySatellite(base.analysis, outcome.value, outcome.failed)

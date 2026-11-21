@@ -31,7 +31,21 @@ function epsgOf(item: StacItem): string | null {
   return code === "32633" || code === "32634" ? code : null
 }
 
-async function readWindow(href: string, bbox: [number, number, number, number], signal: AbortSignal): Promise<{ data: ArrayLike<number>; width: number; height: number }> {
+type Window = { data: ArrayLike<number>; width: number; height: number; x0: number; y0: number; ox: number; oy: number; rx: number; ry: number }
+
+function insideRings(x: number, y: number, rings: [number, number][][]): boolean {
+  let inside = false
+  for (const ring of rings) {
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const [xi, yi] = ring[i]
+      const [xj, yj] = ring[j]
+      if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside
+    }
+  }
+  return inside
+}
+
+async function readWindow(href: string, bbox: [number, number, number, number], signal: AbortSignal): Promise<Window> {
   const tiff = await fromUrl(href, { allowFullFile: false }, signal)
   const image = await tiff.getImage()
   const [ox, oy] = image.getOrigin()
@@ -43,10 +57,10 @@ async function readWindow(href: string, bbox: [number, number, number, number], 
   if (x1 <= x0 || y1 <= y0) throw new Error("parcel outside scene")
   const rasters = await image.readRasters({ window: [x0, y0, x1, y1], samples: [0], signal })
   const band = (rasters as unknown as ArrayLike<number>[])[0]
-  return { data: band, width: x1 - x0, height: y1 - y0 }
+  return { data: band, width: x1 - x0, height: y1 - y0, x0, y0, ox, oy, rx, ry }
 }
 
-async function ndviForScene(item: StacItem, bbox: [number, number, number, number], signal: AbortSignal): Promise<{ ndvi: number; clear: number } | null> {
+async function ndviForScene(item: StacItem, bbox: [number, number, number, number], rings: [number, number][][], signal: AbortSignal): Promise<{ ndvi: number; clear: number } | null> {
   const red = item.assets.red?.href
   const nir = item.assets.nir?.href
   const scl = item.assets.scl?.href
@@ -54,10 +68,15 @@ async function ndviForScene(item: StacItem, bbox: [number, number, number, numbe
   const [r, n, s] = await Promise.all([readWindow(red, bbox, signal), readWindow(nir, bbox, signal), readWindow(scl, bbox, signal)])
   let sum = 0
   let count = 0
+  let total = 0
   for (let y = 0; y < r.height; y++) {
     for (let x = 0; x < r.width; x++) {
-      const sx = Math.min(s.width - 1, Math.floor((x * s.width) / r.width))
-      const sy = Math.min(s.height - 1, Math.floor((y * s.height) / r.height))
+      const cx = r.ox + (r.x0 + x + 0.5) * r.rx
+      const cy = r.oy + (r.y0 + y + 0.5) * r.ry
+      if (!insideRings(cx, cy, rings)) continue
+      total++
+      const sx = Math.min(s.width - 1, Math.max(0, Math.floor((cx - s.ox) / s.rx) - s.x0))
+      const sy = Math.min(s.height - 1, Math.max(0, Math.floor((cy - s.oy) / s.ry) - s.y0))
       if (!CLEAR_SCL.has(s.data[sy * s.width + sx])) continue
       const rv = r.data[y * r.width + x]
       const nv = n.data[y * n.width + x]
@@ -66,8 +85,7 @@ async function ndviForScene(item: StacItem, bbox: [number, number, number, numbe
       count++
     }
   }
-  const total = r.width * r.height
-  if (count === 0) return { ndvi: Number.NaN, clear: 0 }
+  if (count === 0 || total === 0) return { ndvi: Number.NaN, clear: 0 }
   return { ndvi: sum / count, clear: count / total }
 }
 
@@ -76,10 +94,11 @@ export async function loadSatellite(
   lat: number,
   lon: number,
   utmBbox: Record<"32633" | "32634", [number, number, number, number]>,
+  utmRings: Record<"32633" | "32634", [number, number][][]>,
   analysisDate: string,
   budgetMs: number,
 ): Promise<SatelliteResult | null> {
-  return cached("sentinel2-ndvi", `${parcelId}:${analysisDate}`, 7 * 86400, async () => {
+  return cached("sentinel2-ndvi-mask", `${parcelId}:${analysisDate}`, 7 * 86400, async () => {
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), budgetMs)
     try {
@@ -98,7 +117,8 @@ export async function loadSatellite(
       for (const item of search.features.slice(0, 3)) {
         const epsg = epsgOf(item)
         if (!epsg) continue
-        const res = await ndviForScene(item, utmBbox[epsg as "32633" | "32634"], controller.signal)
+        const zone = epsg as "32633" | "32634"
+        const res = await ndviForScene(item, utmBbox[zone], utmRings[zone], controller.signal)
         if (res && res.clear >= 0.5 && Number.isFinite(res.ndvi)) {
           return { ndvi: Math.round(res.ndvi * 100) / 100, clearFraction: Math.round(res.clear * 100) / 100, imageDate: item.properties.datetime.slice(0, 10), sceneId: item.id }
         }

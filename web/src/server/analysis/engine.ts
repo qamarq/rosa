@@ -359,7 +359,6 @@ export function applySatellite(analysis: Analysis, satellite: SatelliteResult | 
   if (!satellite) unknowns.push(failed ? "Zdjęcia satelitarne nie odpowiedziały na czas; kondycji roślin nie oceniamy." : "Brak bezchmurnego zdjęcia satelitarnego z 30 dni przed datą analizy.")
   else {
     if (ageDays > 10) unknowns.push(`Ostatnie bezchmurne zdjęcie satelitarne jest sprzed ${ageDays} dni.`)
-    unknowns.push("NDVI liczymy dla prostokąta obejmującego działkę, więc brzegi mogą zawierać sąsiednie pola.")
   }
   return {
     ...analysis,
