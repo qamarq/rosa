@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation"
+import { connection } from "next/server"
 import { Suspense } from "react"
 import { ResultSkeleton } from "@/components/result/result-skeleton"
 import { ResultView } from "@/components/result/result-view"
@@ -16,6 +17,7 @@ export default function ParcelPage({ params }: PageProps<"/dzialka/[id]">) {
 }
 
 async function ParcelResult({ id }: { id: string }) {
+  await connection()
   let req: ReturnType<typeof requestFromId> = null
   try {
     req = requestFromId(id)
