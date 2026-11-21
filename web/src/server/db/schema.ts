@@ -1,4 +1,4 @@
-import { date, doublePrecision, geometry, index, integer, jsonb, pgTable, primaryKey, real, text, timestamp } from "drizzle-orm/pg-core"
+import { customType, date, doublePrecision, geometry, index, integer, jsonb, pgTable, primaryKey, real, serial, text, timestamp } from "drizzle-orm/pg-core"
 
 export const rosaCache = pgTable(
   "rosa_cache",
@@ -38,4 +38,21 @@ export const meteoDaily = pgTable(
     source: text("source").notNull(),
   },
   (t) => [primaryKey({ columns: [t.stationCode, t.day] }), index("meteo_daily_day_idx").on(t.day)],
+)
+
+const geometry2180 = customType<{ data: string }>({
+  dataType: () => "geometry(Geometry, 2180)",
+})
+
+export const hydroFeature = pgTable(
+  "hydro_feature",
+  {
+    id: serial("id").primaryKey(),
+    kind: text("kind").notNull(),
+    subkind: text("subkind"),
+    name: text("name"),
+    teryt: text("teryt"),
+    geom: geometry2180("geom").notNull(),
+  },
+  (t) => [index("hydro_feature_geom_idx").using("gist", t.geom), index("hydro_feature_kind_idx").on(t.kind)],
 )

@@ -15,6 +15,13 @@
       "when": 1795263032020,
       "tag": "0001_meteo_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795264101992,
+      "tag": "0002_hydro_feature",
+      "breakpoints": true
     }
   ]
 }
