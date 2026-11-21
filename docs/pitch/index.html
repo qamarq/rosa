@@ -3,9 +3,13 @@
 <head>
 <meta charset="utf-8">
 <title>ROSA – pitch deck</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
+@font-face { font-family: "Bricolage Grotesque"; src: url(fonts/BricolageGrotesque-700.ttf); font-weight: 500 700; }
+@font-face { font-family: "Bricolage Grotesque"; src: url(fonts/BricolageGrotesque-800.ttf); font-weight: 800; }
+@font-face { font-family: "Figtree"; src: url(fonts/Figtree-400.ttf); font-weight: 400 500; }
+@font-face { font-family: "Figtree"; src: url(fonts/Figtree-600.ttf); font-weight: 600; }
+@font-face { font-family: "Figtree"; src: url(fonts/Figtree-700.ttf); font-weight: 700; }
+@font-face { font-family: "Figtree"; src: url(fonts/Figtree-800.ttf); font-weight: 800; }
 :root {
   --accent: #0E6E73;
   --accent-deep: #0A5357;
@@ -38,9 +42,9 @@ body { font-family: "Figtree", sans-serif; -webkit-print-color-adjust: exact; pr
 .paper .mark { background: var(--accent); color: var(--white); }
 .accent { color: var(--accent); }
 .sun { color: var(--sun); }
-.phone { position: absolute; aspect-ratio: 390 / 844; border-radius: 58px; border: 13px solid #1d1712; background: #1d1712; overflow: hidden; box-shadow: 0 40px 80px -30px rgba(20,10,0,.45); }
+.phone { position: absolute; aspect-ratio: 390 / 844; border-radius: 58px; border: 13px solid #1d1712; background: #1d1712; overflow: hidden; }
 .phone img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; border-radius: 44px; }
-.browser { position: absolute; border-radius: 18px; overflow: hidden; background: #EDE2CF; box-shadow: 0 40px 80px -30px rgba(20,10,0,.45); }
+.browser { position: absolute; border-radius: 18px; overflow: hidden; background: #EDE2CF; }
 .browser .bar { height: 38px; display: flex; align-items: center; gap: 9px; padding: 0 16px; background: #E3D3B8; }
 .browser .bar i { width: 13px; height: 13px; border-radius: 50%; background: #C9B593; display: block; }
 .browser .bar span { margin-left: 18px; font: 600 16px "Figtree"; color: #6B5A45; background: #F6EBD9; padding: 5px 16px; border-radius: 8px; }
@@ -302,7 +306,7 @@ body { font-family: "Figtree", sans-serif; -webkit-print-color-adjust: exact; pr
     <div><div style="font:800 40px/1 'Bricolage Grotesque'">Aplikacja</div><div class="small" style="margin-top:10px;opacity:.85">rosa.kamilmarczak.pl</div></div>
   </div>
   <div class="browser" style="width:980px;left:900px;top:200px;transform:rotate(-2deg)"><div class="bar"><i></i><i></i><i></i><span>rosa.kamilmarczak.pl</span></div><img src="img/w-landing.jpg"></div>
-  <div class="phone" style="width:300px;left:1560px;top:520px;transform:rotate(6deg)"><img src="img/m-actions.jpg"></div>
+  <div class="phone" style="width:300px;left:1560px;top:520px;transform:rotate(6deg)"><img src="img/m-result.jpg"></div>
 </section>
 
 </body>
