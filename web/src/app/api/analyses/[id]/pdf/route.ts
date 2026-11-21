@@ -5,7 +5,7 @@ import { formatDatePl, toIsoDate } from "@/lib/validation"
 import { ReportPdf } from "@/server/pdf/report-pdf"
 import { loadParcelScene } from "@/server/sources/scene3d"
 
-export async function GET(_request: Request, ctx: RouteContext<"/api/analyses/[id]/pdf">) {
+export async function GET(request: Request, ctx: RouteContext<"/api/analyses/[id]/pdf">) {
   const { id } = await ctx.params
   const req = requestFromId(id)
   if (!req) return Response.json({ code: "invalid_request" }, { status: 400 })
@@ -18,7 +18,7 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/analyses/[i
   return new Response(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="${name}"`,
+      "Content-Disposition": `${new URL(request.url).searchParams.has("inline") ? "inline" : "attachment"}; filename="${name}"`,
       "Cache-Control": "private, max-age=600",
     },
   })

@@ -77,12 +77,14 @@ export function ResultHeader({ analysis }: { analysis: Analysis }) {
         Zmień działkę
       </Link>
       <LiteToggle className="flex-none" />
-      <Link
-        href={`/raport/${analysis.id}`}
+      <a
+        href={`/api/analyses/${analysis.id}/pdf?inline=1`}
+        target="_blank"
+        rel="noopener"
         className="rosa-btn flex h-12 flex-none items-center rounded-2xl border-2 border-border bg-paper px-4 text-base font-bold text-foreground no-underline hover:text-foreground"
       >
         Drukuj
-      </Link>
+      </a>
       <a
         href={`/api/analyses/${analysis.id}/pdf`}
         download

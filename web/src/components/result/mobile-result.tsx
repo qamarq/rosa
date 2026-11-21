@@ -441,12 +441,14 @@ export function MobileResult({
           <DownloadIcon />
           Pobierz PDF
         </a>
-        <Link
-          href={`/raport/${analysis.id}?druk=1`}
+        <a
+          href={`/api/analyses/${analysis.id}/pdf?inline=1`}
+          target="_blank"
+          rel="noopener"
           className="rosa-btn flex h-14 w-[110px] flex-none items-center justify-center rounded-[18px] border-2 border-border bg-paper text-base font-bold text-foreground no-underline hover:text-foreground"
         >
           Drukuj
-        </Link>
+        </a>
       </div>
     </div>
   )

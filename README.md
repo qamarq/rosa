@@ -1,6 +1,6 @@
 # ROSA: Retencja · Opady · Susza · Analiza
 
-Narzędzie webowe dla rolnika: wpisujesz numer działki ewidencyjnej, wybierasz uprawę i dzień analizy, a ROSA w kilka sekund ocenia sytuację wodną działki na tle ostatnich 10 lat, wyjaśnia przyczyny niedoboru wody i podpowiada, jak zatrzymać wodę na polu (retencja → agrotechnika → ewentualnie nawadnianie). Wynik można pobrać jako raport A4 (PDF lub wydruk).
+Narzędzie webowe dla rolnika: wpisujesz numer działki ewidencyjnej, wybierasz uprawę i dzień analizy, a ROSA w kilka sekund ocenia sytuację wodną działki na tle ostatnich 10 lat, wyjaśnia przyczyny niedoboru wody i podpowiada, jak zatrzymać wodę na polu (retencja → agrotechnika → ewentualnie nawadnianie). Wynik można pobrać lub wydrukować jako raport PDF (A4).
 
 **Wersja działająca (zalecana do oceny):** https://rosa.kamilmarczak.pl — pełne dane dla całej Polski. Uruchomienie lokalne bez bazy danych daje tylko tryb demonstracyjny (sekcja 1).
 
@@ -72,7 +72,7 @@ docker run --rm -e PGHOST=... -e PGPASSWORD=... -v /dane/bdot:/work -v $PWD/scri
    - nawadnianie (opcjonalnie): dawka z zapotrzebowania uprawy (ET0 × Kc wg FAO-56) minus opad z ostatnich 7 dni.
    Każda rekomendacja ma „Dlaczego to polecamy” z liczbami i źródłem. Kliknięcie pokazuje działanie na modelu 3D działki (np. koparka przy zastawce na najbliższym prawdziwym rowie), bez zmiany ujęcia kamery.
 10. **Pewność i „Czego nie wiemy”**: jawny poziom pewności i lista ograniczeń dla tej konkretnej analizy (odległość do stacji, brak zdjęcia satelitarnego, działka nierolnicza itd.).
-11. **Raport**: plik PDF generowany na serwerze jednym kliknięciem („Pobierz PDF”, `GET /api/analyses/<id>/pdf`: plan działki z rowami, stan wody, historia, przyczyny, rekomendacje, źródła z datami pobrania i licencjami) oraz wersja HTML A4 do druku. Każda analiza ma stały link `/dzialka/<id>`.
+11. **Raport**: plik PDF generowany na serwerze jednym kliknięciem („Pobierz PDF”, `GET /api/analyses/<id>/pdf`: plan działki z rowami, stan wody, historia, przyczyny, rekomendacje, źródła z datami pobrania i licencjami). „Drukuj” otwiera ten sam PDF w nowej karcie, więc wydruk i pobrany plik są identyczne; stary adres `/raport/<id>` przekierowuje do PDF. Każda analiza ma stały link `/dzialka/<id>`.
 12. **Tryb lekki**: bez animacji, dla słabszych komputerów i wolnego łącza; włącza się sam przy `prefers-reduced-motion` lub wolnym połączeniu.
 
 ---
@@ -81,7 +81,7 @@ docker run --rm -e PGHOST=... -e PGPASSWORD=... -v /dane/bdot:/work -v $PWD/scri
 
 ```
 przeglądarka ──► Next.js 16 (App Router, React 19)
-                 ├─ strony: / · /analiza · /dzialka/[id] · /raport/[id]
+                 ├─ strony: / · /analiza · /dzialka/[id] (· /raport/[id] → PDF)
                  ├─ API: POST /api/analyses · GET /api/analyses/[id] · …/[id]/satellite · …/[id]/scene · …/[id]/pdf
                  │       GET /api/parcels/locate · /api/parcels/[id] · /api/places/search · /api/tiles/parcels/{z}/{x}/{y}
                  └─ web/src/server
@@ -162,7 +162,7 @@ Instalacja na serwerze: skopiuj `scripts/` do `~/rosa/scripts`, utwórz `~/rosa-
 | Kafelki granic działek | generowane z naszej bazy przy przeglądaniu mapy | 24 h w przeglądarce |
 | Ortofotomapa, numery działek KIEG, kafelki OSM | pobierane bezpośrednio przez przeglądarkę | cache przeglądarki |
 
-Każdy wynik pokazuje datę pobrania danych przy źródle (sekcje wyniku i raport A4).
+Każdy wynik pokazuje datę pobrania danych przy źródle (sekcje wyniku i raport PDF).
 
 ---
 
