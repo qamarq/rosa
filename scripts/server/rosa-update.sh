@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Background data refresh for ROSA. Usage: rosa-update.sh imgw|bdot|parcels|cache
+# Background data refresh for ROSA. Usage: rosa-update.sh imgw|bdot|parcels|places|cache
 # Config: ~/rosa-data/rosa.env with DB_CONTAINER=<postgis container name>
 set -euo pipefail
 
@@ -56,6 +56,27 @@ case "$1" in
     psql_db -c "SET maintenance_work_mem = '1GB'; CREATE INDEX dzialki_next_id_dzialki_idx ON dzialki_next (id_dzialki); CREATE INDEX dzialki_next_geom_idx ON dzialki_next USING gist (geom); ANALYZE dzialki_next;"
     swap_next dzialki
     rm -f "$DATA/0_dzialki.parquet"
+    "$0" places
+    ;;
+  places)
+    prepare_next rosa_place
+    psql_db -c "SET max_parallel_workers_per_gather = 4; SET work_mem = '256MB';
+      INSERT INTO rosa_place_next (id, kind, name, gmina, woj, name_norm, parcels, lon, lat, min_lon, min_lat, max_lon, max_lat)
+      WITH o AS (
+        SELECT numer_jednostki AS j, numer_obrebu AS n, min(nazwa_obrebu) AS name, min(nazwa_gminy) AS gmina, count(*) AS parcels, ST_Extent(geom) AS ext
+        FROM dzialki WHERE numer_jednostki IS NOT NULL AND numer_obrebu IS NOT NULL AND nazwa_obrebu IS NOT NULL GROUP BY 1, 2
+      ), t AS (
+        SELECT j, n, initcap(name) AS name, regexp_replace(gmina, '^(gmina miejska|gmina wiejska|gmina|miasto)\\s+', '', 'i') AS gmina, parcels,
+          ST_Transform(ST_SetSRID(ext::geometry, 2180), 4326) AS g FROM o
+      )
+      SELECT 'o:' || j || '.' || n, 'obreb', name, gmina, left(j, 2), translate(lower(name), 'ąćęłńóśźżĄĆĘŁŃÓŚŹŻ', 'acelnoszzacelnoszz'), parcels,
+        ST_X(ST_Centroid(g)), ST_Y(ST_Centroid(g)), ST_XMin(g), ST_YMin(g), ST_XMax(g), ST_YMax(g) FROM t;
+      INSERT INTO rosa_place_next (id, kind, name, gmina, woj, name_norm, parcels, lon, lat, min_lon, min_lat, max_lon, max_lat)
+      SELECT 'g:' || split_part(substr(id, 3), '.', 1), 'gmina', min(gmina), min(gmina), min(woj), translate(lower(min(gmina)), 'ąćęłńóśźżĄĆĘŁŃÓŚŹŻ', 'acelnoszzacelnoszz'), sum(parcels),
+        (min(min_lon) + max(max_lon)) / 2, (min(min_lat) + max(max_lat)) / 2, min(min_lon), min(min_lat), max(max_lon), max(max_lat)
+      FROM rosa_place_next WHERE kind = 'obreb' AND gmina IS NOT NULL GROUP BY split_part(substr(id, 3), '.', 1);
+      ANALYZE rosa_place_next;"
+    swap_next rosa_place
     ;;
   cache)
     psql_db -c "DELETE FROM rosa_cache WHERE expires_at IS NOT NULL AND expires_at < now()"

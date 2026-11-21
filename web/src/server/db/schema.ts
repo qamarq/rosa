@@ -56,3 +56,23 @@ export const hydroFeature = pgTable(
   },
   (t) => [index("hydro_feature_geom_idx").using("gist", t.geom), index("hydro_feature_kind_idx").on(t.kind)],
 )
+
+export const rosaPlace = pgTable(
+  "rosa_place",
+  {
+    id: text("id").primaryKey(),
+    kind: text("kind").notNull(),
+    name: text("name").notNull(),
+    gmina: text("gmina"),
+    woj: text("woj").notNull(),
+    nameNorm: text("name_norm").notNull(),
+    parcels: integer("parcels").notNull(),
+    lon: doublePrecision("lon").notNull(),
+    lat: doublePrecision("lat").notNull(),
+    minLon: doublePrecision("min_lon").notNull(),
+    minLat: doublePrecision("min_lat").notNull(),
+    maxLon: doublePrecision("max_lon").notNull(),
+    maxLat: doublePrecision("max_lat").notNull(),
+  },
+  (t) => [index("rosa_place_name_norm_idx").on(t.nameNorm.op("text_pattern_ops"))],
+)
