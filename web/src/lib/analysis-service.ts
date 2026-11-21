@@ -49,16 +49,22 @@ function mockAnalysis(req: AnalysisRequest): AnalysisResult {
 }
 
 async function settle<T>(label: string, promise: Promise<T>): Promise<{ value: T | null; failed: boolean }> {
+  const started = performance.now()
   try {
-    return { value: await promise, failed: false }
+    const value = await promise
+    console.info(`[rosa] source ${label} ${Math.round(performance.now() - started)} ms`)
+    return { value, failed: false }
   } catch (error) {
-    console.warn(`[rosa] source ${label} failed: ${error instanceof Error ? error.message : String(error)}`)
+    const cause = error instanceof Error && error.cause instanceof Error ? ` (${error.cause.message})` : ""
+    console.warn(`[rosa] source ${label} failed after ${Math.round(performance.now() - started)} ms: ${error instanceof Error ? error.message.split("\n")[0] : String(error)}${cause}`)
     return { value: null, failed: true }
   }
 }
 
 async function computeLive(req: AnalysisRequest, id: string): Promise<AnalysisResult> {
+  const parcelStarted = performance.now()
   const parcel = await findParcelById(req.parcelId)
+  console.info(`[rosa] source parcel ${Math.round(performance.now() - parcelStarted)} ms`)
   if (!parcel) {
     return { ok: false, error: { code: "parcel_not_found", message: "Nie znaleziono działki.", parcelId: req.parcelId } }
   }
@@ -98,15 +104,24 @@ export async function runAnalysis(req: AnalysisRequest): Promise<AnalysisResult>
 
   const id = analysisIdFor(req)
   const cacheKey = `${ENGINE_VERSION}:${id}`
+  const running = inflight.get(cacheKey)
+  if (running) return running
+  const job = cachedOrCompute(req, id, cacheKey).finally(() => inflight.delete(cacheKey))
+  inflight.set(cacheKey, job)
+  return job
+}
+
+const inflight = new Map<string, Promise<AnalysisResult>>()
+
+async function cachedOrCompute(req: AnalysisRequest, id: string, cacheKey: string): Promise<AnalysisResult> {
   const hit = await readCache<Analysis>("analysis", cacheKey)
   if (hit) return { ok: true, analysis: hit }
-
   const started = performance.now()
   const result = await computeLive(req, id)
   console.info(`[rosa] analysis ${id} ${result.ok ? "ok" : result.error.code} in ${Math.round(performance.now() - started)} ms`)
   if (result.ok) {
-    const isToday = req.date >= toIsoDate(new Date(Date.now() - 6 * 86400000))
-    await writeCache("analysis", cacheKey, result.analysis, isToday ? 3 * 3600 : 30 * 86400)
+    const isRecent = req.date >= toIsoDate(new Date(Date.now() - 6 * 86400000))
+    void writeCache("analysis", cacheKey, result.analysis, isRecent ? 3 * 3600 : 30 * 86400)
   }
   return result
 }

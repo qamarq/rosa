@@ -16,7 +16,6 @@ export type DailySeries = {
 }
 
 type StationRow = { code: string; name: string; dist_m: number; has_temperature: number; lat: number }
-type DayRow = { station_code: string; day: string; precip_mm: number | null; tmax_c: number | null; tmin_c: number | null }
 type OpenMeteoForecast = { daily: { time: string[]; precipitation_sum: (number | null)[]; et0_fao_evapotranspiration: (number | null)[]; temperature_2m_max: (number | null)[] } }
 
 const PRECIP_STATIONS = 5
@@ -50,16 +49,6 @@ function hargreaves(tmax: number, tmin: number, latDeg: number, iso: string): nu
   return Math.max(0, 0.0023 * extraterrestrialRadiationMm(latDeg, iso) * (tmean + 17.8) * Math.sqrt(range))
 }
 
-function idw(values: { v: number | null; w: number }[]): number | null {
-  let num = 0
-  let den = 0
-  for (const { v, w } of values) {
-    if (v === null || !Number.isFinite(v)) continue
-    num += v * w
-    den += w
-  }
-  return den > 0 ? num / den : null
-}
 
 async function nearestStations(lat: number, lon: number): Promise<StationRow[]> {
   return db().execute<StationRow>(sql`
@@ -86,50 +75,50 @@ async function recentDays(lat: number, lon: number): Promise<OpenMeteoForecast["
   return (await fetchJson<OpenMeteoForecast>(url, 6000)).daily
 }
 
+type AggRow = { day: string; precip: number | null; tmax: number | null; tmin: number | null }
+
 async function stationSeries(lat: number, lon: number, start: string, end: string): Promise<DailySeries> {
   const stations = (await nearestStations(lat, lon)).filter((s) => s.dist_m <= MAX_DISTANCE_M)
   if (stations.length === 0) throw new Error("no IMGW stations nearby")
-  const rows = await db().execute<DayRow>(sql`
-    SELECT station_code, to_char(day, 'YYYY-MM-DD') AS day, precip_mm, tmax_c, tmin_c
-    FROM meteo_daily
-    WHERE station_code IN (${sql.join(stations.map((s) => sql`${s.code}`), sql`, `)})
-      AND day BETWEEN ${start} AND ${end}
-  `)
-  const byDay = new Map<string, DayRow[]>()
-  for (const r of rows) {
-    const list = byDay.get(r.day)
-    if (list) list.push(r)
-    else byDay.set(r.day, [r])
-  }
   const precipSet = [...stations].sort((a, b) => a.dist_m - b.dist_m).slice(0, PRECIP_STATIONS)
   const tempSet = stations.filter((s) => s.has_temperature === 1).sort((a, b) => a.dist_m - b.dist_m).slice(0, TEMP_STATIONS)
-  const weight = new Map(stations.map((s) => [s.code, 1 / Math.max(1000, s.dist_m) ** 2]))
   const precipCodes = new Set(precipSet.map((s) => s.code))
   const tempCodes = new Set(tempSet.map((s) => s.code))
-
+  const used = stations.filter((s) => precipCodes.has(s.code) || tempCodes.has(s.code))
+  const values = sql.join(
+    used.map((s) => sql`(${s.code}::text, ${1 / Math.max(1000, s.dist_m) ** 2}::float8, ${precipCodes.has(s.code)}::boolean, ${tempCodes.has(s.code)}::boolean)`),
+    sql`, `,
+  )
+  const rows = await db().execute<AggRow>(sql`
+    WITH st(code, w, is_p, is_t) AS (VALUES ${values})
+    SELECT to_char(d.day, 'YYYY-MM-DD') AS day,
+      sum(d.precip_mm * st.w) FILTER (WHERE st.is_p AND d.precip_mm IS NOT NULL) / nullif(sum(st.w) FILTER (WHERE st.is_p AND d.precip_mm IS NOT NULL), 0) AS precip,
+      sum(d.tmax_c * st.w) FILTER (WHERE st.is_t AND d.tmax_c IS NOT NULL) / nullif(sum(st.w) FILTER (WHERE st.is_t AND d.tmax_c IS NOT NULL), 0) AS tmax,
+      sum(d.tmin_c * st.w) FILTER (WHERE st.is_t AND d.tmin_c IS NOT NULL) / nullif(sum(st.w) FILTER (WHERE st.is_t AND d.tmin_c IS NOT NULL), 0) AS tmin
+    FROM meteo_daily d JOIN st ON st.code = d.station_code
+    WHERE d.day BETWEEN ${start} AND ${end}
+    GROUP BY d.day
+    ORDER BY d.day
+  `)
   const dates: string[] = []
   const precip: number[] = []
   const et0: number[] = []
   const tmax: number[] = []
-  for (let d = start; d <= end; d = addDays(d, 1)) {
-    const list = byDay.get(d) ?? []
-    const p = idw(list.filter((r) => precipCodes.has(r.station_code)).map((r) => ({ v: r.precip_mm, w: weight.get(r.station_code)! })))
-    const tx = idw(list.filter((r) => tempCodes.has(r.station_code)).map((r) => ({ v: r.tmax_c, w: weight.get(r.station_code)! })))
-    const tn = idw(list.filter((r) => tempCodes.has(r.station_code)).map((r) => ({ v: r.tmin_c, w: weight.get(r.station_code)! })))
-    if (p === null && tx === null) continue
-    dates.push(d)
-    precip.push(p ?? 0)
+  for (const r of rows) {
+    if (r.precip === null && r.tmax === null) continue
+    const tx = r.tmax === null ? null : Number(r.tmax)
+    const tn = r.tmin === null ? null : Number(r.tmin)
+    dates.push(r.day)
+    precip.push(r.precip === null ? 0 : Number(r.precip))
     tmax.push(tx ?? Number.NaN)
-    et0.push(tx !== null && tn !== null ? hargreaves(tx, tn, lat, d) : 0)
+    et0.push(tx !== null && tn !== null ? hargreaves(tx, tn, lat, r.day) : 0)
   }
-  const used = new Set([...precipCodes, ...tempCodes])
   return {
     dates,
     precip,
     et0,
     tmax,
-    stations: stations
-      .filter((s) => used.has(s.code))
+    stations: used
       .sort((a, b) => a.dist_m - b.dist_m)
       .map((s) => ({ code: s.code, name: s.name, distanceKm: Math.round(s.dist_m / 100) / 10, temperature: tempCodes.has(s.code) })),
     recentFrom: null,
