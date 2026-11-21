@@ -1,6 +1,9 @@
 import "server-only"
 import { cropLabel } from "@/lib/crops"
+import { DEMO_REQUEST } from "@/lib/demo"
 import { morkaAnalysis } from "@/lib/mock/morka"
+
+const LIVE_URL = "https://rosa.kamilmarczak.pl"
 import type { Analysis, AnalysisError, AnalysisRequest } from "@/lib/types"
 import { dateRange, isDateInRange, isValidParcelId, toIsoDate } from "@/lib/validation"
 import { applySatellite, buildAnalysis } from "@/server/analysis/engine"
@@ -14,7 +17,7 @@ import { loadSatellite, type SatelliteResult } from "@/server/sources/satellite"
 import { loadSoilCategory } from "@/server/sources/soil"
 import { loadTerrain } from "@/server/sources/terrain"
 
-const ENGINE_VERSION = "v9"
+const ENGINE_VERSION = "v10"
 const WINDOW_DAYS = 60
 const HISTORY_YEARS = 10
 const SATELLITE_BUDGET_MS = Number(process.env.ROSA_SATELLITE_BUDGET_MS ?? 15000)
@@ -38,8 +41,15 @@ function mockMode(): boolean {
 }
 
 function mockAnalysis(req: AnalysisRequest): AnalysisResult {
-  if (req.parcelId.endsWith(".9999")) {
-    return { ok: false, error: { code: "parcel_not_found", message: "Nie znaleziono działki.", parcelId: req.parcelId } }
+  if (req.parcelId !== DEMO_REQUEST.parcelId && req.parcelId !== morkaAnalysis.parcel.id) {
+    return {
+      ok: false,
+      error: {
+        code: "parcel_not_found",
+        message: `Tryb demonstracyjny bez bazy danych: działa tylko działka przykładowa ${DEMO_REQUEST.parcelId}. Analiza dowolnej działki: ${LIVE_URL}`,
+        parcelId: req.parcelId,
+      },
+    }
   }
   return {
     ok: true,
@@ -49,6 +59,7 @@ function mockAnalysis(req: AnalysisRequest): AnalysisResult {
       request: req,
       cropLabel: cropLabel(req.crop),
       parcel: { ...morkaAnalysis.parcel, id: req.parcelId },
+      demo: true,
     },
   }
 }

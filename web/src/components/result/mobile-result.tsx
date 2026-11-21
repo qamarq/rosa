@@ -13,6 +13,7 @@ import { DataStatusPill } from "./data-status"
 import { DioramaStage, useCamera } from "./diorama-stage"
 import { CAUSE_STYLE, CONFIDENCE, LEVEL_STYLE, SCALE, analysisYear, daysPl, groupedRecommendations, signed, noActionsText, noCausesText } from "./format"
 import { ClockIcon, DownloadIcon, FullscreenIcon, LayersIcon, MenuIcon, RosaLogo } from "./icons"
+import { DemoBanner } from "./demo-banner"
 import { LiteBanner } from "./lite-banner"
 import { LiteSwitchVisual } from "./result-header"
 import { CountableText } from "./sections"
@@ -410,6 +411,7 @@ export function MobileResult({
       <MobileHeader analysis={analysis} />
       <MobileScene analysis={analysis} selected={selected} onClear={onClear} sceneRef={sceneRef} />
       <main className={cn("mx-auto flex w-full max-w-2xl flex-1 flex-col gap-[18px] px-4 pt-5 pb-6", entrance && "animate-in duration-900 ease-out fade-in slide-in-from-bottom-24")}>
+        <DemoBanner analysis={analysis} />
         <LiteBanner />
         <MobileStatus analysis={analysis} />
         <MobileHistory analysis={analysis} />

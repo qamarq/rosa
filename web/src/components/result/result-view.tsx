@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import type { Analysis } from "@/lib/types"
 import { cn } from "@/lib/utils"
+import { DemoBanner } from "./demo-banner"
 import { LiteBanner } from "./lite-banner"
 import { MobileResult } from "./mobile-result"
 import { ResultHeader } from "./result-header"
@@ -52,6 +53,7 @@ export function ResultView({ analysis: initial, entrance = false }: { analysis: 
               entrance && "animate-in duration-800 ease-[cubic-bezier(.34,1.56,.64,1)] fade-in slide-in-from-right-24",
             )}
           >
+            <DemoBanner analysis={analysis} />
             <LiteBanner />
             <StatusSection analysis={analysis} />
             <Divider />
