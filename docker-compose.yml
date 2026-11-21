@@ -1,0 +1,29 @@
+services:
+  db:
+    image: imresamu/postgis:17-3.5
+    container_name: rosa-db
+    environment:
+      POSTGRES_DB: rosa
+      POSTGRES_USER: rosa
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rosa}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    command:
+      - postgres
+      - -c
+      - shared_buffers=1GB
+      - -c
+      - maintenance_work_mem=1GB
+      - -c
+      - max_wal_size=8GB
+      - -c
+      - synchronous_commit=off
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rosa -d rosa"]
+      interval: 5s
+      retries: 20
+
+volumes:
+  pgdata:
