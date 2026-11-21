@@ -30,7 +30,7 @@ export function LoadingFrame({ children }: { children: React.ReactNode }) {
   )
 }
 
-function LiteToggle() {
+export function LiteToggle() {
   const { lite, toggle } = useLiteMode()
   return (
     <button

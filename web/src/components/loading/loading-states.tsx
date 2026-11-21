@@ -5,6 +5,7 @@ import { useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { dateRange, formatDatePl } from "@/lib/validation"
+import type { ClientResult } from "@/lib/api-client"
 import { TIMING } from "./story-config"
 
 export type LoadInput = { parcel: string; crop: string; date: string }
@@ -14,6 +15,22 @@ export type LoadError =
   | { kind: "invalid_parcel" }
   | { kind: "date_out_of_range"; min?: string }
   | { kind: "unavailable"; reason: "network" | "upstream" | "timeout" }
+
+export function toLoadError(result: Extract<ClientResult, { ok: false }>, parcelId: string): LoadError {
+  const { error } = result
+  switch (error.code) {
+    case "parcel_not_found":
+      return { kind: "not_found", parcelId: error.parcelId ?? parcelId }
+    case "invalid_parcel_id":
+      return { kind: "invalid_parcel" }
+    case "date_out_of_range":
+      return { kind: "date_out_of_range", min: error.min }
+    case "network":
+      return { kind: "unavailable", reason: "network" }
+    default:
+      return { kind: "unavailable", reason: "upstream" }
+  }
+}
 
 export function startHref(input: Partial<LoadInput>, extra?: Record<string, string>): string {
   const params = new URLSearchParams()

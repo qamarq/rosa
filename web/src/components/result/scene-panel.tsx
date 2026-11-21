@@ -3,6 +3,7 @@
 import { baseSceneMode, sceneFacts } from "@/lib/scene"
 import type { Analysis, Recommendation } from "@/lib/types"
 import { cn } from "@/lib/utils"
+import { DataStatusPill } from "./data-status"
 import { DioramaStage, useCamera } from "./diorama-stage"
 import { daysPl, groupTint, ndviPosition, signed } from "./format"
 import { EyeIcon, LayersIcon, MinusIcon, PlusIcon, RainDeficitIcon, SunIcon } from "./icons"
@@ -67,7 +68,6 @@ export function DesktopScene({
 }) {
   const cam = useCamera()
   const { status, vegetation } = analysis
-  const allOk = analysis.sourceStatus.every((s) => s.ok)
 
   return (
     <section aria-label="Scena 3D działki" className="@container relative min-w-0 flex-1 overflow-hidden rounded-[28px] bg-[#F3D9AE]">
@@ -100,10 +100,7 @@ export function DesktopScene({
               {daysPl(status.windowDays)}: {signed(status.precipDeficitPct)}% deszczu
             </span>
           </div>
-          <div className="flex h-11 items-center gap-2 rounded-2xl bg-paper/85 px-3.5 text-sm text-muted-foreground">
-            <span aria-hidden="true" className={cn("size-2 rounded-full", allOk ? "bg-[#2E8B57]" : "bg-[#D9A52E]")} />
-            {vegetation ? `Teren: NMT GUGiK · zdjęcie satelitarne sprzed ${daysPl(vegetation.imageAgeDays)}` : analysis.sourceStatus.some((s) => s.pending) ? "Teren: NMT GUGiK · wczytujemy zdjęcie satelitarne…" : "Teren: NMT GUGiK · bez nowego zdjęcia satelitarnego"}
-          </div>
+          <DataStatusPill analysis={analysis} />
         </div>
       )}
 

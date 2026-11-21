@@ -1,11 +1,11 @@
 "use client"
 
 import dynamic from "next/dynamic"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useSyncExternalStore } from "react"
 import { Diorama, type SceneFacts } from "@/components/diorama/diorama"
 import { useLiteMode } from "@/components/lite-mode"
 import { SceneErrorBoundary } from "@/components/scene3d/error-boundary"
-import { loadParcelScene, supportsWebGL } from "@/components/scene3d/load-scene"
+import { getHandoff, loadParcelScene, reportHandoffReady, subscribeHandoff, supportsWebGL } from "@/components/scene3d/load-scene"
 import type { ParcelScene } from "@/lib/scene3d"
 import type { Analysis, SceneMode } from "@/lib/types"
 import { cn } from "@/lib/utils"
@@ -127,7 +127,9 @@ export function DioramaStage({
   const [loaded, setLoaded] = useState<{ id: string; scene: ParcelScene | null } | null>(null)
   const [phase, setPhase] = useState<Phase>("loading")
   const [failed, setFailed] = useState(false)
-  const want3d = webgl && !lite && visible && !failed
+  const handoff = useSyncExternalStore(subscribeHandoff, () => getHandoff(analysis.id), () => null)
+  const handing = !!handoff && !failed
+  const want3d = webgl && !lite && visible && !failed && (!handoff || handoff.released)
 
   useEffect(() => {
     if (!want3d) return
@@ -140,9 +142,9 @@ export function DioramaStage({
     }
   }, [want3d, analysis.id])
 
-  const scene = loaded?.id === analysis.id ? loaded.scene : null
+  const scene = handoff?.scene ?? (loaded?.id === analysis.id ? loaded.scene : null)
   const active = want3d && !!scene
-  const shown = active && (phase === "shown" || phase === "done")
+  const shown = handing || (active && (phase === "shown" || phase === "done"))
 
   useEffect(() => {
     if (!active || phase !== "loading") return
@@ -158,7 +160,7 @@ export function DioramaStage({
 
   return (
     <>
-      {!(active && phase === "done") && (
+      {!handing && !(active && phase === "done") && (
         <SvgStage
           mode={mode}
           labels={labels}
@@ -168,7 +170,7 @@ export function DioramaStage({
           className={cn(className, "transition-opacity duration-700", shown && "pointer-events-none opacity-0")}
         />
       )}
-      <div ref={hostRef} aria-hidden={!active || undefined} className={cn("absolute inset-0 transition-opacity duration-700", shown ? "opacity-100" : "pointer-events-none opacity-0")}>
+      <div ref={hostRef} aria-hidden={!active || undefined} className={cn("absolute inset-0", !handing && "transition-opacity duration-700", shown ? "opacity-100" : "pointer-events-none opacity-0")}>
         {active && scene && (
           <SceneErrorBoundary
             onError={() => {
@@ -183,7 +185,11 @@ export function DioramaStage({
               camera={camera}
               onRotate={onRotate}
               labels={labels}
-              onReady={() => setPhase((p) => (p === "loading" ? "shown" : p))}
+              intro={!handoff}
+              onReady={() => {
+                if (handoff) reportHandoffReady(analysis.id)
+                setPhase((p) => (p === "loading" ? (handoff ? "done" : "shown") : p))
+              }}
               onError={() => {
                 setFailed(true)
                 setPhase("loading")

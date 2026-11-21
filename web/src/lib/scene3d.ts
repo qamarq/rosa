@@ -15,4 +15,5 @@ export interface ParcelScene {
   waterLines: { kind: "rów" | "ciek" | "kanał"; points: Ring }[]
   waterAreas: Ring[]
   downslope: { x: number; y: number; slopePct: number }
+  center2180?: [number, number]
 }

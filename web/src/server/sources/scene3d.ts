@@ -82,7 +82,7 @@ function downslope(hs: number[], step: number): ParcelScene["downslope"] {
 }
 
 export async function loadParcelScene(parcelId: string): Promise<ParcelScene | null> {
-  return cached("scene3d-v2", parcelId, null, async () => {
+  return cached("scene3d-v3", parcelId, null, async () => {
     const base = await db().execute<Base>(sql`
       WITH p AS (SELECT geom FROM dzialki WHERE id_dzialki = ${parcelId} LIMIT 1),
       c AS (SELECT geom, ST_PointOnSurface(geom) AS pt FROM p)
@@ -125,6 +125,7 @@ export async function loadParcelScene(parcelId: string): Promise<ParcelScene | n
       waterLines,
       waterAreas,
       downslope: downslope(hs, step),
+      center2180: [Math.round(cx * 10) / 10, Math.round(cy * 10) / 10],
     }
   })
 }

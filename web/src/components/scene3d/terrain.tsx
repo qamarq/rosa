@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo } from "react"
 import * as THREE from "three"
+import { patchMaterial } from "./materials"
 import { ISLAND_DEPTH, type World } from "./world"
 
 const BANDS = [
@@ -111,7 +112,29 @@ function shadowTexture() {
   return tex
 }
 
-export function Terrain({ world, texture, quality }: { world: World; texture: THREE.Texture; quality: "high" | "low" }) {
+export function Terrain({
+  world,
+  texture,
+  quality,
+  ortho,
+}: {
+  world: World
+  texture: THREE.Texture
+  quality: "high" | "low"
+  ortho?: { map: THREE.Texture | null; mix: { value: number } }
+}) {
+  const orthoMap = ortho?.map ?? null
+  const orthoMix = ortho?.mix
+  const topMaterial = useMemo(() => {
+    const m = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.92, metalness: 0 })
+    if (!orthoMap || !orthoMix) return m
+    return patchMaterial(m, "rosa-terrain-ortho", {
+      uniforms: { uOrtho: orthoMix, uOrthoMap: { value: orthoMap } },
+      fragmentHead: "uniform float uOrtho;\nuniform sampler2D uOrthoMap;",
+      fragmentColor: "diffuseColor.rgb = mix(diffuseColor.rgb, texture2D(uOrthoMap, vMapUv).rgb, uOrtho);",
+    })
+  }, [texture, orthoMap, orthoMix])
+  useEffect(() => () => topMaterial.dispose(), [topMaterial])
   const res = quality === "high" ? 129 : 73
   const { top, sides, bottom, shadow } = useMemo(() => {
     const t = buildTop(world, res)
@@ -131,9 +154,7 @@ export function Terrain({ world, texture, quality }: { world: World; texture: TH
 
   return (
     <group>
-      <mesh geometry={top} receiveShadow>
-        <meshStandardMaterial map={texture} roughness={0.92} metalness={0} />
-      </mesh>
+      <mesh geometry={top} material={topMaterial} receiveShadow />
       <mesh geometry={sides} receiveShadow>
         <meshStandardMaterial vertexColors roughness={0.95} metalness={0} side={THREE.DoubleSide} />
       </mesh>

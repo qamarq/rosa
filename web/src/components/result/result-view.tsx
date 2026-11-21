@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import type { Analysis } from "@/lib/types"
+import { cn } from "@/lib/utils"
 import { LiteBanner } from "./lite-banner"
 import { MobileResult } from "./mobile-result"
 import { ResultHeader } from "./result-header"
@@ -19,7 +20,7 @@ import {
 
 const ACTIONS_ID = "co-zrobic"
 
-export function ResultView({ analysis: initial }: { analysis: Analysis }) {
+export function ResultView({ analysis: initial, entrance = false }: { analysis: Analysis; entrance?: boolean }) {
   const [analysis, setAnalysis] = useState(initial)
   const satellitePending = analysis.sourceStatus.some((s) => s.pending)
   useEffect(() => {
@@ -46,7 +47,10 @@ export function ResultView({ analysis: initial }: { analysis: Analysis }) {
           <DesktopScene analysis={analysis} selected={selected} onClear={clear} />
           <aside
             aria-label="Wynik analizy"
-            className="rosa-clay flex w-[460px] flex-none flex-col gap-[22px] overflow-y-auto overscroll-contain rounded-[28px] bg-paper p-7 xl:w-[540px]"
+            className={cn(
+              "rosa-clay flex w-[460px] flex-none flex-col gap-[22px] overflow-y-auto overscroll-contain rounded-[28px] bg-paper p-7 xl:w-[540px]",
+              entrance && "animate-in duration-800 ease-[cubic-bezier(.34,1.56,.64,1)] fade-in slide-in-from-right-24",
+            )}
           >
             <LiteBanner />
             <StatusSection analysis={analysis} />
@@ -65,7 +69,7 @@ export function ResultView({ analysis: initial }: { analysis: Analysis }) {
           </aside>
         </main>
       </div>
-      <MobileResult analysis={analysis} selected={selected} onSelect={setSelectedId} onClear={clear} className="lg:hidden" />
+      <MobileResult analysis={analysis} selected={selected} onSelect={setSelectedId} onClear={clear} entrance={entrance} className="lg:hidden" />
     </>
   )
 }

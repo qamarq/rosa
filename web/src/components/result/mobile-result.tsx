@@ -9,6 +9,7 @@ import type { Analysis, Recommendation } from "@/lib/types"
 import { formatDatePl } from "@/lib/validation"
 import { cn } from "@/lib/utils"
 import { CountUp } from "./count-up"
+import { DataStatusPill } from "./data-status"
 import { DioramaStage, useCamera } from "./diorama-stage"
 import { CAUSE_STYLE, CONFIDENCE, LEVEL_STYLE, SCALE, analysisYear, daysPl, groupedRecommendations, signed, noActionsText, noCausesText } from "./format"
 import { ClockIcon, DownloadIcon, FullscreenIcon, LayersIcon, MenuIcon, RosaLogo } from "./icons"
@@ -115,9 +116,12 @@ function MobileScene({
           </button>
         </div>
       ) : (
-        <span className="pointer-events-none absolute top-3 left-3 flex h-9 items-center gap-1.5 rounded-xl bg-paper px-3 text-[13px] font-bold tabular-nums">
-          {weather} · {daysPl(status.windowDays)}: {signed(status.precipDeficitPct)}% deszczu
-        </span>
+        <>
+          <span className="pointer-events-none absolute top-3 left-3 flex h-9 max-w-[calc(100%-150px)] items-center gap-1.5 truncate rounded-xl bg-paper px-3 text-[13px] font-bold tabular-nums">
+            {weather} · {daysPl(status.windowDays)}: {signed(status.precipDeficitPct)}% deszczu
+          </span>
+          <DataStatusPill analysis={analysis} compact className="absolute top-3 right-3 rounded-xl" />
+        </>
       )}
       <div className="absolute right-3 bottom-3 flex gap-1.5">
         <button

@@ -6,7 +6,7 @@ import * as THREE from "three"
 import { useLiteMode } from "@/components/lite-mode"
 import { useReducedMotion } from "@/components/result/motion"
 import type { ParcelScene } from "@/lib/scene3d"
-import type { Analysis, SceneMode } from "@/lib/types"
+import type { Analysis, CropId, SceneMode } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { SceneActors } from "./actors"
 import { CameraRig, FLY_IN_S, type CameraState } from "./camera-rig"
@@ -25,7 +25,7 @@ export type Quality = "high" | "low"
 const PLANTS = { high: 9000, low: 3200 }
 const FOG = "#F1D6A8"
 
-function initialQuality(): Quality {
+export function initialQuality(): Quality {
   if (typeof window === "undefined") return "low"
   const coarse = window.matchMedia("(pointer: coarse)").matches
   const cores = navigator.hardwareConcurrency ?? 4
@@ -33,7 +33,7 @@ function initialQuality(): Quality {
   return coarse || cores <= 4 || memory <= 4 ? "low" : "high"
 }
 
-function Ticker({ time, animate }: { time: TimeUniforms; animate: boolean }) {
+export function Ticker({ time, animate }: { time: TimeUniforms; animate: boolean }) {
   const nextGust = useRef(4)
   useFrame(({ clock }) => {
     if (!animate) return
@@ -47,7 +47,7 @@ function Ticker({ time, animate }: { time: TimeUniforms; animate: boolean }) {
   return null
 }
 
-function FpsWatch({ quality, onLow, onStill }: { quality: Quality; onLow: () => void; onStill: () => void }) {
+export function FpsWatch({ quality, onLow, onStill }: { quality: Quality; onLow: () => void; onStill: () => void }) {
   const acc = useRef({ start: -1, last: -1, frames: 0 })
   useFrame(({ clock }) => {
     const t = clock.elapsedTime
@@ -71,7 +71,7 @@ function FpsWatch({ quality, onLow, onStill }: { quality: Quality; onLow: () => 
   return null
 }
 
-function FirstFrame({ onReady }: { onReady?: () => void }) {
+export function FirstFrame({ onReady }: { onReady?: () => void }) {
   const frames = useRef(0)
   useFrame(() => {
     frames.current += 1
@@ -80,7 +80,7 @@ function FirstFrame({ onReady }: { onReady?: () => void }) {
   return null
 }
 
-type Label = { key: string; at: [number, number, number]; text: string; detail?: string | null; water?: boolean }
+export type Label = { key: string; at: [number, number, number]; text: string; detail?: string | null; water?: boolean }
 
 function sceneLabels(world: World, analysis: Analysis): Label[] {
   const areaHa = analysis.parcel.areaHa
@@ -102,7 +102,7 @@ function sceneLabels(world: World, analysis: Analysis): Label[] {
   return out
 }
 
-function LabelTracker({ labels, nodes }: { labels: Label[]; nodes: React.RefObject<(HTMLDivElement | null)[]> }) {
+export function LabelTracker({ labels, nodes }: { labels: Label[]; nodes: React.RefObject<(HTMLDivElement | null)[]> }) {
   useFrame(({ camera, size }) => {
     camera.updateMatrixWorld()
     labels.forEach((label, i) => {
@@ -116,50 +116,17 @@ function LabelTracker({ labels, nodes }: { labels: Label[]; nodes: React.RefObje
   return null
 }
 
-function World3D({
-  world,
-  analysis,
-  mode,
-  camera,
-  tilt,
-  animate,
-  quality,
-}: {
-  world: World
-  analysis: Analysis
-  mode: SceneMode
-  camera: CameraState
-  tilt: number
-  animate: boolean
-  quality: Quality
-}) {
-  const gl = useThree((s) => s.gl)
-  const level = analysis.status.level
-  const ndvi = analysis.vegetation?.ndvi ?? null
-  const crop = analysis.request.crop
-  const target = PLANTS[quality]
-  const rowGapM = rowGapFor(world, target)
-  const time = useMemo(() => createTimeUniforms(), [])
-  const texture = useMemo(() => {
-    const ditchWidthM = 7
-    const tex = new THREE.CanvasTexture(drawGround(world, { size: quality === "high" ? 2048 : 1024, level, rowGapM, ditchWidthM }))
-    tex.colorSpace = THREE.SRGBColorSpace
-    tex.anisotropy = Math.min(8, gl.capabilities.getMaxAnisotropy())
-    return tex
-  }, [world, quality, level, rowGapM, gl])
-  useEffect(() => () => texture.dispose(), [texture])
+export function weatherOf(analysis: Analysis | null): SceneWeather {
+  const level = analysis?.status.level ?? 2
+  return {
+    level,
+    hot: !!analysis && (analysis.causes.some((c) => c.kind === "upal") || /upał/i.test(analysis.status.headline)),
+    dry: level >= 3,
+    wet: level <= 1,
+  }
+}
 
-  const weather = useMemo<SceneWeather>(
-    () => ({
-      level,
-      hot: analysis.causes.some((c) => c.kind === "upal") || /upał/i.test(analysis.status.headline),
-      dry: level >= 3,
-      wet: level <= 1,
-    }),
-    [level, analysis.causes, analysis.status.headline],
-  )
-  const shadows = quality === "high"
-
+export function SceneLights({ shadows }: { shadows: boolean }) {
   return (
     <>
       <fog attach="fog" args={[FOG, 30, 80]} />
@@ -182,15 +149,92 @@ function World3D({
         shadow-radius={3}
       />
       <directionalLight position={[8, 5, -6]} color="#BFE3E6" intensity={0.35} />
-      <Ticker time={time} animate={animate} />
-      <CameraRig world={world} mode={mode} camera={camera} tilt={tilt} animate={animate} />
-      <Terrain world={world} texture={texture} quality={quality} />
+    </>
+  )
+}
+
+export type ParcelWorldProps = {
+  world: World
+  crop: CropId
+  analysis: Analysis | null
+  mode: SceneMode
+  animate: boolean
+  quality: Quality
+  time: TimeUniforms
+  outlineAt: number
+  cropAt: number
+  actors: boolean
+  ortho?: { map: THREE.Texture | null; mix: { value: number } }
+}
+
+export function ParcelWorld({ world, crop, analysis, mode, animate, quality, time, outlineAt, cropAt, actors, ortho }: ParcelWorldProps) {
+  const gl = useThree((s) => s.gl)
+  const level = analysis?.status.level ?? 2
+  const ndvi = analysis?.vegetation?.ndvi ?? null
+  const target = PLANTS[quality]
+  const rowGapM = rowGapFor(world, target)
+  const texture = useMemo(() => {
+    const tex = new THREE.CanvasTexture(drawGround(world, { size: quality === "high" ? 2048 : 1024, level, rowGapM, ditchWidthM: 7 }))
+    tex.colorSpace = THREE.SRGBColorSpace
+    tex.anisotropy = Math.min(8, gl.capabilities.getMaxAnisotropy())
+    return tex
+  }, [world, quality, level, rowGapM, gl])
+  useEffect(() => () => texture.dispose(), [texture])
+  const weather = useMemo(() => weatherOf(analysis), [analysis])
+  const shadows = quality === "high"
+
+  return (
+    <>
+      <Terrain world={world} texture={texture} quality={quality} ortho={ortho} />
       <Water world={world} time={time} level={level} />
-      <CropField world={world} crop={crop} ndvi={ndvi} level={level} target={target} time={time} animate={animate} shadows={shadows} revealAt={FLY_IN_S * 0.7} />
-      <ParcelOutline world={world} animate={animate} revealAt={FLY_IN_S * 0.45} />
-      <SceneErrorBoundary>
-        <SceneActors ctx={world} mode={mode} crop={crop} weather={weather} ndvi={ndvi} animate={animate} quality={quality} />
-      </SceneErrorBoundary>
+      <CropField world={world} crop={crop} ndvi={ndvi} level={level} target={target} time={time} animate={animate} shadows={shadows} revealAt={cropAt} />
+      <ParcelOutline world={world} animate={animate} revealAt={outlineAt} />
+      {actors && (
+        <SceneErrorBoundary>
+          <SceneActors ctx={world} mode={mode} crop={crop} weather={weather} ndvi={ndvi} animate={animate} quality={quality} />
+        </SceneErrorBoundary>
+      )}
+    </>
+  )
+}
+
+function World3D({
+  world,
+  analysis,
+  mode,
+  camera,
+  tilt,
+  animate,
+  quality,
+  intro,
+}: {
+  world: World
+  analysis: Analysis
+  mode: SceneMode
+  camera: CameraState
+  tilt: number
+  animate: boolean
+  quality: Quality
+  intro: boolean
+}) {
+  const time = useMemo(() => createTimeUniforms(), [])
+  return (
+    <>
+      <SceneLights shadows={quality === "high"} />
+      <Ticker time={time} animate={animate} />
+      <CameraRig world={world} mode={mode} camera={camera} tilt={tilt} animate={animate} intro={intro} />
+      <ParcelWorld
+        world={world}
+        crop={analysis.request.crop}
+        analysis={analysis}
+        mode={mode}
+        animate={animate}
+        quality={quality}
+        time={time}
+        outlineAt={intro ? FLY_IN_S * 0.45 : -10}
+        cropAt={intro ? FLY_IN_S * 0.7 : -10}
+        actors
+      />
     </>
   )
 }
@@ -204,10 +248,11 @@ export type ParcelScene3DProps = {
   labels?: boolean
   onReady?: () => void
   onError?: () => void
+  intro?: boolean
   className?: string
 }
 
-export function ParcelScene3D({ scene, analysis, mode, camera, onRotate, labels = false, onReady, onError, className }: ParcelScene3DProps) {
+export function ParcelScene3D({ scene, analysis, mode, camera, onRotate, labels = false, onReady, onError, intro = true, className }: ParcelScene3DProps) {
   const { lite } = useLiteMode()
   const reduced = useReducedMotion()
   const [still, setStill] = useState(false)
@@ -221,7 +266,7 @@ export function ParcelScene3D({ scene, analysis, mode, camera, onRotate, labels 
   const drag = useRef<{ x: number; y: number; rot: number; tilt: number; captured: boolean } | null>(null)
   const labelNodes = useRef<(HTMLDivElement | null)[]>([])
   const labelList = useMemo(() => (labels ? sceneLabels(world, analysis) : []), [labels, world, analysis])
-  const [labelsShown, setLabelsShown] = useState(!animate)
+  const [labelsShown, setLabelsShown] = useState(!animate || !intro)
 
   useEffect(() => {
     if (labelsShown) return
@@ -292,7 +337,7 @@ export function ParcelScene3D({ scene, analysis, mode, camera, onRotate, labels 
         }}
       >
         {animate && <FpsWatch quality={quality} onLow={() => setQuality("low")} onStill={() => setStill(true)} />}
-        <World3D world={world} analysis={analysis} mode={mode} camera={camera} tilt={tilt} animate={animate} quality={quality} />
+        <World3D world={world} analysis={analysis} mode={mode} camera={camera} tilt={tilt} animate={animate} quality={quality} intro={intro} />
         {labelList.length > 0 && <LabelTracker labels={labelList} nodes={labelNodes} />}
         <FirstFrame onReady={onReady} />
       </Canvas>

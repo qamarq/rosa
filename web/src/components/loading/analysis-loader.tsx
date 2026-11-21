@@ -5,12 +5,14 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react"
 import { useLiteMode } from "@/components/lite-mode"
 import { Button } from "@/components/ui/button"
-import { requestAnalysis, type ClientResult } from "@/lib/api-client"
+import { requestAnalysis } from "@/lib/api-client"
 import { cropLabel, isCropId } from "@/lib/crops"
 import type { Analysis, CropId } from "@/lib/types"
 import { formatDatePl, isDateInRange, isValidParcelId } from "@/lib/validation"
+import { supportsWebGL } from "@/components/scene3d/load-scene"
+import { Journey } from "./journey"
 import { LoadingFrame } from "./loading-frame"
-import { LoadErrorState, startHref, type LoadError, type LoadInput } from "./loading-states"
+import { LoadErrorState, startHref, toLoadError, type LoadError, type LoadInput } from "./loading-states"
 import { TIMING, type StoryStep } from "./story-config"
 import { StoryStage } from "./story-stage"
 
@@ -27,7 +29,7 @@ function subscribeReduced(onChange: () => void) {
   return () => mq.removeEventListener("change", onChange)
 }
 
-function usePrefersReducedMotion(): boolean {
+export function usePrefersReducedMotion(): boolean {
   return useSyncExternalStore(
     subscribeReduced,
     () => window.matchMedia(REDUCED_QUERY).matches,
@@ -35,31 +37,20 @@ function usePrefersReducedMotion(): boolean {
   )
 }
 
-function toLoadError(result: Extract<ClientResult, { ok: false }>, parcelId: string): LoadError {
-  const { error } = result
-  switch (error.code) {
-    case "parcel_not_found":
-      return { kind: "not_found", parcelId: error.parcelId ?? parcelId }
-    case "invalid_parcel_id":
-      return { kind: "invalid_parcel" }
-    case "date_out_of_range":
-      return { kind: "date_out_of_range", min: error.min }
-    case "network":
-      return { kind: "unavailable", reason: "network" }
-    default:
-      return { kind: "unavailable", reason: "upstream" }
-  }
-}
 
 export function AnalysisLoader() {
   const params = useSearchParams()
   const { bfcacheId } = useRouter()
-  const input: LoadInput = {
+  const live: LoadInput = {
     parcel: params.get("parcel")?.trim() ?? "",
     crop: params.get("crop") ?? "",
     date: params.get("date") ?? "",
   }
-  return <AnalysisFlow key={`${bfcacheId}|${input.parcel}|${input.crop}|${input.date}`} {...input} />
+  const liveKey = `${bfcacheId}|${live.parcel}|${live.crop}|${live.date}`
+  const [pinned, setPinned] = useState({ key: liveKey, input: live })
+  if (live.parcel && liveKey !== pinned.key) setPinned({ key: liveKey, input: live })
+  const current = live.parcel ? { key: liveKey, input: live } : pinned
+  return <AnalysisFlow key={current.key} {...current.input} />
 }
 
 function AnalysisFlow({ parcel, crop, date }: LoadInput) {
@@ -89,7 +80,19 @@ function AnalysisFlow({ parcel, crop, date }: LoadInput) {
     )
   }
 
-  return <RunAttempt key={attempt} parcel={parcel} crop={crop as CropId} date={date} onRetry={retry} />
+  return <RunChoice key={attempt} parcel={parcel} crop={crop as CropId} date={date} onRetry={retry} />
+}
+
+const noopSubscribe = () => () => {}
+
+function RunChoice({ parcel, crop, date, onRetry }: LoadInput & { crop: CropId; onRetry: () => void }) {
+  const { lite } = useLiteMode()
+  const reduced = usePrefersReducedMotion()
+  const webgl = useSyncExternalStore(noopSubscribe, supportsWebGL, () => null)
+  const [fallback, setFallback] = useState(false)
+  if (webgl === null) return <div aria-hidden="true" className="fixed inset-0 bg-[linear-gradient(180deg,#FBE8C6_0%,#F6DDB2_45%,#F1D6A8_100%)]" />
+  if (lite || reduced || !webgl || fallback) return <RunAttempt parcel={parcel} crop={crop} date={date} onRetry={onRetry} />
+  return <Journey parcel={parcel} crop={crop} date={date} onRetry={onRetry} onFallback={() => setFallback(true)} />
 }
 
 function RunAttempt({ parcel, crop, date, onRetry }: LoadInput & { crop: CropId; onRetry: () => void }) {

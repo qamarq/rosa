@@ -3,10 +3,10 @@ import type { ParcelScene } from "@/lib/scene3d"
 const cache = new Map<string, Promise<ParcelScene | null>>()
 const TIMEOUT_MS = 8000
 
-export function loadParcelScene(analysisId: string): Promise<ParcelScene | null> {
+export function loadParcelScene(analysisId: string, timeoutMs = TIMEOUT_MS): Promise<ParcelScene | null> {
   const hit = cache.get(analysisId)
   if (hit) return hit
-  const promise = fetch(`/api/analyses/${analysisId}/scene`, { signal: AbortSignal.timeout(TIMEOUT_MS) })
+  const promise = fetch(`/api/analyses/${analysisId}/scene`, { signal: AbortSignal.timeout(timeoutMs) })
     .then((res) => (res.ok ? (res.json() as Promise<ParcelScene>) : null))
     .then((scene) => (scene && scene.grid?.heights?.length === scene.grid.size * scene.grid.size && scene.parcel?.length ? scene : null))
     .catch(() => null)
@@ -31,3 +31,36 @@ export function supportsWebGL(): boolean {
   }
   return webgl
 }
+
+export type Handoff = { scene: ParcelScene; released: boolean; ready: boolean }
+
+const handoffs = new Map<string, Handoff>()
+const listeners = new Set<() => void>()
+const emit = () => listeners.forEach((l) => l())
+
+export function subscribeHandoff(listener: () => void) {
+  listeners.add(listener)
+  return () => {
+    listeners.delete(listener)
+  }
+}
+
+export function getHandoff(analysisId: string): Handoff | null {
+  return handoffs.get(analysisId) ?? null
+}
+
+export function beginHandoff(analysisId: string, scene: ParcelScene) {
+  cache.set(analysisId, Promise.resolve(scene))
+  handoffs.set(analysisId, { scene, released: false, ready: false })
+  emit()
+}
+
+function patchHandoff(analysisId: string, patch: Partial<Handoff>) {
+  const cur = handoffs.get(analysisId)
+  if (!cur) return
+  handoffs.set(analysisId, { ...cur, ...patch })
+  emit()
+}
+
+export const releaseHandoff = (analysisId: string) => patchHandoff(analysisId, { released: true })
+export const reportHandoffReady = (analysisId: string) => patchHandoff(analysisId, { ready: true })
