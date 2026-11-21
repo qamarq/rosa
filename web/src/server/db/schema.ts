@@ -40,6 +40,31 @@ export const meteoDaily = pgTable(
   (t) => [primaryKey({ columns: [t.stationCode, t.day] }), index("meteo_daily_day_idx").on(t.day)],
 )
 
+export const meteoLiveSample = pgTable(
+  "meteo_live_sample",
+  {
+    stationCode: text("station_code").notNull(),
+    ts: timestamp("ts", { withTimezone: true }).notNull(),
+    tempC: real("temp_c"),
+    precip10minMm: real("precip_10min_mm"),
+  },
+  (t) => [primaryKey({ columns: [t.stationCode, t.ts] }), index("meteo_live_sample_ts_idx").on(t.ts)],
+)
+
+export const meteoDailyLive = pgTable(
+  "meteo_daily_live",
+  {
+    stationCode: text("station_code").notNull(),
+    day: date("day").notNull(),
+    precipMm: real("precip_mm"),
+    tmaxC: real("tmax_c"),
+    tminC: real("tmin_c"),
+    samplesPrecip: integer("samples_precip").notNull(),
+    samplesTemp: integer("samples_temp").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.stationCode, t.day] }), index("meteo_daily_live_day_idx").on(t.day)],
+)
+
 const geometry2180 = customType<{ data: string }>({
   dataType: () => "geometry(Geometry, 2180)",
 })
