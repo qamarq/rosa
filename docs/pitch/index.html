@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>ROSA – pitch deck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --accent: #0E6E73;
+  --accent-deep: #0A5357;
+  --ink: #2A2118;
+  --paper: #F6EBD9;
+  --card: #FFFDF8;
+  --sun: #E9B949;
+  --clay: #A8432A;
+  --leaf: #8DB54A;
+  --white: #ffffff;
+}
+@page { size: 1920px 1080px; margin: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: #222; }
+body { font-family: "Figtree", sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.slide { width: 1920px; height: 1080px; position: relative; overflow: hidden; background: var(--accent); color: var(--white); page-break-after: always; break-after: page; }
+.slide.paper { background: var(--paper); color: var(--ink); }
+.slide.ink { background: var(--ink); color: var(--white); }
+.meta { position: absolute; top: 28px; left: 40px; right: 40px; z-index: 20; display: flex; justify-content: space-between; font: 700 22px/1 "Figtree", sans-serif; }
+.meta .brand { display: flex; align-items: center; gap: 12px; }
+.meta .brand img { width: 30px; height: 30px; border-radius: 8px; }
+.meta .right { color: var(--sun); }
+.paper .meta .right { color: var(--accent); }
+.display { font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; letter-spacing: -0.045em; line-height: 0.86; }
+.h2 { font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; letter-spacing: -0.035em; line-height: 0.95; font-size: 104px; }
+.h3 { font-family: "Bricolage Grotesque", sans-serif; font-weight: 700; letter-spacing: -0.025em; line-height: 1.02; font-size: 52px; }
+.body { font: 600 30px/1.34 "Figtree", sans-serif; }
+.small { font: 600 22px/1.4 "Figtree", sans-serif; }
+.mark { background: var(--sun); color: var(--ink); padding: 0 10px; border-radius: 8px; }
+.paper .mark { background: var(--accent); color: var(--white); }
+.accent { color: var(--accent); }
+.sun { color: var(--sun); }
+.phone { position: absolute; aspect-ratio: 390 / 844; border-radius: 58px; border: 13px solid #1d1712; background: #1d1712; overflow: hidden; box-shadow: 0 40px 80px -30px rgba(20,10,0,.45); }
+.phone img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; border-radius: 44px; }
+.browser { position: absolute; border-radius: 18px; overflow: hidden; background: #EDE2CF; box-shadow: 0 40px 80px -30px rgba(20,10,0,.45); }
+.browser .bar { height: 38px; display: flex; align-items: center; gap: 9px; padding: 0 16px; background: #E3D3B8; }
+.browser .bar i { width: 13px; height: 13px; border-radius: 50%; background: #C9B593; display: block; }
+.browser .bar span { margin-left: 18px; font: 600 16px "Figtree"; color: #6B5A45; background: #F6EBD9; padding: 5px 16px; border-radius: 8px; }
+.browser img { display: block; width: 100%; }
+.pill { display: inline-flex; align-items: center; gap: 12px; padding: 12px 24px; border-radius: 999px; background: rgba(255,255,255,.16); font: 700 26px "Figtree"; white-space: nowrap; }
+.paper .pill { background: var(--card); border: 2px solid #E3D3B8; }
+.card { background: var(--card); color: var(--ink); border-radius: 26px; padding: 26px 28px; }
+.card h4 { font: 700 34px/1.05 "Bricolage Grotesque"; letter-spacing: -0.02em; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; }
+.card p { font: 600 20px/1.38 "Figtree"; color: #5B4D3E; }
+.num { font-family: "Bricolage Grotesque"; font-weight: 800; letter-spacing: -0.04em; line-height: .9; }
+.foot { position: absolute; left: 40px; bottom: 28px; font: 600 16px/1.3 "Figtree"; opacity: .7; }
+.tag { display: inline-block; font: 800 18px/1 "Figtree"; letter-spacing: .14em; text-transform: uppercase; padding: 9px 14px; border-radius: 10px; background: var(--accent); color: #fff; }
+.ink .tag { background: var(--sun); color: var(--ink); }
+.dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; flex: none; }
+</style>
+</head>
+<body>
+
+<!-- 1. Tytuł -->
+<section class="slide">
+  <div class="meta"><span class="brand"><img src="img/app-icon.svg">ROSA · KOWR „Zatrzymaj Wodę, Chroń Plony”</span><span class="right">HackNation 2026</span></div>
+  <div style="position:absolute;left:44px;top:110px;display:flex;flex-direction:column;gap:6px">
+    <div style="display:flex;align-items:baseline;white-space:nowrap"><span class="display" style="font-size:178px;line-height:.92;width:150px">R</span><span style="font:700 74px/1 'Bricolage Grotesque';letter-spacing:-.03em;color:var(--sun);opacity:.92">etencja</span></div>
+    <div style="display:flex;align-items:baseline;white-space:nowrap"><span class="display" style="font-size:178px;line-height:.92;width:150px">O</span><span style="font:700 74px/1 'Bricolage Grotesque';letter-spacing:-.03em;color:var(--sun);opacity:.92">pady</span></div>
+    <div style="display:flex;align-items:baseline;white-space:nowrap"><span class="display" style="font-size:178px;line-height:.92;width:150px">S</span><span style="font:700 74px/1 'Bricolage Grotesque';letter-spacing:-.03em;color:var(--sun);opacity:.92">usza</span></div>
+    <div style="display:flex;align-items:baseline;white-space:nowrap"><span class="display" style="font-size:178px;line-height:.92;width:150px">A</span><span style="font:700 74px/1 'Bricolage Grotesque';letter-spacing:-.03em;color:var(--sun);opacity:.92">naliza</span></div>
+  </div>
+<div class="browser" style="width:980px;left:880px;top:200px;transform:rotate(-3deg)"><div class="bar"><i></i><i></i><i></i><span>rosa.kamilmarczak.pl/dzialka/302602_5.0008.399</span></div><img src="img/w-result.jpg"></div>
+  <div class="phone" style="width:330px;left:1520px;top:420px;transform:rotate(6deg)"><img src="img/m-result.jpg"></div>
+  <div style="position:absolute;left:44px;bottom:46px;max-width:780px">
+    <div style="font:700 36px/1.16 'Bricolage Grotesque';letter-spacing:-.02em">Ile wody ma Twoje pole — i&nbsp;jak ją na nim zatrzymać. Dla każdej działki w&nbsp;Polsce, w&nbsp;kilka sekund.</div>
+  </div>
+</section>
+
+<!-- 2. Problem -->
+<section class="slide">
+  <div class="meta"><span class="brand"><img src="img/app-icon.svg">ROSA · KOWR „Zatrzymaj Wodę, Chroń Plony”</span><span class="right">HackNation 2026</span></div>
+  <div class="body" style="position:absolute;left:40px;top:130px;width:1120px;font-size:35px;line-height:1.32">
+    <p>Susza rolnicza wraca co roku. W 2018 r. dotknęła <span class="mark">prawie 83% gmin</span>, a pomoc suszowa kosztowała 1,5 mld zł. W 2026 r. już wiosną susza była we wszystkich województwach.</p>
+    <p style="margin-top:32px">Polska zatrzymuje tylko ok. <span class="mark">7,5% wody</span> z opadów, Hiszpania ok. 40%. Tanie sposoby na zatrzymanie wody na polu są znane, ale nikt ich nie podpowiada wtedy, gdy mają sens.</p>
+    <p style="margin-top:32px">Dane istnieją, ale są rozproszone w pięciu instytucjach, a monitoring suszy mówi o gminie, <span class="mark">nie o Twojej działce</span>.</p>
+  </div>
+  <div style="position:absolute;right:60px;top:150px;width:600px;display:flex;flex-direction:column;gap:18px">
+    <div class="pill">🌧️ IMGW-PIB · pogoda i rzeki</div>
+    <div class="pill" style="margin-left:90px">🌱 IUNG-PIB · gleba i susza</div>
+    <div class="pill" style="margin-left:30px">🗺️ GUGiK · działki, teren, rowy</div>
+    <div class="pill" style="margin-left:120px">💧 PIG-PIB · wody gruntowe</div>
+    <div class="pill" style="margin-left:10px">🛰️ Copernicus · Sentinel-2</div>
+  </div>
+  <div class="display" style="position:absolute;left:24px;bottom:-40px;font-size:300px;white-space:nowrap">PROBLEM</div>
+  <div class="foot" style="left:auto;right:60px;bottom:auto;top:560px;width:600px;text-align:right">Źródła: gov.pl (pomoc suszowa 2018), biuletyn suszy IUNG 2026, Wielkopolska Izba Rolnicza</div>
+</section>
+
+<!-- 3. Rozwiązanie -->
+<section class="slide">
+  <div class="meta"><span class="brand"><img src="img/app-icon.svg">ROSA · KOWR „Zatrzymaj Wodę, Chroń Plony”</span><span class="right">HackNation 2026</span></div>
+  <div class="display" style="position:absolute;right:30px;top:90px;font-size:190px;white-space:nowrap;text-align:right">
+    <div>ROZWIĄZANIE</div><div style="opacity:.5">ROZWIĄZANIE</div><div style="opacity:.22">ROZWIĄZANIE</div>
+  </div>
+  <div class="phone" style="width:330px;left:1050px;top:470px;transform:rotate(-5deg)"><img src="img/m-landing.jpg"></div>
+  <div class="phone" style="width:330px;left:1430px;top:430px;transform:rotate(5deg)"><img src="img/m-status.jpg"></div>
+  <div style="position:absolute;left:40px;bottom:70px;display:flex;flex-direction:column;gap:16px;font:700 38px/1.15 'Bricolage Grotesque';letter-spacing:-.015em;max-width:960px">
+    <div>Numer działki, uprawa, dzień → <span class="sun">wynik w kilka sekund</span></div>
+    <div>Stan wody liczony metodą IUNG z rozporządzenia MRiRW</div>
+    <div>Przyczyny i rekomendacje wyliczone z danych, ze źródłem</div>
+    <div>Model 3D działki z prawdziwych danych i raport PDF</div>
+    <div>Bez logowania, na komputerze i telefonie</div>
+  </div>
+</section>
+
+<!-- 4. Przelot -->
+<section class="slide paper">
+  <div class="meta"><span class="brand"><img src="img/app-icon.svg">ROSA · KOWR „Zatrzymaj Wodę, Chroń Plony”</span><span class="right">HackNation 2026</span></div>
+  <div class="h2" style="position:absolute;left:40px;top:110px;max-width:1400px">Od numeru działki do odpowiedzi <span class="accent">w&nbsp;5&nbsp;sekund</span></div>
+  <div class="body" style="position:absolute;left:40px;top:330px;max-width:1500px;color:#5B4D3E;font-size:28px">Jedno płynne ujęcie 3D, w trakcie którego ładują się dane. Gdy któryś etap nie jest gotowy, kamera spokojnie czeka — bez spinnerów.</div>
+  
+  <div style="position:absolute;left:40px;top:470px;width:440px">
+    <div class="browser" style="position:relative;width:440px"><div class="bar"><i></i><i></i><i></i><span>rosa.kamilmarczak.pl/analiza</span></div><img src="img/j-pin.jpg"></div>
+    <div style="margin-top:22px;display:flex;align-items:center;gap:14px"><span class="tag">0–1,2 s</span><span style="font:700 28px/1.1 'Bricolage Grotesque'">Lot nad Polską</span></div>
+  </div>
+  <div style="position:absolute;left:505px;top:470px;width:440px">
+    <div class="browser" style="position:relative;width:440px"><div class="bar"><i></i><i></i><i></i><span>rosa.kamilmarczak.pl/analiza</span></div><img src="img/j-outline.jpg"></div>
+    <div style="margin-top:22px;display:flex;align-items:center;gap:14px"><span class="tag">1,2–2 s</span><span style="font:700 28px/1.1 'Bricolage Grotesque'">Obrys na ortofotomapie</span></div>
+  </div>
+  <div style="position:absolute;left:970px;top:470px;width:440px">
+    <div class="browser" style="position:relative;width:440px"><div class="bar"><i></i><i></i><i></i><span>rosa.kamilmarczak.pl/analiza</span></div><img src="img/j-sources.jpg"></div>
+    <div style="margin-top:22px;display:flex;align-items:center;gap:14px"><span class="tag">2–4,2 s</span><span style="font:700 28px/1.1 'Bricolage Grotesque'">Źródła przylatują</span></div>
+  </div>
+  <div style="position:absolute;left:1435px;top:470px;width:440px">
+    <div class="browser" style="position:relative;width:440px"><div class="bar"><i></i><i></i><i></i><span>rosa.kamilmarczak.pl/analiza</span></div><img src="img/j-panel.jpg"></div>
+    <div style="margin-top:22px;display:flex;align-items:center;gap:14px"><span class="tag">4,2–5 s</span><span style="font:700 28px/1.1 'Bricolage Grotesque'">Wynik</span></div>
+  </div>
+  <div class="small" style="position:absolute;left:40px;bottom:40px;color:#5B4D3E">Teren z NMT GUGiK, obrys z EGiB, ortofotomapa GUGiK · dźwięki generowane w przeglądarce · tryb lekki dla słabszych komputerów</div>
+</section>
+
+<!-- 5. Wynik -->
+<section class="slide ink">
+  <div class="meta"><span class="brand"><img src="img/app-icon.svg">ROSA · KOWR „Zatrzymaj Wodę, Chroń Plony”</span><span class="right">HackNation 2026</span></div>
+  <div class="h2" style="position:absolute;left:40px;top:110px;width:620px">Jeden ekran, <span class="sun">cztery odpowiedzi</span></div>
+  <div style="position:absolute;left:40px;top:430px;width:600px;display:flex;flex-direction:column;gap:26px">
+    
+    <div style="display:flex;gap:20px"><span style="flex:none;width:52px;height:52px;border-radius:14px;background:var(--sun);color:var(--ink);display:flex;align-items:center;justify-content:center;font:800 28px Figtree">1</span><div><div style="font:700 34px/1.05 'Bricolage Grotesque'">Stan wody</div><div class="small" style="opacity:.78;margin-top:6px">poziom suszy 1–5 metodą IUNG: bilans wodny z 60 dni vs próg dla uprawy i gleby</div></div></div>
+    <div style="display:flex;gap:20px"><span style="flex:none;width:52px;height:52px;border-radius:14px;background:var(--sun);color:var(--ink);display:flex;align-items:center;justify-content:center;font:800 28px Figtree">2</span><div><div style="font:700 34px/1.05 'Bricolage Grotesque'">Na tle 10 lat</div><div class="small" style="opacity:.78;margin-top:6px">ile lat z deficytem i najbardziej narażone miesiące</div></div></div>
+    <div style="display:flex;gap:20px"><span style="flex:none;width:52px;height:52px;border-radius:14px;background:var(--sun);color:var(--ink);display:flex;align-items:center;justify-content:center;font:800 28px Figtree">3</span><div><div style="font:700 34px/1.05 'Bricolage Grotesque'">Dlaczego</div><div class="small" style="opacity:.78;margin-top:6px">deszcz, upał, gleba, spadek, rzeka, wody gruntowe, kondycja roślin</div></div></div>
+    <div style="display:flex;gap:20px"><span style="flex:none;width:52px;height:52px;border-radius:14px;background:var(--sun);color:var(--ink);display:flex;align-items:center;justify-content:center;font:800 28px Figtree">4</span><div><div style="font:700 34px/1.05 'Bricolage Grotesque'">Co zrobić</div><div class="small" style="opacity:.78;margin-top:6px">najpierw zatrzymaj wodę, potem gleba, na końcu nawadnianie</div></div></div>
+  </div>
+  <div class="browser" style="width:1180px;left:700px;top:150px"><div class="bar"><i></i><i></i><i></i><span>rosa.kamilmarczak.pl/dzialka/302602_5.0008.399~kukurydza~2022-08-10</span></div><img src="img/w-result.jpg"></div>
+</section>
+
+<!-- 6. Model 3D -->
+<section class="slide">
+  <div class="meta"><span class="brand"><img src="img/app-icon.svg">ROSA · KOWR „Zatrzymaj Wodę, Chroń Plony”</span><span class="right">HackNation 2026</span></div>
+  <div class="h2" style="position:absolute;left:40px;top:110px;width:740px;font-size:84px">Twoja działka w&nbsp;3D, <span class="sun">z&nbsp;prawdziwych danych</span></div>
+  <div style="position:absolute;left:40px;top:420px;width:720px;display:flex;flex-direction:column;gap:16px" class="body">
+    <div style="display:flex;gap:16px;font-size:27px"><span class="dot" style="background:var(--sun);margin-top:12px"></span><span>Teren: siatka wysokości z NMT GUGiK (rzeźba przewyższona — pokazujemy krotność)</span></div><div style="display:flex;gap:16px;font-size:27px"><span class="dot" style="background:var(--sun);margin-top:12px"></span><span>Granica działki i sąsiednie działki z EGiB</span></div><div style="display:flex;gap:16px;font-size:27px"><span class="dot" style="background:var(--sun);margin-top:12px"></span><span>Rowy, cieki i zbiorniki z BDOT10k — tam, gdzie leżą</span></div><div style="display:flex;gap:16px;font-size:27px"><span class="dot" style="background:var(--sun);margin-top:12px"></span><span>Kolor upraw z NDVI Sentinel-2 względem typowej wartości dla uprawy</span></div><div style="display:flex;gap:16px;font-size:27px"><span class="dot" style="background:var(--sun);margin-top:12px"></span><span>Pogoda w scenie z wyniku analizy; koparka przy prawdziwym rowie dla zastawki</span></div>
+    <div class="small" style="opacity:.75;margin-top:8px">Poglądowe: farma, drzewa, ludziki i maszyny.</div>
+  </div>
+  <div class="browser" style="width:1080px;left:800px;top:190px;transform:rotate(2deg)"><div class="bar"><i></i><i></i><i></i><span>rosa.kamilmarczak.pl/dzialka/… · Zastawka na rowie</span></div><img src="img/w-zastawka.jpg"></div>
+</section>
+
+<!-- 7. Rekomendacje i przejrzystość -->
+<section class="slide paper">
+  <div class="meta"><span class="brand"><img src="img/app-icon.svg">ROSA · KOWR „Zatrzymaj Wodę, Chroń Plony”</span><span class="right">HackNation 2026</span></div>
+  <div class="h2" style="position:absolute;left:40px;top:110px;max-width:1200px">Każda liczba <span class="accent">ma źródło</span></div>
+  <div class="browser" style="width:900px;left:40px;top:330px"><div class="bar"><i></i><i></i><i></i><span>Przyczyny i rekomendacje</span></div><img src="img/w-causes.jpg"></div>
+  <div class="browser" style="width:900px;left:980px;top:330px"><div class="bar"><i></i><i></i><i></i><span>Kompletność danych</span></div><img src="img/w-data.jpg"></div>
+  <div class="small" style="position:absolute;left:40px;bottom:36px;max-width:1840px;color:#5B4D3E">„Dlaczego to polecamy” z liczbami przy każdej rekomendacji · „Czego nie wiemy” i poziom pewności · wskaźnik „Dane: komplet” z listą źródeł i datami pobrania · formułki licencyjne IMGW w wyniku i raporcie</div>
+</section>
+
+<!-- 8. Dane -->
+<section class="slide">
+  <div class="meta"><span class="brand"><img src="img/app-icon.svg">ROSA · KOWR „Zatrzymaj Wodę, Chroń Plony”</span><span class="right">HackNation 2026</span></div>
+  <div class="h2" style="position:absolute;left:40px;top:110px">Cała Polska <span class="sun">w&nbsp;naszej bazie</span></div>
+  <div style="position:absolute;left:40px;right:40px;top:330px;display:grid;grid-template-columns:repeat(3,1fr);gap:26px">
+    
+    <div style="background:rgba(255,255,255,.1);border-radius:28px;padding:30px 34px">
+      <div class="num" style="font-size:96px;color:var(--sun)">38,9 mln</div>
+      <div style="font:700 32px/1.1 'Bricolage Grotesque';margin-top:12px">działek ewidencyjnych</div>
+      <div class="small" style="opacity:.75;margin-top:8px">GUGiK EGiB · cała Polska</div>
+    </div>
+    <div style="background:rgba(255,255,255,.1);border-radius:28px;padding:30px 34px">
+      <div class="num" style="font-size:96px;color:var(--sun)">2,8 mln</div>
+      <div style="font:700 32px/1.1 'Bricolage Grotesque';margin-top:12px">rowów, cieków i zbiorników</div>
+      <div class="small" style="opacity:.75;margin-top:8px">BDOT10k · 380 powiatów</div>
+    </div>
+    <div style="background:rgba(255,255,255,.1);border-radius:28px;padding:30px 34px">
+      <div class="num" style="font-size:96px;color:var(--sun)">2,3 mln</div>
+      <div style="font:700 32px/1.1 'Bricolage Grotesque';margin-top:12px">dobowych pomiarów pogody</div>
+      <div class="small" style="opacity:.75;margin-top:8px">IMGW-PIB · 533 stacje · od 2006</div>
+    </div>
+    <div style="background:rgba(255,255,255,.1);border-radius:28px;padding:30px 34px">
+      <div class="num" style="font-size:96px;color:var(--sun)">5,6 mln</div>
+      <div style="font:700 32px/1.1 'Bricolage Grotesque';margin-top:12px">stanów rzek</div>
+      <div class="small" style="opacity:.75;margin-top:8px">IMGW-PIB · 889 wodowskazów · 2006–2025</div>
+    </div>
+    <div style="background:rgba(255,255,255,.1);border-radius:28px;padding:30px 34px">
+      <div class="num" style="font-size:96px;color:var(--sun)">co 5 min</div>
+      <div style="font:700 32px/1.1 'Bricolage Grotesque';margin-top:12px">pomiary bieżące IMGW</div>
+      <div class="small" style="opacity:.75;margin-top:8px">788 stacji telemetrycznych · Inngest</div>
+    </div>
+    <div style="background:rgba(255,255,255,.1);border-radius:28px;padding:30px 34px">
+      <div class="num" style="font-size:96px;color:var(--sun)">od 2016</div>
+      <div style="font:700 32px/1.1 'Bricolage Grotesque';margin-top:12px">zdjęcia Sentinel-2</div>
+      <div class="small" style="opacity:.75;margin-top:8px">NDVI w granicach działki · w tle</div>
+    </div>
+  </div>
+  <div class="small" style="position:absolute;left:40px;bottom:36px;opacity:.85">PostgreSQL + PostGIS z indeksami przestrzennymi · aktualizacja w tle (cron, Inngest Cloud) · na żywo tylko lekkie zapytania (IUNG, NMT, PIG-PIB), z cache</div>
+</section>
+
+<!-- 9. Wiarygodność i szybkość -->
+<section class="slide paper">
+  <div class="meta"><span class="brand"><img src="img/app-icon.svg">ROSA · KOWR „Zatrzymaj Wodę, Chroń Plony”</span><span class="right">HackNation 2026</span></div>
+  <div class="h2" style="position:absolute;left:40px;top:110px;max-width:1300px">Zgodne z <span class="accent">oficjalnym monitoringiem</span> i szybkie</div>
+  <div style="position:absolute;left:40px;top:340px;display:flex;gap:26px">
+    
+    <div class="card" style="width:600px;padding:36px 38px">
+      <div class="num accent" style="font-size:120px">97,4%</div>
+      <div style="font:700 34px/1.1 'Bricolage Grotesque';margin-top:14px">trafności vs wykazy suszy IUNG</div>
+      <p style="margin-top:10px">53 346 porównań · 39 gmin · 2020–2025 · F1 0,65</p>
+    </div>
+    <div class="card" style="width:600px;padding:36px 38px">
+      <div class="num accent" style="font-size:120px">0,5–2,5 s</div>
+      <div style="font:700 34px/1.1 'Bricolage Grotesque';margin-top:14px">nowa analiza dowolnej działki</div>
+      <p style="margin-top:10px">ok. 0,15 s z cache · PDF 0,5–1,7 s</p>
+    </div>
+    <div class="card" style="width:600px;padding:36px 38px">
+      <div class="num accent" style="font-size:120px">0</div>
+      <div style="font:700 34px/1.1 'Bricolage Grotesque';margin-top:14px">AI w działaniu</div>
+      <p style="margin-top:10px">deterministyczny silnik regułowy: ten sam input = ten sam wynik</p>
+    </div>
+  </div>
+  <div class="body" style="position:absolute;left:40px;bottom:60px;max-width:1800px;color:#5B4D3E;font-size:26px">Metoda IUNG: klimatyczny bilans wodny z 60 dni i progi z Rozporządzenia MRiRW z 11.04.2019 · parowanie Hargreaves (FAO-56) skalibrowane do IUNG · każda awaria źródła obniża pewność, ale nie przerywa analizy</div>
+</section>
+
+<!-- 10. Funkcje -->
+<section class="slide paper">
+  <div class="meta"><span class="brand"><img src="img/app-icon.svg">ROSA · KOWR „Zatrzymaj Wodę, Chroń Plony”</span><span class="right">HackNation 2026</span></div>
+  <div class="display accent" style="position:absolute;left:-20px;bottom:40px;font-size:190px;transform:rotate(-90deg);transform-origin:left bottom;margin-left:180px">Funkcje</div>
+  <div style="position:absolute;left:240px;right:40px;top:110px;display:grid;grid-template-columns:repeat(4,1fr);gap:22px">
+    
+    <div class="card" style="padding:28px 26px;min-height:286px;border:2px solid #E3D3B8">
+      <h4><span style="font-size:34px">🗺️</span>Mapa i wyszukiwarka</h4>
+      <p>wieś, adres z numerem, „Małachowo 399” albo ID działki</p>
+    </div>
+    <div class="card" style="padding:28px 26px;min-height:286px;border:2px solid #E3D3B8">
+      <h4><span style="font-size:34px">🎬</span>Przelot 3D</h4>
+      <p>jedno ujęcie od Polski do pola, czeka na dane</p>
+    </div>
+    <div class="card" style="padding:28px 26px;min-height:286px;border:2px solid #E3D3B8">
+      <h4><span style="font-size:34px">💧</span>Stan wody wg IUNG</h4>
+      <p>skala 1–5, metoda z rozporządzenia MRiRW</p>
+    </div>
+    <div class="card" style="padding:28px 26px;min-height:286px;border:2px solid #E3D3B8">
+      <h4><span style="font-size:34px">🛰️</span>Satelita wg uprawy</h4>
+      <p>NDVI vs typowe dla uprawy i miesiąca</p>
+    </div>
+    <div class="card" style="padding:28px 26px;min-height:286px;border:2px solid #E3D3B8">
+      <h4><span style="font-size:34px">🌊</span>Rzeki i wody gruntowe</h4>
+      <p>wodowskazy IMGW, monitoring PIG-PIB</p>
+    </div>
+    <div class="card" style="padding:28px 26px;min-height:286px;border:2px solid #E3D3B8">
+      <h4><span style="font-size:34px">🚜</span>Rekomendacje KOWR</h4>
+      <p>woda → gleba → nawadnianie, z uzasadnieniem</p>
+    </div>
+    <div class="card" style="padding:28px 26px;min-height:286px;border:2px solid #E3D3B8">
+      <h4><span style="font-size:34px">📄</span>Raport PDF</h4>
+      <p>plan działki, wynik, źródła i licencje</p>
+    </div>
+    <div class="card" style="padding:28px 26px;min-height:286px;border:2px solid #E3D3B8">
+      <h4><span style="font-size:34px">📱</span>Telefon i tryb lekki</h4>
+      <p>działa na słabym łączu i starszym sprzęcie</p>
+    </div>
+    <div class="card" style="padding:28px 26px;min-height:286px;border:2px solid #E3D3B8">
+      <h4><span style="font-size:34px">🧑‍🌾</span>Model 3D działki</h4>
+      <p>teren, rowy, sąsiedzi; pinch, obrót, zoom</p>
+    </div>
+    <div class="card" style="padding:28px 26px;min-height:286px;border:2px solid #E3D3B8">
+      <h4><span style="font-size:34px">✅</span>Kompletność danych</h4>
+      <p>„Dane: komplet” i „Czego nie wiemy”</p>
+    </div>
+    <div class="card" style="padding:28px 26px;min-height:286px;border:2px solid #E3D3B8">
+      <h4><span style="font-size:34px">🔄</span>Aktualne dane</h4>
+      <p>IMGW co 5 min, archiwa i działki odświeżane w tle</p>
+    </div>
+    <div class="card" style="padding:28px 26px;min-height:286px;border:2px solid #E3D3B8">
+      <h4><span style="font-size:34px">🔒</span>Bez logowania</h4>
+      <p>bez danych osobowych, tylko dane publiczne</p>
+    </div>
+  </div>
+</section>
+
+<!-- 11. CTA -->
+<section class="slide">
+  <div class="meta"><span class="brand"><img src="img/app-icon.svg">ROSA · KOWR „Zatrzymaj Wodę, Chroń Plony”</span><span class="right">HackNation 2026</span></div>
+  <img src="img/farmer.svg" style="position:absolute;left:40px;top:120px;width:120px;height:120px;background:var(--card);border-radius:30px;padding:12px">
+  <div class="h2" style="position:absolute;left:40px;top:290px;width:820px;font-size:92px">Sprawdź swoje pole <span class="sun">już dziś</span> i&nbsp;zatrzymaj wodę, zanim ucieknie.</div>
+  <div style="position:absolute;left:40px;bottom:60px;display:flex;align-items:flex-end;gap:36px">
+    <img src="img/qr-app.png" style="width:240px;height:240px;border-radius:18px;background:#fff;padding:10px">
+    <div><div style="font:800 40px/1 'Bricolage Grotesque'">Aplikacja</div><div class="small" style="margin-top:10px;opacity:.85">rosa.kamilmarczak.pl</div></div>
+  </div>
+  <div class="browser" style="width:980px;left:900px;top:200px;transform:rotate(-2deg)"><div class="bar"><i></i><i></i><i></i><span>rosa.kamilmarczak.pl</span></div><img src="img/w-landing.jpg"></div>
+  <div class="phone" style="width:300px;left:1560px;top:520px;transform:rotate(6deg)"><img src="img/m-actions.jpg"></div>
+</section>
+
+</body>
+</html>

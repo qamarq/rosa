@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FCF3DF"/>
+      <stop offset="1" stop-color="#F1DCB2"/>
+    </linearGradient>
+    <linearGradient id="drop" x1="0.25" y1="0" x2="0.75" y2="1">
+      <stop offset="0" stop-color="#22979B"/>
+      <stop offset="1" stop-color="#0A5357"/>
+    </linearGradient>
+    <clipPath id="tile"><rect width="64" height="64" rx="15"/></clipPath>
+  </defs>
+  <g clip-path="url(#tile)">
+    <rect width="64" height="64" fill="url(#bg)"/>
+    <path d="M-2 50 Q32 42 66 50 V66 H-2Z" fill="#D9B676"/>
+    <path d="M-2 56 Q32 49 66 56" stroke="#C49A55" stroke-width="1.6" fill="none"/>
+    <path d="M-2 61 Q32 55 66 61" stroke="#C49A55" stroke-width="1.6" fill="none"/>
+  </g>
+  <path d="M32 6 C 25 16.5, 15.5 25.5, 15.5 36 A16.5 16.5 0 0 0 48.5 36 C 48.5 25.5, 39 16.5, 32 6Z" fill="url(#drop)"/>
+  <path d="M21.5 35.5 A10.5 10.5 0 0 0 27 45" stroke="#A8E3EA" stroke-width="3.2" stroke-linecap="round" fill="none"/>
+  <path d="M35 46.5 V34.5" stroke="#CFEA8F" stroke-width="2.6" stroke-linecap="round"/>
+  <path d="M35 36.5 C 35 30.5, 39.5 27.8, 44 28.6 C 43.3 33.8, 39.6 36.6, 35 36.5Z" fill="#9CCB4E"/>
+  <path d="M35 40.5 C 34.4 35.8, 30.6 34.3, 27.6 35.2 C 28.4 39.2, 31.4 40.9, 35 40.5Z" fill="#C3E06F"/>
+</svg>
