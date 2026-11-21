@@ -38,7 +38,9 @@ function norm(value: string): string {
 }
 
 function cleanGmina(value: string | null): string {
-  return (value ?? "").replace(/\s*-\s*(obszar wiejski|miasto|gmina|g|m|w)$/i, "").trim()
+  const v = value ?? ""
+  const cased = v === v.toLocaleUpperCase("pl-PL") ? v.toLocaleLowerCase("pl-PL").replace(/(^|[\s-])(\p{L})/gu, (_, sep: string, ch: string) => sep + ch.toLocaleUpperCase("pl-PL")) : v
+  return cased.replace(/\s*-\s*(obszar wiejski|miasto|gmina|g|m|w)$/i, "").trim()
 }
 
 function toHit(row: PlaceRow): PlaceHit {
