@@ -191,6 +191,15 @@ export function CauseIcon({ kind }: { kind: Cause["kind"] }) {
           <path d="M26 9v4M26 39v4M9 26h4M39 26h4M14 14l3 3M35 35l3 3M14 38l3-3M35 17l3-3" stroke="#E08A22" strokeWidth="2.4" strokeLinecap="round" />
         </svg>
       )
+    case "rosliny":
+      return (
+        <svg width="52" height="52" viewBox="0 0 52 52" aria-hidden="true" className="flex-none">
+          <rect width="52" height="52" rx="16" fill="#EFE8CF" />
+          <path d="M26 42V25M26 25c0-6 4-10 11-10 0 6-4 10-11 10zM26 31c0-5-4-8-10-8 0 5 4 8 10 8z" stroke="#7A6B2E" strokeWidth="2.6" fill="#C9B458" strokeLinejoin="round" />
+          <circle cx="40" cy="38" r="6" fill="#0E6E73" />
+          <path d="M37.5 38h5M40 35.5v5" stroke="#FFFFFF" strokeWidth="1.8" strokeLinecap="round" transform="rotate(45 40 38)" />
+        </svg>
+      )
     case "uprawa":
       return (
         <svg width="52" height="52" viewBox="0 0 52 52" aria-hidden="true" className="flex-none">

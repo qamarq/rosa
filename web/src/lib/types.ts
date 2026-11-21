@@ -51,7 +51,7 @@ export interface WaterHistory {
 
 export interface Cause {
   id: string
-  kind: "opady" | "gleba" | "spadek" | "upal" | "uprawa"
+  kind: "opady" | "gleba" | "spadek" | "upal" | "uprawa" | "rosliny"
   value: string
   title: string
   detail: string
@@ -75,10 +75,14 @@ export interface Vegetation {
   label: string
   imageDate: string
   imageAgeDays: number
+  expected?: number
+  assessment?: "ponizej" | "norma" | "poza-sezonem"
+  note?: string
 }
 
 export interface Confidence {
   level: ConfidenceLevel
+  baseLevel?: ConfidenceLevel
   unknowns: string[]
 }
 
@@ -106,6 +110,7 @@ export interface Analysis {
   status: WaterStatus
   history: WaterHistory
   causes: Cause[]
+  demo?: boolean
   vegetation: Vegetation | null
   recommendations: Recommendation[]
   confidence: Confidence

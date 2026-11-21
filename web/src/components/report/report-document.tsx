@@ -121,6 +121,7 @@ export function ReportDocument({ analysis }: { analysis: Analysis }) {
               <p className="m-0 text-xs leading-[1.4] text-[#333333]">
                 Kondycja roślin (NDVI): {ndviFormat.format(vegetation.ndvi)}, {vegetation.label} · zdjęcie z{" "}
                 {formatDatePl(vegetation.imageDate)}
+                {vegetation.note ? ` · ${vegetation.note}` : ""}
               </p>
             )}
           </section>

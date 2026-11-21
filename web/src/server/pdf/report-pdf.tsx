@@ -175,7 +175,7 @@ export function ReportPdf({ analysis, scene, generatedAt }: { analysis: Analysis
               {LEVEL_COLORS.map((c, i) => <View key={c} style={{ flexGrow: 1, height: 6, borderRadius: 3, backgroundColor: c, opacity: i + 1 === status.level ? 1 : 0.35 }} />)}
             </View>
             <Text>{status.summary}</Text>
-            {vegetation && <Text style={[s.small, { marginTop: 4 }]}>Kondycja roślin (NDVI): {vegetation.ndvi.toLocaleString("pl-PL")}, {vegetation.label} · zdjęcie z {formatDatePl(vegetation.imageDate)}</Text>}
+            {vegetation && <Text style={[s.small, { marginTop: 4 }]}>Kondycja roślin (NDVI): {vegetation.ndvi.toLocaleString("pl-PL")}, {vegetation.label} · zdjęcie z {formatDatePl(vegetation.imageDate)}{vegetation.note ? ` · ${vegetation.note}` : ""}</Text>}
             <Text style={[s.small, { marginTop: 4 }]}>{status.source}</Text>
           </View>
         </View>

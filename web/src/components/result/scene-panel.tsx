@@ -126,6 +126,7 @@ export function DesktopScene({
             <strong className="text-foreground">Twoje pole: {vegetation.label}</strong>
             <span>soczyste</span>
           </div>
+          {vegetation.note && <span className="text-xs leading-snug text-muted-foreground">{vegetation.note}</span>}
         </div>
       ) : null}
 

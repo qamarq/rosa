@@ -47,6 +47,7 @@ export const CAUSE_STYLE: Record<string, { bg: string; value: string }> = {
   spadek: { bg: "#EAF2EF", value: "#0B5A5E" },
   upal: { bg: "#FBEFE6", value: "#8A3A22" },
   uprawa: { bg: "#EEF3E2", value: "#4A5420" },
+  rosliny: { bg: "#F4EFD9", value: "#5E5320" },
 }
 
 export const GROUPS: { id: RecommendationGroup; title: string; tint: string; label: string; optional: boolean }[] = [

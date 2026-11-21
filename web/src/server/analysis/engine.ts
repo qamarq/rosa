@@ -16,7 +16,7 @@ import type { HydroSummary } from "@/server/sources/hydro"
 import type { SatelliteResult } from "@/server/sources/satellite"
 import type { SoilCategory } from "@/server/sources/soil"
 import type { TerrainSummary } from "@/server/sources/terrain"
-import { CROP_PROFILES, MONTHS_PL } from "./crop-profiles"
+import { CROP_PROFILES, MONTHS_PL, expectedNdvi, NDVI_SEASON_MIN } from "./crop-profiles"
 import { iungAssessment } from "./iung-thresholds"
 import type { BalanceResult } from "./water-balance"
 
@@ -377,21 +377,70 @@ export function buildAnalysis(input: EngineInput): Analysis {
   }
 }
 
+const CONFIDENCE_ORDER: ConfidenceLevel[] = ["niska", "srednia", "wysoka"]
+
+function assessVegetation(analysis: Analysis, satellite: SatelliteResult) {
+  const crop = analysis.request.crop
+  const expected = expectedNdvi(crop, satellite.imageDate)
+  const month = MONTHS_PL[Number(satellite.imageDate.slice(5, 7)) - 1]
+  const cropName = analysis.cropLabel.toLowerCase()
+  const ndviPl = satellite.ndvi.toLocaleString("pl-PL")
+  const expectedPl = expected.toLocaleString("pl-PL")
+  if (expected < NDVI_SEASON_MIN) {
+    return {
+      expected,
+      assessment: "poza-sezonem" as const,
+      label: satellite.ndvi >= 0.5 ? "zielono" : "poza sezonem",
+      note: `w tym okresie uprawa (${cropName}, ${month}) zwykle jeszcze lub już nie pokrywa pola (typowe NDVI ok. ${expectedPl}), więc zdjęcie nie ocenia jej kondycji.`,
+    }
+  }
+  const ratio = satellite.ndvi / expected
+  const assessment = ratio < 0.8 ? ("ponizej" as const) : ("norma" as const)
+  return {
+    expected,
+    assessment,
+    label: ratio < 0.65 ? "słaba" : ratio < 0.8 ? "osłabiona" : "dobra",
+    note: `NDVI ${ndviPl} przy typowym ok. ${expectedPl} (${cropName}, ${month}).`,
+  }
+}
+
 export function applySatellite(analysis: Analysis, satellite: SatelliteResult | null, failed: boolean): Analysis {
   const fetchedAt = new Date().toISOString().slice(0, 10)
   const ageDays = satellite ? Math.max(0, Math.round((Date.parse(analysis.request.date) - Date.parse(satellite.imageDate)) / 86400000)) : 0
-  const vegetation = satellite
-    ? { ndvi: satellite.ndvi, label: satellite.ndvi < 0.25 ? "słaba" : satellite.ndvi < 0.5 ? "umiarkowana" : "dobra", imageDate: satellite.imageDate, imageAgeDays: ageDays }
+  const assessed = satellite ? assessVegetation(analysis, satellite) : null
+  const vegetation = satellite && assessed
+    ? { ndvi: satellite.ndvi, label: assessed.label, imageDate: satellite.imageDate, imageAgeDays: ageDays, expected: assessed.expected, assessment: assessed.assessment, note: assessed.note }
     : null
+  const baseLevel = analysis.confidence.baseLevel ?? analysis.confidence.level
+  let level = baseLevel
+  const causes = analysis.causes.filter((c) => c.kind !== "rosliny")
   const unknowns = analysis.confidence.unknowns.filter((u) => !u.includes("satelit") && !u.startsWith("NDVI"))
+  const dry = analysis.status.level >= 3
   if (!satellite) unknowns.push(failed ? "Zdjęcia satelitarne nie odpowiedziały na czas; kondycji roślin nie oceniamy." : "Brak bezchmurnego zdjęcia satelitarnego z 30 dni (dla starszych dat: 60 dni) przed datą analizy.")
-  else {
+  else if (vegetation) {
     if (ageDays > 10) unknowns.push(`Ostatnie bezchmurne zdjęcie satelitarne jest sprzed ${ageDays} dni.`)
+    if (vegetation.assessment === "poza-sezonem") unknowns.push(`Zdjęcie satelitarne: ${vegetation.note}`)
+    else if (vegetation.assessment === "ponizej" && dry) {
+      causes.push({
+        id: "rosliny",
+        kind: "rosliny",
+        value: `NDVI ${vegetation.ndvi.toLocaleString("pl-PL")}`,
+        title: "Rośliny już reagują na brak wody",
+        detail: `Zdjęcie satelitarne z ${formatDatePl(vegetation.imageDate)}: ${vegetation.note} Słabsza zieleń potwierdza niedobór wody na polu.`,
+        source: "Copernicus Sentinel-2",
+      })
+      level = CONFIDENCE_ORDER[Math.min(2, CONFIDENCE_ORDER.indexOf(baseLevel) + 1)]
+    } else if (vegetation.assessment === "ponizej") {
+      unknowns.push(`Zdjęcie satelitarne pokazuje słabsze rośliny niż typowo (${vegetation.note}), choć bilans wodny tego nie tłumaczy: przyczyną może być np. inna uprawa niż wybrana, choroby lub nawożenie.`)
+    } else if (dry) {
+      unknowns.push(`Zdjęcie satelitarne pokazuje rośliny w normie mimo deficytu wody (${vegetation.note}): możliwe nawadnianie, głębokie korzenie albo początek suszy.`)
+    }
   }
   return {
     ...analysis,
     vegetation,
-    confidence: { ...analysis.confidence, unknowns },
+    causes,
+    confidence: { ...analysis.confidence, level, baseLevel, unknowns },
     sources: [
       ...analysis.sources.filter((s) => s.key !== "satelita"),
       ...(satellite
