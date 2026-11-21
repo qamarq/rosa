@@ -17,6 +17,7 @@ import type { SatelliteResult } from "@/server/sources/satellite"
 import type { SoilCategory } from "@/server/sources/soil"
 import type { TerrainSummary } from "@/server/sources/terrain"
 import { CROP_PROFILES, MONTHS_PL } from "./crop-profiles"
+import { iungAssessment } from "./iung-thresholds"
 import type { BalanceResult } from "./water-balance"
 
 export type EngineInput = {
@@ -79,7 +80,21 @@ export function buildAnalysis(input: EngineInput): Analysis {
   const fetched = formatDatePl(input.fetchedAt)
   const W = balance.windowDays
   const zSoil = balance.z + (soil ? (SOIL_SHIFT[soil.code] ?? 0) : 0)
-  const level = droughtLevel(zSoil)
+  const kbw = Math.round(balance.current.precip - balance.current.et0)
+  const iung = soil?.agricultural ? iungAssessment(request.crop, soil.code, request.date) : null
+  const iungThreshold = iung?.reason === "ok" ? iung.threshold : null
+  const level: DroughtLevel =
+    iungThreshold !== null
+      ? kbw < iungThreshold
+        ? kbw / iungThreshold >= 1.35
+          ? 5
+          : kbw / iungThreshold >= 1.15
+            ? 4
+            : 3
+        : balance.z >= 0.8
+          ? 1
+          : 2
+      : droughtLevel(zSoil)
   const dry = balance.precipDeficitPct <= -15
   const wet = balance.precipDeficitPct >= 20
   const hot = balance.tmaxAnomaly >= 1.5
@@ -93,7 +108,11 @@ export function buildAnalysis(input: EngineInput): Analysis {
       : balance.precipDeficitPct >= 10
         ? `Od ${W} dni spadło ${balance.precipDeficitPct}% więcej deszczu niż zwykle`
         : `Opady z ostatnich ${W} dni są blisko normy`
-  const summary = precipPhrase + (hot ? ", a upał przyspiesza parowanie." : level >= 3 && !dry ? ", ale parowanie było większe niż zwykle." : ".")
+  const kbwSentence =
+    iungThreshold !== null
+      ? ` Bilans wodny z ${W} dni: ${minus(kbw)} mm, a próg suszy IUNG dla ${iung!.cropLabel} na glebie kat. ${iung!.soilCategory} to ${minus(iungThreshold)} mm.`
+      : ""
+  const summary = precipPhrase + (hot ? ", a upał przyspiesza parowanie." : level >= 3 && !dry ? ", ale parowanie było większe niż zwykle." : ".") + kbwSentence
 
   const yearsShown = [...balance.previous.slice(-(historyYears - 1)), balance.current]
   const history = {
@@ -301,6 +320,15 @@ export function buildAnalysis(input: EngineInput): Analysis {
   if (!hydro) unknowns.push("Nie udało się sprawdzić rowów i cieków przy działce.")
   if (!agricultural) unknowns.unshift(`W ewidencji to ${soil && !soil.agricultural ? soil.texture.toLocaleLowerCase("pl-PL") : "teren nierolniczy"}. Rekomendacje dotyczą upraw i mogą tu nie pasować.`)
   if (month <= 2 || month >= 11) unknowns.push("Poza sezonem wegetacji ocena suszy ma mniejsze znaczenie dla upraw.")
+  if (agricultural && iungThreshold === null) {
+    unknowns.push(
+      iung?.reason === "no-effect"
+        ? "W tym okresie susza zwykle nie obniża plonów tej uprawy (IUNG), więc poziom liczymy względem średniej z 10 lat."
+        : iung?.reason === "not-recommended"
+          ? "Na tej kategorii gleby IUNG nie zaleca tej uprawy, więc poziom liczymy względem średniej z 10 lat."
+          : "Poza okresem 21.III–30.IX lub dla tej uprawy IUNG nie wyznacza progu suszy; poziom liczymy względem średniej z 10 lat.",
+    )
+  }
 
   const missing = (soil ? 0 : 1) + (terrain ? 0 : 1) + (hydro ? 0 : 1)
   const confidence: ConfidenceLevel = missing === 0 && weather.stations[0] && weather.stations[0].distanceKm <= 15 ? "wysoka" : missing <= 1 ? "srednia" : "niska"
@@ -335,7 +363,7 @@ export function buildAnalysis(input: EngineInput): Analysis {
       precipDeficitMm: balance.precipDeficitMm,
       precipDeficitPct: balance.precipDeficitPct,
       headline,
-      source: `${meteoSource}, najbliższa stacja ${nearest ? nearest.distanceKm.toLocaleString("pl-PL") + " km" : "–"} · pobrano ${fetched}`,
+      source: `${meteoSource}, najbliższa stacja ${nearest ? nearest.distanceKm.toLocaleString("pl-PL") + " km" : "–"}${iungThreshold !== null ? " · metoda: KBW i progi IUNG (Rozp. MRiRW z 11.04.2019)" : ""} · pobrano ${fetched}`,
     },
     history,
     causes: causes.slice(0, 4),

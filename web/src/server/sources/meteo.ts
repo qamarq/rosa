@@ -2,6 +2,7 @@ import "server-only"
 import { sql } from "drizzle-orm"
 import { cached } from "@/server/cache"
 import { db } from "@/server/db"
+import { ETP_FACTOR } from "@/server/analysis/calibration"
 import { fetchJson } from "@/server/http"
 
 export type WeatherStation = { code: string; name: string; distanceKm: number; temperature: boolean }
@@ -111,7 +112,7 @@ async function stationSeries(lat: number, lon: number, start: string, end: strin
     dates.push(r.day)
     precip.push(r.precip === null ? 0 : Number(r.precip))
     tmax.push(tx ?? Number.NaN)
-    et0.push(tx !== null && tn !== null ? hargreaves(tx, tn, lat, r.day) : 0)
+    et0.push(tx !== null && tn !== null ? hargreaves(tx, tn, lat, r.day) * ETP_FACTOR : 0)
   }
   return {
     dates,
