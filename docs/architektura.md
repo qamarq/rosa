@@ -184,3 +184,20 @@ Wynik całości: **14,7 s** z 1 sceną Sentinel-2, **38,8 s** z 10 latami. Bez S
 - **Lokalnie** (PostgreSQL + PostGIS): działki z `0_dzialki.parquet` (4,6 GB, aktualizowany codziennie), cieki i zbiorniki z BDOT10k, wycinek SoilGrids dla Polski.
 - **Na żywo, równolegle**: Open-Meteo, IUNG, NMT (punkty), jedna bieżąca scena Sentinel-2.
 - **Historia NDVI z 10 lat**: nie w ścieżce zapytania. Do sprawdzenia: Sentinel Hub Statistical API w Copernicus Data Space (szereg czasowy dla wielokąta w jednym zapytaniu, darmowe konto z limitem), albo liczenie w tle i cache dla działki.
+
+## 10. Stan na 21.11.2026, po podpięciu bazy
+
+**Backend jest w Next.js** (route handlers + moduły `web/src/server`), a nie w osobnym serwisie Python. Jedna aplikacja, jedno wdrożenie. Dostęp do bazy przez Drizzle ORM (`postgres.js`), migracje w `web/drizzle`.
+
+**Baza (PostGIS na serwerze, Coolify):**
+- `dzialki`: 38,9 mln działek EGiB (import ogr2ogr, poza migracjami Drizzle).
+- `meteo_station`, `meteo_daily`: dobowe dane IMGW-PIB 2006–2026 (533 stacje ze współrzędnymi, 207 z temperaturą, 2,3 mln wierszy, 231 MB). Import: `scripts/import_imgw.py`.
+- `rosa_cache`: cache odpowiedzi źródeł i gotowych analiz (klucz z wersją silnika).
+
+**Dlaczego IMGW zamiast Open-Meteo:** darmowe Open-Meteo liczy 10 lat danych dziennych jako ok. 260 wywołań, a limit to 10 tys. dziennie na adres IP (na hackathonie wspólny NAT wyczerpał go w kilka minut), do tego licencja jest niekomercyjna. Open-Meteo zostaje tylko do ostatnich dni, których nie ma jeszcze w archiwum IMGW (jedno małe zapytanie, cache 3 h).
+
+**Pogoda dla działki:** 5 najbliższych stacji z opadem i 4 z temperaturą (do 80 km), ważenie odwrotnością kwadratu odległości liczone w SQL; parowanie metodą Hargreavesa (FAO-56) z Tmax/Tmin.
+
+**Czasy (lokalna aplikacja, baza na serwerze):** nowa analiza 0,7–1,3 s (działka ~0,15 s, gleba IUNG ~0,25 s, NMT ~0,25 s, pogoda ~0,6–1 s, równolegle), z cache ~0,15 s.
+
+**Jeszcze nie ma:** Sentinel-2 (NDVI), rowy i cieki z BDOT10k, współrzędne dla ok. 60% stacji opadowych IMGW (lista telemetryczna ich nie zawiera).
