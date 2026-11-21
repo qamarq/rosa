@@ -94,6 +94,7 @@ export interface SourceStatus {
   key: SourceKey
   label: string
   ok: boolean
+  pending?: boolean
   message?: string
 }
 

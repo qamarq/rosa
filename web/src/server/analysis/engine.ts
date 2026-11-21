@@ -12,6 +12,8 @@ import type {
 import { formatDatePl } from "@/lib/validation"
 import type { ParcelRecord } from "@/server/sources/parcel"
 import type { WeatherStation } from "@/server/sources/meteo"
+import type { HydroSummary } from "@/server/sources/hydro"
+import type { SatelliteResult } from "@/server/sources/satellite"
 import type { SoilCategory } from "@/server/sources/soil"
 import type { TerrainSummary } from "@/server/sources/terrain"
 import { CROP_PROFILES, MONTHS_PL } from "./crop-profiles"
@@ -25,7 +27,8 @@ export type EngineInput = {
   weather: { stations: WeatherStation[]; recentFrom: string | null }
   soil: SoilCategory | null
   terrain: TerrainSummary | null
-  failed: { soil: boolean; terrain: boolean }
+  hydro: HydroSummary | null
+  failed: { soil: boolean; terrain: boolean; hydro: boolean }
   fetchedAt: string
   historyYears: number
 }
@@ -63,7 +66,9 @@ function round5(n: number): number {
 }
 
 export function buildAnalysis(input: EngineInput): Analysis {
-  const { request, parcel, balance, soil, terrain, historyYears, weather } = input
+  const { request, parcel, balance, soil, terrain, historyYears, weather, hydro } = input
+  const ditchClose = hydro?.ditchM != null && hydro.ditchM <= 30
+
   const nearest = weather.stations[0]
   const stationNames = weather.stations.slice(0, 3).map((s) => `${s.name.charAt(0)}${s.name.slice(1).toLocaleLowerCase("pl-PL")} (${s.distanceKm.toLocaleString("pl-PL")} km)`).join(", ")
   const meteoSource = weather.recentFrom ? "IMGW-PIB, Open-Meteo" : "IMGW-PIB"
@@ -163,6 +168,24 @@ export function buildAnalysis(input: EngineInput): Analysis {
   const soilWhy = soil?.agricultural && soil.susceptibility
     ? `${soil.texture}: podatność na suszę ${soil.susceptibility === "organiczna" ? "jak dla gleb organicznych" : soil.susceptibility} (IUNG-PIB).`
     : null
+  if (ditchClose && hydro) {
+    const ditchName = hydro.features.find((f) => f.kind === "rów" || f.kind === "kanał")
+    recs.push({
+      id: "zastawka",
+      group: "woda",
+      title: ditchName?.kind === "kanał" ? "Zastawka na kanale przy polu" : "Zastawka na rowie melioracyjnym",
+      text: `Postaw zastawkę na ${ditchName?.kind === "kanał" ? "kanale" : "rowie"}${hydro.ditchSide ? ` przy ${hydro.ditchSide} granicy` : " przy działce"}, żeby woda nie uciekała z pola.`,
+      when: "Jak najszybciej, przed kolejnymi opadami",
+      sceneMode: "zastawka",
+      sceneCaption: "Zastawka podnosi wodę w rowie, więc wsiąka ona w pole zamiast odpływać.",
+      why: [
+        `${ditchName?.kind === "kanał" ? "Kanał" : "Rów melioracyjny"} biegnie ${hydro.ditchM === 0 ? "przez działkę" : `ok. ${hydro.ditchM} m od działki`}${hydro.ditchSide ? `, po stronie ${hydro.ditchSide}` : ""} (BDOT10k).`,
+        ...(terrain && terrain.slopePct >= 1 ? [`Pole opada o ok. ${terrain.slopePct.toLocaleString("pl-PL")}% na ${terrain.downslope} (GUGiK NMT).`] : []),
+        ...(soilWhy ? [soilWhy] : []),
+      ],
+      note: "Przed budową zapytaj spółkę wodną lub Wody Polskie, czy potrzebna jest zgoda.",
+    })
+  }
   if (terrain && terrain.slopePct >= 1.5) {
     recs.push({
       id: "zatrzymaj-splyw",
@@ -262,6 +285,7 @@ export function buildAnalysis(input: EngineInput): Analysis {
       why: [
         `W ostatnich 7 dniach ${cropName.toLocaleLowerCase("pl-PL")} zużyła ok. ${Math.round(etc)} mm wody, a spadło ${Math.round(balance.last7.precip)} mm (${meteoSource}, FAO-56).`,
         ...(inCritical ? [`To okres ${crop.criticalLabel}, kiedy uprawa najbardziej potrzebuje wody.`] : []),
+        ...(hydro?.waterBodyM != null && hydro.waterBodyM <= 300 ? [`Najbliższy zbiornik wodny jest ok. ${hydro.waterBodyM} m od działki (BDOT10k).`] : []),
       ],
       note: "Pobór wody do nawadniania może wymagać zgody wodnoprawnej.",
     })
@@ -270,17 +294,16 @@ export function buildAnalysis(input: EngineInput): Analysis {
   const unknowns = [
     `Pogodę liczymy z ${weather.stations.length} najbliższych stacji IMGW (najbliższa ${nearest ? nearest.distanceKm.toLocaleString("pl-PL") + " km" : "–"}), a nie z pomiaru na Twoim polu.`,
     "Parowanie liczymy metodą Hargreavesa (FAO-56) z temperatury; to przybliżenie.",
-    "Zdjęć satelitarnych (kondycji roślin) jeszcze nie analizujemy w tej wersji.",
-    "Rowów i cieków przy działce jeszcze nie sprawdzamy.",
     "Nie znamy poziomu wód gruntowych pod działką.",
   ]
   if (!soil) unknowns.push(input.failed.soil ? "Mapa gleb IUNG nie odpowiedziała; ocena nie uwzględnia rodzaju gleby." : "Brak kategorii gleby IUNG dla tego miejsca.")
   if (!terrain) unknowns.push("Nie udało się pobrać wysokości terenu, więc nie oceniamy spływu wody.")
+  if (!hydro) unknowns.push("Nie udało się sprawdzić rowów i cieków przy działce.")
   if (!agricultural) unknowns.unshift(`W ewidencji to ${soil && !soil.agricultural ? soil.texture.toLocaleLowerCase("pl-PL") : "teren nierolniczy"}. Rekomendacje dotyczą upraw i mogą tu nie pasować.`)
   if (month <= 2 || month >= 11) unknowns.push("Poza sezonem wegetacji ocena suszy ma mniejsze znaczenie dla upraw.")
 
-  const missing = (soil ? 0 : 1) + (terrain ? 0 : 1)
-  const confidence: ConfidenceLevel = missing === 0 ? "srednia" : missing === 1 ? "srednia" : "niska"
+  const missing = (soil ? 0 : 1) + (terrain ? 0 : 1) + (hydro ? 0 : 1)
+  const confidence: ConfidenceLevel = missing === 0 && weather.stations[0] && weather.stations[0].distanceKm <= 15 ? "wysoka" : missing <= 1 ? "srednia" : "niska"
 
   const sources: DataSource[] = [
     { key: "pogoda", name: "IMGW-PIB", what: `dobowe opady i temperatury ze stacji: ${stationNames}`, license: "dane publiczne IMGW-PIB (źródło: IMGW-PIB)", fetchedAt: input.fetchedAt },
@@ -289,13 +312,14 @@ export function buildAnalysis(input: EngineInput): Analysis {
       : []),
     { key: "gleba", name: "IUNG-PIB", what: "kategoria podatności gleby na suszę", license: "dane publiczne IUNG-PIB (do potwierdzenia)", fetchedAt: input.fetchedAt },
     { key: "teren", name: "GUGiK (EGiB, NMT)", what: "granice działki i wysokości terenu", license: "dane otwarte GUGiK", fetchedAt: input.fetchedAt },
+    { key: "hydrologia", name: "BDOT10k (GUGiK)", what: "rowy, cieki, kanały i zbiorniki w promieniu 500 m", license: "dane otwarte GUGiK", fetchedAt: input.fetchedAt },
   ]
   const sourceStatus: SourceStatus[] = [
     { key: "pogoda", label: "Pogoda · 10 lat", ok: true },
-    { key: "satelita", label: "Sentinel-2", ok: false, message: "Analiza zdjęć satelitarnych będzie dostępna wkrótce." },
+    { key: "satelita", label: "Sentinel-2", ok: true, pending: true, message: "Zdjęcie satelitarne wczytuje się w tle." },
     { key: "gleba", label: "Gleba", ok: !!soil, message: soil ? undefined : "Mapa gleb IUNG nie odpowiedziała." },
     { key: "teren", label: "Teren (NMT)", ok: !!terrain, message: terrain ? undefined : "Brak danych wysokościowych." },
-    { key: "hydrologia", label: "Hydrologia", ok: false, message: "Rowy i cieki dodamy wkrótce." },
+    { key: "hydrologia", label: "Hydrologia", ok: !!hydro, message: hydro ? undefined : "Nie udało się sprawdzić rowów i cieków." },
   ]
 
   return {
@@ -320,7 +344,37 @@ export function buildAnalysis(input: EngineInput): Analysis {
     confidence: { level: confidence, unknowns },
     sources,
     sourceStatus,
-    scene: { slopePct: terrain ? terrain.slopePct : null, ditchNearby: null },
+    scene: { slopePct: terrain ? terrain.slopePct : null, ditchNearby: hydro ? hydro.ditchM !== null && hydro.ditchM <= 50 : null },
     generatedAt: new Date().toISOString(),
+  }
+}
+
+export function applySatellite(analysis: Analysis, satellite: SatelliteResult | null, failed: boolean): Analysis {
+  const fetchedAt = new Date().toISOString().slice(0, 10)
+  const ageDays = satellite ? Math.max(0, Math.round((Date.parse(analysis.request.date) - Date.parse(satellite.imageDate)) / 86400000)) : 0
+  const vegetation = satellite
+    ? { ndvi: satellite.ndvi, label: satellite.ndvi < 0.25 ? "słaba" : satellite.ndvi < 0.5 ? "umiarkowana" : "dobra", imageDate: satellite.imageDate, imageAgeDays: ageDays }
+    : null
+  const unknowns = analysis.confidence.unknowns.filter((u) => !u.includes("satelit") && !u.startsWith("NDVI"))
+  if (!satellite) unknowns.push(failed ? "Zdjęcia satelitarne nie odpowiedziały na czas; kondycji roślin nie oceniamy." : "Brak bezchmurnego zdjęcia satelitarnego z 30 dni przed datą analizy.")
+  else {
+    if (ageDays > 10) unknowns.push(`Ostatnie bezchmurne zdjęcie satelitarne jest sprzed ${ageDays} dni.`)
+    unknowns.push("NDVI liczymy dla prostokąta obejmującego działkę, więc brzegi mogą zawierać sąsiednie pola.")
+  }
+  return {
+    ...analysis,
+    vegetation,
+    confidence: { ...analysis.confidence, unknowns },
+    sources: [
+      ...analysis.sources.filter((s) => s.key !== "satelita"),
+      ...(satellite
+        ? [{ key: "satelita" as const, name: "Copernicus Sentinel-2", what: `kondycja roślin (NDVI), zdjęcie z ${formatDatePl(satellite.imageDate)}`, license: "zawiera zmodyfikowane dane Copernicus Sentinel, wolny dostęp", fetchedAt }]
+        : []),
+    ],
+    sourceStatus: analysis.sourceStatus.map((s) =>
+      s.key !== "satelita"
+        ? s
+        : { key: "satelita", label: "Sentinel-2", ok: !!satellite, message: satellite ? undefined : failed ? "Zdjęcia satelitarne nie odpowiedziały na czas." : "Brak bezchmurnego zdjęcia z ostatnich 30 dni." },
+    ),
   }
 }

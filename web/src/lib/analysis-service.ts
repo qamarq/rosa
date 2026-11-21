@@ -3,17 +3,21 @@ import { cropLabel } from "@/lib/crops"
 import { morkaAnalysis } from "@/lib/mock/morka"
 import type { Analysis, AnalysisError, AnalysisRequest } from "@/lib/types"
 import { dateRange, isDateInRange, isValidParcelId, toIsoDate } from "@/lib/validation"
-import { buildAnalysis } from "@/server/analysis/engine"
+import { applySatellite, buildAnalysis } from "@/server/analysis/engine"
 import { computeBalance } from "@/server/analysis/water-balance"
 import { readCache, writeCache } from "@/server/cache"
+import { loadHydro } from "@/server/sources/hydro"
 import { loadDailyWeather } from "@/server/sources/meteo"
 import { findParcelById } from "@/server/sources/parcel"
+import { loadSatellite, type SatelliteResult } from "@/server/sources/satellite"
 import { loadSoilCategory } from "@/server/sources/soil"
 import { loadTerrain } from "@/server/sources/terrain"
 
-const ENGINE_VERSION = "v3"
+const ENGINE_VERSION = "v4"
 const WINDOW_DAYS = 45
 const HISTORY_YEARS = 10
+const SATELLITE_BUDGET_MS = Number(process.env.ROSA_SATELLITE_BUDGET_MS ?? 15000)
+const SATELLITE_GRACE_MS = 400
 
 export type AnalysisResult = { ok: true; analysis: Analysis } | { ok: false; error: AnalysisError }
 
@@ -68,10 +72,12 @@ async function computeLive(req: AnalysisRequest, id: string): Promise<AnalysisRe
   if (!parcel) {
     return { ok: false, error: { code: "parcel_not_found", message: "Nie znaleziono działki.", parcelId: req.parcelId } }
   }
-  const [weather, soil, terrain] = await Promise.all([
+  const sat = satelliteJob(id, () => loadSatellite(parcel.id, parcel.lat, parcel.lon, parcel.utmBbox, req.date, SATELLITE_BUDGET_MS))
+  const [weather, soil, terrain, hydro] = await Promise.all([
     settle("meteo", loadDailyWeather(parcel.lat, parcel.lon, req.date, HISTORY_YEARS, WINDOW_DAYS)),
     settle("soil", loadSoilCategory(parcel.x2180, parcel.y2180)),
     settle("terrain", loadTerrain(parcel.id, parcel.samplePoints2180)),
+    settle("hydro", loadHydro(parcel.id)),
   ])
   if (!weather.value) {
     return { ok: false, error: { code: "upstream_unavailable", message: "Dane pogodowe są chwilowo niedostępne." } }
@@ -85,10 +91,46 @@ async function computeLive(req: AnalysisRequest, id: string): Promise<AnalysisRe
     weather: { stations: weather.value.stations, recentFrom: weather.value.recentFrom },
     soil: soil.value,
     terrain: terrain.value,
-    failed: { soil: soil.failed, terrain: terrain.failed },
+    hydro: hydro.value,
+    failed: { soil: soil.failed, terrain: terrain.failed, hydro: hydro.failed },
     fetchedAt: toIsoDate(new Date()),
     historyYears: HISTORY_YEARS,
   })
+  const early = await Promise.race([sat, new Promise<null>((r) => setTimeout(() => r(null), SATELLITE_GRACE_MS))])
+  return { ok: true, analysis: early ? applySatellite(analysis, early.value, early.failed) : analysis }
+}
+
+type SatOutcome = { value: SatelliteResult | null; failed: boolean }
+const satelliteJobs = new Map<string, Promise<SatOutcome>>()
+
+function satelliteJob(id: string, load: () => Promise<SatelliteResult | null>): Promise<SatOutcome> {
+  const running = satelliteJobs.get(id)
+  if (running) return running
+  const job = settle("satellite", load()).finally(() => setTimeout(() => satelliteJobs.delete(id), 60000))
+  satelliteJobs.set(id, job)
+  return job
+}
+
+function cacheKeyFor(id: string): string {
+  return `${ENGINE_VERSION}:${id}`
+}
+
+export async function completeSatellite(req: AnalysisRequest): Promise<AnalysisResult> {
+  const base = await runAnalysis(req)
+  if (!base.ok) return base
+  const status = base.analysis.sourceStatus.find((s) => s.key === "satelita")
+  if (!status?.pending) return base
+  const id = base.analysis.id
+  const job =
+    satelliteJobs.get(id) ??
+    satelliteJob(id, async () => {
+      const parcel = await findParcelById(req.parcelId)
+      return parcel ? loadSatellite(parcel.id, parcel.lat, parcel.lon, parcel.utmBbox, req.date, SATELLITE_BUDGET_MS) : null
+    })
+  const outcome = await job
+  const analysis = applySatellite(base.analysis, outcome.value, outcome.failed)
+  const isRecent = req.date >= toIsoDate(new Date(Date.now() - 6 * 86400000))
+  void writeCache("analysis", cacheKeyFor(id), analysis, isRecent ? 3 * 3600 : 30 * 86400)
   return { ok: true, analysis }
 }
 
