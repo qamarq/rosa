@@ -1,8 +1,14 @@
 # ROSA: Retencja · Opady · Susza · Analiza
 
+**Aplikacja (zalecana do oceny):** https://rosa.kamilmarczak.pl
+
+[![Film prezentujący ROSA](https://img.youtube.com/vi/J658jmTHVJM/maxresdefault.jpg)](https://youtu.be/J658jmTHVJM)
+
+**Pitch deck:** [docs/pitch/ROSA-pitch.pdf](docs/pitch/ROSA-pitch.pdf)
+
 Narzędzie webowe dla rolnika: wpisujesz numer działki ewidencyjnej, wybierasz uprawę i dzień analizy, a ROSA w kilka sekund ocenia sytuację wodną działki na tle ostatnich 10 lat, wyjaśnia przyczyny niedoboru wody i podpowiada, jak zatrzymać wodę na polu (retencja → agrotechnika → ewentualnie nawadnianie). Wynik można pobrać lub wydrukować jako raport PDF (A4).
 
-**Wersja działająca (zalecana do oceny):** https://rosa.kamilmarczak.pl — pełne dane dla całej Polski. Uruchomienie lokalne bez bazy danych daje tylko tryb demonstracyjny (sekcja 1).
+Wersja działająca ma pełne dane dla całej Polski. Uruchomienie lokalne bez bazy danych daje tylko tryb demonstracyjny (sekcja 1).
 
 Zadanie: Krajowy Ośrodek Wsparcia Rolnictwa, „Zatrzymaj Wodę, Chroń Plony”, HackNation 2026.
 
